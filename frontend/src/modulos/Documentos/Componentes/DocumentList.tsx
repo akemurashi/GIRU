@@ -16,63 +16,120 @@ type DocumentListProps = {
   documentos: Documento[];
 };
 
-export const DocumentList = ({
-  documentos,
-}: DocumentListProps) => {
-  const [pdfSeleccionado, setPdfSeleccionado] =
-    useState<string | null>(null);
+export const DocumentList = ({ documentos }: DocumentListProps) => {
+  const [pdfSeleccionado, setPdfSeleccionado] = useState<string | null>(null);
 
   return (
     <>
-      <div className="flex-1 p-8">
-
-        <p className="text-sm text-slate-500 mb-4">
+      <div className="w-full">
+        <p className="mb-3 text-sm text-slate-400">
           {documentos.length} documentos encontrados
         </p>
 
-        {documentos.map((doc) => (
-          <div
-            key={doc.id}
-            className="bg-white border rounded-xl p-6 mb-4"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="font-semibold text-lg">
-                {doc.titulo}
-              </h3>
-
-              <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">
-                {doc.estado}
-              </span>
-            </div>
-
-            <div className="flex gap-4 text-sm text-slate-500 mb-3">
-              <span>{doc.tipo}</span>
-              <span>{doc.fecha}</span>
-              <span>{doc.organismo}</span>
-            </div>
-
-            <p className="text-slate-600 mb-4">
-              {doc.descripcion}
-            </p>
-
-            <button
-              onClick={() =>
-                setPdfSeleccionado(doc.archivo)
-              }
-              className="bg-sidebar text-white px-4 py-2 rounded-lg"
+        <div className="space-y-3 pb-6">
+          {documentos.map((doc) => (
+            <article
+              key={doc.id}
+              className="
+rounded-xl
+border
+border-slate-200
+bg-white
+p-3
+shadow-sm
+md:p-6
+"
             >
-              Ver documento
-            </button>
-          </div>
-        ))}
+              <div
+                className="
+flex
+flex-col
+gap-2
+md:flex-row
+md:items-start
+"
+              >
+                <h3
+                  className="
+min-w-0
+flex-1
+wrap-break-word
+text-base
+font-semibold
+text-slate-900
+md:text-lg
+"
+                >
+                  {doc.titulo}
+                </h3>
+
+                <span
+                  className="
+w-fit
+rounded-full
+bg-green-100
+px-3
+py-1
+text-xs
+text-green-700
+"
+                >
+                  {doc.estado}
+                </span>
+              </div>
+
+              <div
+                className="
+mt-2
+flex
+flex-wrap
+gap-2
+text-xs
+text-slate-400
+md:text-sm
+"
+              >
+                <span>{doc.tipo}</span>
+                <span>{doc.fecha}</span>
+                <span>{doc.organismo}</span>
+              </div>
+
+              <p
+                className="
+mt-2
+wrap-break-word
+text-sm
+text-slate-600
+"
+              >
+                {doc.descripcion}
+              </p>
+
+              <button
+                onClick={() => setPdfSeleccionado(doc.archivo)}
+                className="
+mt-3
+w-full
+rounded-lg
+bg-sidebar
+py-2
+text-sm
+text-white
+md:w-auto
+md:px-4
+"
+              >
+                Ver documento
+              </button>
+            </article>
+          ))}
+        </div>
       </div>
 
       {pdfSeleccionado && (
         <PdfModal
           archivo={pdfSeleccionado}
-          onClose={() =>
-            setPdfSeleccionado(null)
-          }
+          onClose={() => setPdfSeleccionado(null)}
         />
       )}
     </>
