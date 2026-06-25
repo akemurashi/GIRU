@@ -2,18 +2,18 @@ import { useState } from "react";
 import { PdfModal } from "./PdfModal";
 
 type Documento = {
-  id: number;
-  titulo: string;
-  tipo: string;
-  estado: string;
-  fecha: string;
-  organismo: string;
-  descripcion: string;
-  archivo: string;
+  id:number;
+  titulo:string;
+  tipo:string;
+  estado:string;
+  fecha:string;
+  organismo:string;
+  descripcion:string;
+  archivo:string;
 };
 
 type DocumentListProps = {
-  documentos: Documento[];
+  documentos:Documento[];
 };
 
 export const DocumentList = ({ documentos }: DocumentListProps) => {
