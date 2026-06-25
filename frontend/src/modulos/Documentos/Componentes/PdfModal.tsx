@@ -13,13 +13,13 @@ export const PdfModal = ({
       <div className=" bg-sidebar w-[90%] h-[90%] rounded-xl overflow-hidden">
 
         <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="font-semibold">
+          <h2 className="font-semibold  text-white">
             Visualizador de documento
           </h2>
 
           <button
             onClick={onClose}
-            className="text-xl"
+            className="text-xl text-white"
           >
             ✕
           </button>

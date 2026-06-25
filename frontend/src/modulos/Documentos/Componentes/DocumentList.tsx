@@ -16,31 +16,21 @@ type DocumentListProps = {
   documentos:Documento[];
 };
 
-export const DocumentList=({
-  documentos
-}:DocumentListProps)=>{
+export const DocumentList = ({ documentos }: DocumentListProps) => {
+  const [pdfSeleccionado, setPdfSeleccionado] = useState<string | null>(null);
 
-const [pdfSeleccionado,setPdfSeleccionado]=useState<string|null>(null);
+  return (
+    <>
+      <div className="w-full">
+        <p className="mb-3 text-sm text-slate-400">
+          {documentos.length} documentos encontrados
+        </p>
 
-return(
-<>
-
-<div className="w-full">
-
-<p className="mb-3 text-sm text-slate-400">
-{documentos.length} documentos encontrados
-</p>
-
-
-<div className="space-y-3 pb-6">
-
-
-{documentos.map((doc)=>(
-
-
-<article
-key={doc.id}
-className="
+        <div className="space-y-3 pb-6">
+          {documentos.map((doc) => (
+            <article
+              key={doc.id}
+              className="
 rounded-xl
 border
 border-slate-200
@@ -49,22 +39,18 @@ p-3
 shadow-sm
 md:p-6
 "
->
-
-
-<div
-className="
+            >
+              <div
+                className="
 flex
 flex-col
 gap-2
 md:flex-row
 md:items-start
 "
->
-
-
-<h3
-className="
+              >
+                <h3
+                  className="
 min-w-0
 flex-1
 wrap-break-word
@@ -73,13 +59,12 @@ font-semibold
 text-slate-900
 md:text-lg
 "
->
-{doc.titulo}
-</h3>
+                >
+                  {doc.titulo}
+                </h3>
 
-
-<span
-className="
+                <span
+                  className="
 w-fit
 rounded-full
 bg-green-100
@@ -88,16 +73,13 @@ py-1
 text-xs
 text-green-700
 "
->
-{doc.estado}
-</span>
+                >
+                  {doc.estado}
+                </span>
+              </div>
 
-
-</div>
-
-
-<div
-className="
+              <div
+                className="
 mt-2
 flex
 flex-wrap
@@ -106,32 +88,26 @@ text-xs
 text-slate-400
 md:text-sm
 "
->
+              >
+                <span>{doc.tipo}</span>
+                <span>{doc.fecha}</span>
+                <span>{doc.organismo}</span>
+              </div>
 
-<span>{doc.tipo}</span>
-<span>{doc.fecha}</span>
-<span>{doc.organismo}</span>
-
-</div>
-
-
-
-<p
-className="
+              <p
+                className="
 mt-2
 wrap-break-word
 text-sm
 text-slate-600
 "
->
-{doc.descripcion}
-</p>
+              >
+                {doc.descripcion}
+              </p>
 
-
-
-<button
-onClick={()=>setPdfSeleccionado(doc.archivo)}
-className="
+              <button
+                onClick={() => setPdfSeleccionado(doc.archivo)}
+                className="
 mt-3
 w-full
 rounded-lg
@@ -142,34 +118,20 @@ text-white
 md:w-auto
 md:px-4
 "
->
-Ver documento
-</button>
+              >
+                Ver documento
+              </button>
+            </article>
+          ))}
+        </div>
+      </div>
 
-
-
-</article>
-
-
-))}
-
-
-</div>
-
-</div>
-
-
-
-{pdfSeleccionado&&(
-<PdfModal
-archivo={pdfSeleccionado}
-onClose={()=>setPdfSeleccionado(null)}
-/>
-)}
-
-
-</>
-
-)
-
-}
+      {pdfSeleccionado && (
+        <PdfModal
+          archivo={pdfSeleccionado}
+          onClose={() => setPdfSeleccionado(null)}
+        />
+      )}
+    </>
+  );
+};

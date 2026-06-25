@@ -78,8 +78,7 @@ export default function PaginaDocumentos() {
                     w-full
                     rounded-lg
                     border
-                    border-slate-700
-                    bg-slate-600
+                    bg-sidebar
                     py-2
                     text-sm
                     font-semibold
