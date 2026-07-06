@@ -23,7 +23,7 @@ export const SidebarNav = () => {
 
 
         <SidebarNavItems
-          href="/chat"
+          href="/chat-ia"
           icon="pi-comments"
           label="Chat IA"
         />
