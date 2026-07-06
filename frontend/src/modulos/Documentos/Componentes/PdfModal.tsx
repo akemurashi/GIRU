@@ -1,19 +1,22 @@
+import { useIsMobile } from "../../../Hooks/useIsMobile";
+import { PdfMobile } from "./PdfMobile";
+
 type PdfModalProps = {
   archivo: string;
   onClose: () => void;
 };
 
-export const PdfModal = ({
-  archivo,
-  onClose,
-}: PdfModalProps) => {
+export const PdfModal = ({ archivo, onClose }: PdfModalProps) => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
 
-      <div className=" bg-sidebar w-[90%] h-[90%] rounded-xl overflow-hidden">
+      <div className="flex h-[90%] w-[90%] flex-col overflow-hidden rounded-xl bg-sidebar">
 
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="font-semibold  text-white">
+        {/* HEADER */}
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="font-semibold text-white">
             Visualizador de documento
           </h2>
 
@@ -25,13 +28,21 @@ export const PdfModal = ({
           </button>
         </div>
 
-        <iframe
-          src={archivo}
-          className="w-full h-full"
-        />
+        {/* CONTENT */}
+        <div className="flex-1 bg-gray-200">
+
+          {isMobile ? (
+            <PdfMobile archivo={archivo} />
+          ) : (
+            <iframe
+              src={archivo}
+              className="h-full w-full"
+            />
+          )}
+
+        </div>
 
       </div>
-
     </div>
   );
 };
