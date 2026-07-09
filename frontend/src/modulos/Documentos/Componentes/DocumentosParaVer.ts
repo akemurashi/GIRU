@@ -8,7 +8,7 @@ export const documentos = [
     organismo: "Secretaría General",
     descripcion:
       "Regula los derechos, deberes y normas académicas aplicables a estudiantes.",
-    archivo: "/Pdf/Reglamento 1.pdf",
+    archivo: "/Pdf/reglamento1.pdf",
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ export const documentos = [
     organismo: "Vicerrectoría Académica",
     descripcion:
       "Establece criterios y procedimientos para la evaluación académica.",
-    archivo: "/pdfs/normativa-evaluacion.pdf",
+    archivo: "/Pdf/reglamento2.pdf",
   },
   {
     id: 3,
@@ -30,6 +30,6 @@ export const documentos = [
     organismo: "Secretaría General",
     descripcion:
       "Define faltas disciplinarias y procedimientos de sanción.",
-    archivo: "/pdfs/reglamento-disciplinario.pdf",
+    archivo: "/Pdf/reglamento3.pdf",
   },
 ];
