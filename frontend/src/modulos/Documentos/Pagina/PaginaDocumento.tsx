@@ -25,11 +25,10 @@ export default function PaginaDocumentos() {
       : documentos.filter((doc) => doc.tipo === tipoSeleccionado);
 
   return (
-    <div className="h-screen overflow-hidden bg-white">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-white md:block">
       <Sidebar />
 
-      {/* 👇 CAMBIO IMPORTANTE */}
-      <main className="h-screen overflow-hidden md:pl-64">
+      <main className="min-h-0 flex-1 overflow-hidden md:h-screen md:pl-64">
         <div className="flex h-full flex-col xl:flex-row">
           {/* SOLO ESCRITORIO GRANDE */}
           <aside className="hidden xl:block shrink-0 border-r border-slate-200">
