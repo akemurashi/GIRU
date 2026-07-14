@@ -40,7 +40,7 @@ export const FaqHero = () => {
   }, [busqueda, categoriaSeleccionada]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 md:px-8 md:py-12">
           <div className="mb-6 flex items-start gap-4">
