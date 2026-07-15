@@ -4,6 +4,8 @@ import Inicio from "../modulos/inicio/Pagina/PaginaInicio";
 import Documentos from "../modulos/Documentos/Pagina/PaginaDocumento";
 import PaginaChatIa from "../modulos/ChatIa/Pagina/PaginaChatIa";
 import PaginaAyuda from "../modulos/Ayuda/Pagina/PaginaAyuda";
+import PaginaFaq from "../modulos/Faq/Pagina/PaginaFaq";
+
 
 const router = createBrowserRouter([
   {
