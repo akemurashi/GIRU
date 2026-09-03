@@ -14,10 +14,7 @@ const sugerencias = [
 
 export const SearchBox = () => {
 
-
   const [busqueda, setBusqueda] = useState("");
-
-
 
   const sugerenciasFiltradas = sugerencias.filter((item) =>
     item
@@ -25,25 +22,23 @@ export const SearchBox = () => {
       .includes(busqueda.toLowerCase())
   );
 
-
-
   return (
 
     <div className="relative">
-
 
       <i
         className="
           pi pi-search
           absolute
-          left-4
+          left-3
+          md:left-4
           top-1/2
           -translate-y-1/2
           text-slate-500
+          text-sm
+          md:text-base
         "
       />
-
-
 
       <input
 
@@ -57,10 +52,13 @@ export const SearchBox = () => {
 
         className="
           w-full
-          pl-12
+          pl-10
+          md:pl-12
           pr-4
-          py-4
-          text-lg
+          py-2.5
+          md:py-4
+          text-sm
+          md:text-lg
           rounded-xl
           border
           border-slate-300
@@ -71,8 +69,6 @@ export const SearchBox = () => {
         "
 
       />
-
-
 
       {busqueda.length > 0 && sugerenciasFiltradas.length > 0 && (
 
@@ -93,7 +89,6 @@ export const SearchBox = () => {
           "
         >
 
-
           {sugerenciasFiltradas.map((sugerencia) => (
 
             <button
@@ -105,8 +100,12 @@ export const SearchBox = () => {
               className="
                 w-full
                 text-left
-                px-5
-                py-3
+                px-4
+                md:px-5
+                py-2.5
+                md:py-3
+                text-sm
+                md:text-base
                 hover:bg-slate-100
                 text-slate-700
               "
@@ -121,11 +120,9 @@ export const SearchBox = () => {
 
           ))}
 
-
         </div>
 
       )}
-
 
     </div>
 
