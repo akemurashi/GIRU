@@ -1,11 +1,26 @@
+
 export const FilterHeader = () => {
   return (
-    <div className="mb-6 flex items-center gap-2">
-      <i className="pi pi-filter text-slate-600 text-lg" />
-
-      <h2 className="text-xl font-semibold text-slate-900">
-        Filtros de búsqueda
+    <div
+      className="
+        flex
+        items-center
+        justify-between
+        border-b
+        border-slate-200
+        pb-3
+      "
+    >
+      <h2
+        className="
+          text-lg
+          font-bold
+          text-slate-900
+        "
+      >
+        Filtros
       </h2>
     </div>
   );
 };
+
