@@ -1,4 +1,3 @@
-
 import { FilterHeader } from "./FilterHeader";
 import { FilterForm } from "./FilterForm";
 
@@ -16,12 +15,14 @@ type FilterSidebarProps = {
   filtros: Filtros;
   onFiltrosChange: (filtros: Filtros) => void;
   onLimpiarFiltros: () => void;
+  scrollable?: boolean;
 };
 
 export const FilterSidebar = ({
   filtros,
   onFiltrosChange,
   onLimpiarFiltros,
+  scrollable = true,
 }: FilterSidebarProps) => {
   const actualizarFiltro = (
     campo: keyof Filtros,
@@ -35,9 +36,8 @@ export const FilterSidebar = ({
 
   return (
     <aside
-      className="
+      className={`
         flex
-        h-full
         w-full
         flex-col
         bg-white
@@ -46,7 +46,8 @@ export const FilterSidebar = ({
         lg:w-72
         lg:border-y-0
         lg:border-l-0
-      "
+        ${scrollable ? "h-full" : ""}
+      `}
     >
       {/* Título */}
       <div
@@ -65,18 +66,19 @@ export const FilterSidebar = ({
 
       {/* Contenido */}
       <div
-        className="
-          min-h-0
-          flex-1
-          overflow-y-auto
-          overflow-x-hidden
+        className={`
           p-3
           pt-3
           sm:p-4
           sm:pt-3
           md:p-6
           md:pt-4
-        "
+          ${
+            scrollable
+              ? "min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+              : ""
+          }
+        `}
       >
         <FilterForm
           filtros={filtros}
@@ -87,4 +89,3 @@ export const FilterSidebar = ({
     </aside>
   );
 };
-

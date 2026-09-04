@@ -303,6 +303,10 @@ export default function PaginaDocumentos() {
 
             {/* =================================================
                 HEADER
+                Solo título + buscador + botón toggle.
+                El panel de filtros ya NO vive aquí,
+                para que el header nunca crezca más
+                que el espacio disponible y se corte.
             ================================================= */}
 
             <header
@@ -322,7 +326,7 @@ export default function PaginaDocumentos() {
 
                 ${
                   headerVisible
-                    ? "max-h-[90vh] opacity-100"
+                    ? "max-h-[220px] opacity-100"
                     : "max-h-0 border-b-0! py-0! opacity-0"
                 }
               `}
@@ -396,40 +400,10 @@ export default function PaginaDocumentos() {
                   ▼
                 </span>
               </button>
-
-              {/* =================================================
-                  PANEL COMPLETO DE FILTROS - SOLO MÓVIL
-              ================================================= */}
-
-              {mostrarFiltros && (
-                <div
-                  className="
-                    mt-3
-                    max-h-[calc(100dvh-190px)]
-                    overflow-y-auto
-                    overscroll-contain
-                    rounded-xl
-                    border
-                    border-slate-200
-                    bg-slate-50
-                    shadow-sm
-                    md:hidden
-                  "
-                >
-                  <FilterSidebar
-                    filtros={filtros}
-                    onFiltrosChange={setFiltros}
-                    onLimpiarFiltros={
-                      limpiarFiltros
-                    }
-                  />
-                </div>
-              )}
             </header>
 
             {/* =================================================
                 FILTROS - TABLET
-                SIN CAMBIOS
             ================================================= */}
 
             <div
@@ -450,11 +424,17 @@ export default function PaginaDocumentos() {
                 onLimpiarFiltros={
                   limpiarFiltros
                 }
+                scrollable={false}
               />
             </div>
 
             {/* =================================================
-                DOCUMENTOS
+                DOCUMENTOS + PANEL DE FILTROS MÓVIL
+
+                El panel de filtros móvil ahora vive AQUÍ,
+                dentro de la única zona que realmente
+                sabe manejar su scroll (flex-1 min-h-0
+                overflow-y-auto), así nunca se corta.
             ================================================= */}
 
             <div
@@ -470,6 +450,30 @@ export default function PaginaDocumentos() {
                 md:p-6
               "
             >
+              {/* PANEL COMPLETO DE FILTROS - SOLO MÓVIL */}
+              {mostrarFiltros && (
+                <div
+                  className="
+                    mb-4
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-slate-50
+                    shadow-sm
+                    md:hidden
+                  "
+                >
+                  <FilterSidebar
+                    filtros={filtros}
+                    onFiltrosChange={setFiltros}
+                    onLimpiarFiltros={
+                      limpiarFiltros
+                    }
+                    scrollable={false}
+                  />
+                </div>
+              )}
+
               <DocumentList
                 documentos={
                   documentosFiltrados
