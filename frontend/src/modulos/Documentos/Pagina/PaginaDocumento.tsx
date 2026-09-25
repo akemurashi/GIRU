@@ -13,9 +13,10 @@ import {
 import { DocumentList } from "../Componentes/DocumentList";
 
 import {
-  documentos,
   type Documento,
 } from "../Componentes/DocumentosParaVer";
+
+import { useDocuments } from "../../../services/documentService";
 
 // =====================================================
 // SCROLL
@@ -171,6 +172,17 @@ export default function PaginaDocumentos() {
     searchParams.get("tipo") || "Todos";
 
   // ===================================================
+  // DOCUMENTOS - REACT QUERY
+  // ===================================================
+
+  const { 
+    data: documentos = [], 
+    isLoading, 
+    error,
+    refetch 
+  } = useDocuments(0, 50);
+
+  // ===================================================
   // FILTROS
   // ===================================================
 
@@ -230,14 +242,14 @@ export default function PaginaDocumentos() {
   };
 
   // ===================================================
-  // FILTROS APLICADOS
+  // FILTROS APLICADOS (DISABLED FOR NOW)
   // ===================================================
 
-  const documentosFiltrados =
-    filtrarDocumentos(
-      documentos,
-      filtros
-    );
+  // const documentosFiltrados =
+  //   filtrarDocumentos(
+  //     documentos,
+  //     filtros
+  //   );
 
   return (
     <SidebarLayout>
@@ -470,11 +482,30 @@ export default function PaginaDocumentos() {
 
                 {/* LISTA DE DOCUMENTOS */}
 
-                <DocumentList
-                  documentos={
-                    documentosFiltrados
-                  }
-                />
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-sidebar"></div>
+                      <p className="text-sm text-slate-600">Cargando documentos...</p>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+                    <p className="text-sm text-red-800">
+                      {error instanceof Error ? error.message : 'Error al cargar los documentos. Por favor, intenta nuevamente.'}
+                    </p>
+                    <button
+                      onClick={() => refetch()}
+                      className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                ) : (
+                  <DocumentList
+                    documentos={documentos}
+                  />
+                )}
 
               </div>
             </section>

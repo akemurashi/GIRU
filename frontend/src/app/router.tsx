@@ -5,6 +5,8 @@ import Documentos from "../modulos/Documentos/Pagina/PaginaDocumento";
 import PaginaChatIa from "../modulos/ChatIa/Pagina/PaginaChatIa";
 import PaginaFaq from "../modulos/Faq/Pagina/PaginaFaq";
 import PaginaAyuda from "../modulos/Ayuda/Pagina/PaginaAyuda";
+import PaginaLogin from "../modulos/Auth/Pagina/PaginaLogin";
+import PaginaCallback from "../modulos/Auth/Pagina/PaginaCallback";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +28,14 @@ const router = createBrowserRouter([
   {
     path: "/ayuda",
     element: <PaginaAyuda />,
+  },
+  {
+    path: "/login",
+    element: <PaginaLogin />,
+  },
+  {
+    path: "/callback",
+    element: <PaginaCallback />,
   }
 ]);
 
