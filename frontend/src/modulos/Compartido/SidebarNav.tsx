@@ -39,7 +39,7 @@ export const SidebarNav = () => {
         <SidebarNavItems
           href="/faq"
           icon="pi-question-circle"
-          label="FAQ"
+          label="Preguntas frecuentes"
         />
 
 

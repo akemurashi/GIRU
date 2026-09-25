@@ -5,9 +5,10 @@ import type { Filtros } from "./FilterSidebar";
 const tiposDocumento = [
   "Todos",
   "Reglamento",
-  "Normativa",
-  "Resolución",
-  "Instructivo",
+  "Decreto",
+  "Acta",
+  "Convenio",
+  "Elección",
 ];
 
 const estados = [

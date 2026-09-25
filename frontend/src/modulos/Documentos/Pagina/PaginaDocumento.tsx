@@ -1,7 +1,8 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import Sidebar from "../../Compartido/Sidebar";
+import SidebarLayout from "../../Compartido/SidebarLayout";
 import { SearchBox } from "../../Compartido/Busqueda";
 
 import {
@@ -239,251 +240,248 @@ export default function PaginaDocumentos() {
     );
 
   return (
-    <div
-      className="
-        flex
-        h-dvh
-        flex-col
-        overflow-hidden
-        bg-white
-        md:block
-      "
-    >
-      {/* SIDEBAR PRINCIPAL */}
-      <Sidebar />
-
-      <main
+    <SidebarLayout>
+      <div
         className="
-          min-h-0
-          flex-1
+          flex
+          h-dvh
+          flex-col
           overflow-hidden
-          md:h-screen
-          md:pl-64
+          bg-white
         "
       >
-        <div
+        <main
           className="
-            flex
-            h-full
-            flex-col
-            xl:flex-row
+            min-h-0
+            flex-1
+            overflow-hidden
           "
         >
-
-          {/* =================================================
-              SIDEBAR DE FILTROS - PC
-          ================================================= */}
-
-          <aside
-            className="
-              hidden
-              shrink-0
-              border-r
-              border-slate-200
-              xl:block
-            "
-          >
-            <FilterSidebar
-              filtros={filtros}
-              onFiltrosChange={setFiltros}
-              onLimpiarFiltros={limpiarFiltros}
-            />
-          </aside>
-
-          <section
+          <div
             className="
               flex
-              min-h-0
-              min-w-0
-              flex-1
+              h-full
               flex-col
-              overflow-hidden
+              xl:flex-row
             "
           >
 
             {/* =================================================
-                HEADER
-                Solo título + buscador + botón toggle.
-                El panel de filtros ya NO vive aquí,
-                para que el header nunca crezca más
-                que el espacio disponible y se corte.
+                SIDEBAR DE FILTROS - PC
             ================================================= */}
 
-            <header
-              className={`
-                shrink-0
-                overflow-hidden
-                border-b
-                border-slate-200
-                bg-white
-                px-3
-                py-3
-                transition-[max-height,opacity]
-                duration-300
-                md:p-6
-                md:max-h-none
-                md:opacity-100
-
-                ${
-                  headerVisible
-                    ? "max-h-[220px] opacity-100"
-                    : "max-h-0 border-b-0! py-0! opacity-0"
-                }
-              `}
-            >
-
-              <h1
-                className="
-                  mb-3
-                  text-xl
-                  font-bold
-                  text-slate-900
-                  md:text-3xl
-                "
-              >
-                Buscar documentos
-              </h1>
-
-              {/* BUSCADOR */}
-
-              <SearchBox />
-
-              {/* =================================================
-                  BOTÓN GENERAL - SOLO MÓVIL
-              ================================================= */}
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMostrarFiltros(
-                    !mostrarFiltros
-                  )
-                }
-                className="
-                  mt-3
-                  flex
-                  w-full
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-lg
-                  border
-                  border-sidebar
-                  bg-sidebar
-                  px-4
-                  py-2.5
-                  text-sm
-                  font-semibold
-                  text-white
-                  shadow-sm
-                  transition
-                  hover:bg-slate-900
-                  md:hidden
-                "
-              >
-                <span>
-                  {mostrarFiltros
-                    ? "Ocultar filtros"
-                    : "Mostrar filtros"}
-                </span>
-
-                <span
-                  className={`
-                    transition-transform
-                    ${
-                      mostrarFiltros
-                        ? "rotate-180"
-                        : ""
-                    }
-                  `}
-                >
-                  ▼
-                </span>
-              </button>
-            </header>
-
-            {/* =================================================
-                FILTROS - TABLET
-            ================================================= */}
-
-            <div
+            <aside
               className="
                 hidden
-                min-h-0
                 shrink-0
-                border-b
+                border-r
                 border-slate-200
-                bg-slate-50
-                md:block
-                xl:hidden
+                xl:block
               "
             >
               <FilterSidebar
                 filtros={filtros}
                 onFiltrosChange={setFiltros}
-                onLimpiarFiltros={
-                  limpiarFiltros
-                }
-                scrollable={false}
+                onLimpiarFiltros={limpiarFiltros}
               />
-            </div>
+            </aside>
 
             {/* =================================================
-                DOCUMENTOS + PANEL DE FILTROS MÓVIL
-
-                El panel de filtros móvil ahora vive AQUÍ,
-                dentro de la única zona que realmente
-                sabe manejar su scroll (flex-1 min-h-0
-                overflow-y-auto), así nunca se corta.
+                CONTENIDO PRINCIPAL
             ================================================= */}
 
-            <div
-              ref={scrollContainerRef}
+            <section
               className="
+                flex
                 min-h-0
+                min-w-0
                 flex-1
-                overflow-y-auto
-                overflow-x-hidden
-                px-3
-                py-3
-                pb-8
-                md:p-6
+                flex-col
+                overflow-hidden
               "
             >
-              {/* PANEL COMPLETO DE FILTROS - SOLO MÓVIL */}
-              {mostrarFiltros && (
-                <div
+
+              {/* =================================================
+                  HEADER
+              ================================================= */}
+
+              <header
+                className={`
+                  shrink-0
+                  overflow-hidden
+                  border-b
+                  border-slate-200
+                  bg-white
+                  px-3
+                  py-3
+                  transition-[max-height,opacity]
+                  duration-300
+                  md:p-6
+                  md:max-h-none
+                  md:opacity-100
+
+                  ${
+                    headerVisible
+                      ? "max-h-55 opacity-100"
+                      : "max-h-0 border-b-0! py-0! opacity-0"
+                  }
+                `}
+              >
+                <h1
                   className="
-                    mb-4
-                    rounded-xl
+                    mb-3
+                    text-xl
+                    font-bold
+                    text-slate-900
+                    md:text-3xl
+                  "
+                >
+                  Buscar documentos
+                </h1>
+
+                {/* BUSCADOR */}
+
+                <SearchBox />
+
+                {/* =================================================
+                    BOTÓN GENERAL - SOLO MÓVIL
+                ================================================= */}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMostrarFiltros(
+                      !mostrarFiltros
+                    )
+                  }
+                  className="
+                    mt-3
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-lg
                     border
-                    border-slate-200
-                    bg-slate-50
+                    border-sidebar
+                    bg-sidebar
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    text-white
                     shadow-sm
+                    transition
+                    hover:bg-slate-900
                     md:hidden
                   "
                 >
-                  <FilterSidebar
-                    filtros={filtros}
-                    onFiltrosChange={setFiltros}
-                    onLimpiarFiltros={
-                      limpiarFiltros
-                    }
-                    scrollable={false}
-                  />
-                </div>
-              )}
+                  <span>
+                    {mostrarFiltros
+                      ? "Ocultar filtros"
+                      : "Mostrar filtros"}
+                  </span>
 
-              <DocumentList
-                documentos={
-                  documentosFiltrados
-                }
-              />
-            </div>
+                  <span
+                    className={`
+                      transition-transform
+                      ${
+                        mostrarFiltros
+                          ? "rotate-180"
+                          : ""
+                      }
+                    `}
+                  >
+                    ▼
+                  </span>
+                </button>
+              </header>
 
-          </section>
-        </div>
-      </main>
-    </div>
+              {/* =================================================
+                  FILTROS - TABLET
+              ================================================= */}
+
+              <div
+                className="
+                  hidden
+                  min-h-0
+                  shrink-0
+                  border-b
+                  border-slate-200
+                  bg-slate-50
+                  md:block
+                  xl:hidden
+                "
+              >
+                <FilterSidebar
+                  filtros={filtros}
+                  onFiltrosChange={setFiltros}
+                  onLimpiarFiltros={
+                    limpiarFiltros
+                  }
+                  scrollable={false}
+                />
+              </div>
+
+              {/* =================================================
+                  DOCUMENTOS + PANEL DE FILTROS MÓVIL
+              ================================================= */}
+
+              <div
+                ref={scrollContainerRef}
+                className="
+                  min-h-0
+                  flex-1
+                  overflow-y-auto
+                  overflow-x-hidden
+                  px-3
+                  py-3
+                  pb-8
+                  md:p-6
+                "
+              >
+
+                {/* PANEL COMPLETO DE FILTROS - SOLO MÓVIL */}
+
+                {mostrarFiltros && (
+                  <div
+                    className="
+                      mb-4
+                      rounded-xl
+                      border
+                      border-slate-200
+                      bg-slate-50
+                      shadow-sm
+                      md:hidden
+                    "
+                  >
+                    <FilterSidebar
+                      filtros={filtros}
+                      onFiltrosChange={
+                        setFiltros
+                      }
+                      onLimpiarFiltros={
+                        limpiarFiltros
+                      }
+                      scrollable={false}
+                    />
+                  </div>
+                )}
+
+                {/* LISTA DE DOCUMENTOS */}
+
+                <DocumentList
+                  documentos={
+                    documentosFiltrados
+                  }
+                />
+
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </SidebarLayout>
   );
 }
+
