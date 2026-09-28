@@ -1,125 +1,9 @@
 
 import { useMemo, useState } from "react";
 import type { Filtros } from "./FilterSidebar";
+import { useFilterOptions, type FilterOption } from "../../../services/searchService";
 
-const tiposDocumento = [
-  "Todos",
-  "Reglamento",
-  "Decreto",
-  "Acta",
-  "Convenio",
-  "Elección",
-];
-
-const estados = [
-  "Todos",
-  "Vigente",
-  "Reemplazado",
-  "Derogado",
-  "Complementario",
-];
-
-const areas = [
-  "Académica",
-  "Administrativa",
-  "Estudiantil",
-  "Disciplinaria",
-];
-
-const sedes = [
-  "Casa Central Valparaíso",
-  "Campus San Joaquín",
-  "Campus Vitacura",
-  "Sede Viña del Mar",
-  "Sede Concepción",
-];
-
-const departamentos = [
-  "Departamento de Aeronáutica",
-  "Departamento de Arquitectura",
-  "Departamento de Ciencias (Sede Viña del Mar)",
-  "Departamento de Ciencias (Sede Concepción)",
-  "Departamento de Construcción y Prevención de Riesgos (Sede Viña del Mar)",
-  "Departamento de Construcción y Prevención de Riesgos (Sede Concepción)",
-  "Departamento de Diseño y Manufactura",
-  "Departamento de Educación Física, Deportes y Recreación",
-  "Departamento de Electricidad",
-  "Departamento de Electrónica",
-  "Departamento de Electrónica e Informática",
-  "Departamento de Electrotecnia e Informática",
-  "Departamento de Estudios Humanísticos",
-  "Departamento de Física",
-  "Departamento de Industrias",
-  "Departamento de Informática",
-  "Departamento de Ingeniería Comercial",
-  "Departamento de Ingeniería Eléctrica",
-  "Departamento de Ingeniería en Diseño",
-  "Departamento de Ingeniería Mecánica",
-  "Departamento de Ingeniería de Minas, Metalurgia y Materiales",
-  "Departamento de Ingeniería Química y Ambiental",
-  "Departamento de Matemática",
-  "Departamento de Mecánica (Sede Viña del Mar)",
-  "Departamento de Mecánica (Sede Concepción)",
-  "Departamento de Obras Civiles",
-  "Departamento de Química",
-  "Departamento de Química y Medio Ambiente (Sede Viña del Mar)",
-  "Departamento de Química y Medio Ambiente (Sede Concepción)",
-];
-
-const carreras = [
-  "Arquitectura",
-  "Construcción Civil",
-  "Ingeniería Civil",
-  "Ingeniería Civil Ambiental",
-  "Ingeniería Civil de Minas",
-  "Ingeniería Civil Eléctrica",
-  "Ingeniería Civil Electrónica",
-  "Ingeniería Civil en Biotecnología",
-  "Ingeniería Civil Física",
-  "Ingeniería Civil Industrial",
-  "Ingeniería Civil Informática",
-  "Ingeniería Civil Matemática",
-  "Ingeniería Civil Mecánica",
-  "Ingeniería Civil Metalúrgica",
-  "Ingeniería Civil Plan Común",
-  "Ingeniería Civil Química",
-  "Ingeniería Civil Telemática",
-  "Ingeniería Comercial",
-  "Ingeniería en Aviación Comercial",
-  "Ingeniería en Biotecnología",
-  "Ingeniería en Diseño de Productos",
-  "Ingeniería en Fabricación y Diseño Industrial",
-  "Ingeniería en Informática",
-  "Ingeniería en Mantenimiento Industrial",
-  "Ingeniería en Prevención de Riesgos Laborales y Ambientales",
-  "Licenciatura en Astrofísica",
-  "Licenciatura en Ciencias, mención Química",
-  "Licenciatura en Física",
-  "Químico",
-  "Dibujante Proyectista",
-  "Administración de Empresas",
-  "Alimentos",
-  "Automatización y Control",
-  "Biotecnología",
-  "Ciencia de Datos",
-  "Construcción",
-  "Control del Medio Ambiente",
-  "Electricidad",
-  "Electrónica",
-  "Energías Renovables",
-  "Informática",
-  "Mantenimiento Aeronáutico",
-  "Mantenimiento Industrial",
-  "Mecánica Automotriz",
-  "Mecánica Industrial",
-  "Minería y Metalurgia",
-  "Proyectos de Ingeniería",
-  "Química mención Analítica",
-  "Química mención Industrial",
-  "Robótica y Mecatrónica",
-  "Telecomunicaciones y Redes",
-];
-
+// Hardcoded years for now (could be calculated dynamically)
 const años = [
   "2026",
   "2025",
@@ -584,6 +468,64 @@ export const FilterForm = ({
 }: FilterFormProps) => {
   const [mostrarTodos, setMostrarTodos] =
     useState(false);
+
+  // Fetch filter options from API
+  const { data: filterOptions, isLoading: isLoadingFilters } = useFilterOptions();
+
+  // Prepare options from API data or fallback to hardcoded values
+  const tiposDocumento = useMemo(() => {
+    if (filterOptions?.tipos_documento) {
+      return ["Todos", ...filterOptions.tipos_documento.map(opt => opt.nombre)];
+    }
+    return ["Todos", "Reglamento", "Decreto", "Acta", "Convenio", "Elección"];
+  }, [filterOptions]);
+
+  const estados = useMemo(() => {
+    if (filterOptions?.estados_vigencia) {
+      return ["Todos", ...filterOptions.estados_vigencia.map(opt => opt.nombre)];
+    }
+    return ["Todos", "Vigente", "Reemplazado", "Derogado", "Complementario"];
+  }, [filterOptions]);
+
+  const areas = useMemo(() => {
+    if (filterOptions?.tipos_area) {
+      return filterOptions.tipos_area.map(opt => opt.nombre);
+    }
+    return ["Académica", "Administrativa", "Estudiantil", "Disciplinaria"];
+  }, [filterOptions]);
+
+  const sedes = useMemo(() => {
+    if (filterOptions?.sedes_campus) {
+      return filterOptions.sedes_campus.map(opt => opt.nombre);
+    }
+    return ["Casa Central Valparaíso", "Campus San Joaquín", "Campus Vitacura", "Sede Viña del Mar", "Sede Concepción"];
+  }, [filterOptions]);
+
+  const departamentos = useMemo(() => {
+    if (filterOptions?.departamentos) {
+      return filterOptions.departamentos.map(opt => opt.nombre);
+    }
+    return [
+      "Departamento de Aeronáutica",
+      "Departamento de Arquitectura",
+      "Departamento de Informática",
+      "Departamento de Electrónica",
+      "Departamento de Industrias",
+    ];
+  }, [filterOptions]);
+
+  const carreras = useMemo(() => {
+    if (filterOptions?.carreras) {
+      return filterOptions.carreras.map(opt => opt.nombre);
+    }
+    return [
+      "Arquitectura",
+      "Ingeniería Civil",
+      "Ingeniería Civil Informática",
+      "Ingeniería Civil Electrónica",
+      "Ingeniería Civil Mecánica",
+    ];
+  }, [filterOptions]);
 
   return (
     <div className="mt-2 w-full">

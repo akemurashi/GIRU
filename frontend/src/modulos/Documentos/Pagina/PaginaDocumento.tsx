@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import SidebarLayout from "../../Compartido/SidebarLayout";
@@ -17,6 +17,7 @@ import {
 } from "../Componentes/DocumentosParaVer";
 
 import { useDocuments } from "../../../services/documentService";
+import { useSearch, mapFrontendFiltersToAPI, type SearchRequest, type SearchResultItem } from "../../../services/searchService";
 
 // =====================================================
 // SCROLL
@@ -89,6 +90,31 @@ const contieneAlguno = (
   return valoresSeleccionados.some((valor) =>
     valoresDocumento.includes(valor)
   );
+};
+
+// =====================================================
+// TRANSFORMAR RESULTADOS DE BÚSQUEDA
+// =====================================================
+
+const transformSearchResultToDocumento = (searchResult: SearchResultItem): Documento => {
+  const fecha = searchResult.creacion 
+    ? new Date(searchResult.creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
+    : 'Sin fecha';
+
+  return {
+    id: searchResult.documentid,
+    titulo: searchResult.titulo,
+    tipo: searchResult.tipodocumento || searchResult.nommetadato || 'Documento',
+    estado: searchResult.estadovigencia || 'Vigente',
+    fecha: fecha,
+    organismo: searchResult.nommetadato || 'Universidad',
+    descripcion: searchResult.excerpt || '',
+    archivo: `/Pdf/documento_${searchResult.documentid}.pdf`,
+    area: searchResult.categorias[0] || undefined,
+    sede: searchResult.sedes,
+    departamento: [], // Would need to be populated from departamento relation
+    carrera: [], // Would need to be populated from carrera relation
+  };
 };
 
 // =====================================================
@@ -172,14 +198,20 @@ export default function PaginaDocumentos() {
     searchParams.get("tipo") || "Todos";
 
   // ===================================================
+  // SEARCH QUERY
+  // ===================================================
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // ===================================================
   // DOCUMENTOS - REACT QUERY
   // ===================================================
 
   const { 
-    data: documentos = [], 
-    isLoading, 
-    error,
-    refetch 
+    data: documentosFromRegular = [], 
+    isLoading: isLoadingDocuments, 
+    error: documentsError,
+    refetch: refetchDocuments 
   } = useDocuments(0, 50);
 
   // ===================================================
@@ -196,6 +228,47 @@ export default function PaginaDocumentos() {
       carrera: [],
       año: [],
     });
+
+  // ===================================================
+  // SEARCH - REACT QUERY
+  // ===================================================
+
+  // Determine if we should use search (when filters are applied or query is not empty)
+  const hasActiveFilters = 
+    filtros.tipoDocumento !== "Todos" ||
+    filtros.estado !== "Todos" ||
+    filtros.area.length > 0 ||
+    filtros.sede.length > 0 ||
+    filtros.departamento.length > 0 ||
+    filtros.carrera.length > 0 ||
+    filtros.año.length > 0 ||
+    searchQuery.trim() !== "";
+
+  const searchRequest: SearchRequest = {
+    query: searchQuery,
+    filters: mapFrontendFiltersToAPI(filtros),
+    page: 1,
+    page_size: 50,
+  };
+
+  const { 
+    data: searchResults, 
+    isLoading: isLoadingSearch, 
+    error: searchError,
+    refetch: refetchSearch 
+  } = useSearch(searchRequest, hasActiveFilters);
+
+  // Transform search results to Document format
+  const documentosFromSearch = useMemo(() => {
+    if (!searchResults?.results) return [];
+    return searchResults.results.map(transformSearchResultToDocumento);
+  }, [searchResults]);
+
+  // Use search results when filters are active, otherwise use regular documents
+  const documentosActivos = hasActiveFilters ? documentosFromSearch : documentosFromRegular;
+  const isLoading = hasActiveFilters ? isLoadingSearch : isLoadingDocuments;
+  const error = hasActiveFilters ? searchError : documentsError;
+  const refetch = hasActiveFilters ? refetchSearch : refetchDocuments;
 
   // ===================================================
   // PANEL GENERAL DE FILTROS - SOLO MÓVIL
@@ -224,6 +297,16 @@ export default function PaginaDocumentos() {
       tipoDocumento: tipoUrl,
     }));
   }, [tipoUrl]);
+
+  // ===================================================
+  // REFETCH SEARCH WHEN FILTERS CHANGE
+  // ===================================================
+
+  useEffect(() => {
+    if (hasActiveFilters && refetchSearch) {
+      refetchSearch();
+    }
+  }, [filtros, searchQuery, hasActiveFilters, refetchSearch]);
 
   // ===================================================
   // LIMPIAR
@@ -353,7 +436,10 @@ export default function PaginaDocumentos() {
 
                 {/* BUSCADOR */}
 
-                <SearchBox />
+                <SearchBox 
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
 
                 {/* =================================================
                     BOTÓN GENERAL - SOLO MÓVIL
@@ -503,7 +589,7 @@ export default function PaginaDocumentos() {
                   </div>
                 ) : (
                   <DocumentList
-                    documentos={documentos}
+                    documentos={documentosActivos}
                   />
                 )}
 

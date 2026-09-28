@@ -48,6 +48,11 @@ export interface Documento {
   carrera?: string[];
 }
 
+export interface DocumentUrlResponse {
+  url: string;
+  expires_in: number;
+}
+
 // Transform API response to match frontend Document type
 const transformToDocumento = (apiDoc: DocumentoAPI): Documento => {
   // Extract year from creacion date if available
@@ -85,6 +90,11 @@ const fetchDocumentById = async (id: number): Promise<Documento> => {
   return transformToDocumento(response.data);
 };
 
+const getDocumentUrl = async (id: number): Promise<string> => {
+  const response = await api.get<DocumentUrlResponse>(`/documents/${id}/url`);
+  return response.data.url;
+};
+
 // React Query hooks
 export const useDocuments = (skip: number = 0, limit: number = 50) => {
   return useQuery({
@@ -100,5 +110,92 @@ export const useDocument = (id: number) => {
     queryFn: () => fetchDocumentById(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+};
+
+export const useDocumentUrl = (id: number | null) => {
+  return useQuery({
+    queryKey: ['documentUrl', id],
+    queryFn: () => id ? getDocumentUrl(id) : Promise.reject('No ID'),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+// Document manipulation hooks
+export interface DocumentUpdateData {
+  titulo?: string;
+  descripcion?: string;
+  idcategoria?: number;
+  idtipodecision?: number;
+  idtiposesion?: number;
+  idestadovigencia?: number;
+  derogacion?: string;
+  aplicacioninmediata?: boolean;
+  isactive?: boolean;
+  sedesids?: number[];
+  carrerasids?: number[];
+  beneficiosids?: number[];
+  nombramientosids?: number[];
+  departamentosids?: number[];
+  jornadasids?: number[];
+  nivelesids?: number[];
+  rolesids?: number[];
+  areaseemisorasids?: number[];
+}
+
+const updateDocument = async (id: number, data: DocumentUpdateData): Promise<DocumentoAPI> => {
+  const response = await api.put<DocumentoAPI>(`/documents/${id}`, data);
+  return response.data;
+};
+
+const toggleDocumentActive = async (id: number): Promise<DocumentoAPI> => {
+  const response = await api.patch<DocumentoAPI>(`/documents/${id}/toggle-active`);
+  return response.data;
+};
+
+const deleteDocument = async (id: number): Promise<void> => {
+  await api.delete(`/documents/${id}`);
+};
+
+export const useUpdateDocument = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: DocumentUpdateData }) => 
+      updateDocument(id, data),
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch documents queries
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['search'] });
+      queryClient.invalidateQueries({ queryKey: ['document', variables.id] });
+    },
+  });
+};
+
+export const useToggleDocumentActive = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => toggleDocumentActive(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch documents queries
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['search'] });
+      queryClient.invalidateQueries({ queryKey: ['document', id] });
+    },
+  });
+};
+
+export const useDeleteDocument = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => deleteDocument(id),
+    onSuccess: () => {
+      // Invalidate and refetch documents queries
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['search'] });
+    },
   });
 };

@@ -17,7 +17,7 @@ type DocumentListProps = {
 };
 
 export const DocumentList = ({ documentos }: DocumentListProps) => {
-  const [pdfSeleccionado, setPdfSeleccionado] = useState<string | null>(null);
+  const [pdfSeleccionado, setPdfSeleccionado] = useState<number | null>(null);
 
   return (
     <>
@@ -106,7 +106,7 @@ text-slate-600
               </p>
 
               <button
-                onClick={() => setPdfSeleccionado(doc.archivo)}
+                onClick={() => setPdfSeleccionado(doc.id)}
                 className="
 mt-3
 w-full
@@ -126,9 +126,9 @@ md:px-4
         </div>
       </div>
 
-      {pdfSeleccionado && (
+      {pdfSeleccionado !== null && (
         <PdfModal
-          archivo={pdfSeleccionado}
+          documentId={pdfSeleccionado}
           onClose={() => setPdfSeleccionado(null)}
         />
       )}

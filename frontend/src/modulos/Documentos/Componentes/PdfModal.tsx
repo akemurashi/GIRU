@@ -1,13 +1,15 @@
 import { useIsMobile } from "../../../Hooks/useIsMobile";
 import { PdfMobile } from "./PdfMobile";
+import { useDocumentUrl } from "../../../services/documentService";
 
 type PdfModalProps = {
-  archivo: string;
+  documentId: number;
   onClose: () => void;
 };
 
-export const PdfModal = ({ archivo, onClose }: PdfModalProps) => {
+export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
   const isMobile = useIsMobile();
+  const { data: url, isLoading, error } = useDocumentUrl(documentId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -24,18 +26,32 @@ export const PdfModal = ({ archivo, onClose }: PdfModalProps) => {
             onClick={onClose}
             className="text-xl text-white"
           >
-            ✕
+            o 
           </button>
         </div>
 
         {/* CONTENT */}
         <div className="flex-1 bg-gray-200">
 
-          {isMobile ? (
-            <PdfMobile archivo={archivo} />
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-sidebar inline-block"></div>
+                <p className="text-slate-800">Cargando documento...</p>
+              </div>
+            </div>
+          ) : error || !url ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center bg-red-100 p-4 rounded-lg">
+                <p className="text-red-800 font-semibold mb-2">Error al cargar el documento</p>
+                <p className="text-red-700 text-sm">No se pudo obtener la URL de origen.</p>
+              </div>
+            </div>
+          ) : isMobile ? (
+            <PdfMobile archivo={url} />
           ) : (
             <iframe
-              src={archivo}
+              src={url}
               className="h-full w-full"
             />
           )}
