@@ -26,7 +26,7 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
             onClick={onClose}
             className="text-xl text-white"
           >
-            o 
+            X
           </button>
         </div>
 

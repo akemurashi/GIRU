@@ -1,4 +1,18 @@
-export const ChatInput = () => {
+interface ChatInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSend: () => void;
+  disabled: boolean;
+}
+
+export const ChatInput = ({ value, onChange, onSend, disabled }: ChatInputProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+
   return (
     <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6 sm:py-5 lg:px-10">
       <div className="mx-auto w-full max-w-5xl">
@@ -6,12 +20,17 @@ export const ChatInput = () => {
           <input
             type="text"
             placeholder="Escribe tu consulta sobre reglamentos, normativas o resoluciones..."
-            className="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-xs text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-sky-900 sm:rounded-2xl sm:px-5 sm:py-3.5 sm:text-sm"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            className="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-xs text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-sky-900 disabled:bg-gray-100 disabled:cursor-not-allowed sm:rounded-2xl sm:px-5 sm:py-3.5 sm:text-sm"
           />
 
           <button
+            onClick={onSend}
+            disabled={disabled || !value.trim()}
             className="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-900 text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50 sm:h-12 sm:w-14 sm:rounded-2xl"
-            disabled
           >
             <i className="pi pi-send text-base sm:text-lg"></i>
           </button>

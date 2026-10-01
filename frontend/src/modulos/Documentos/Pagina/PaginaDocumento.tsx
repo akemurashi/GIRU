@@ -1,5 +1,10 @@
+import {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
 
-import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import SidebarLayout from "../../Compartido/SidebarLayout";
@@ -17,44 +22,70 @@ import {
 } from "../Componentes/DocumentosParaVer";
 
 import { useDocuments } from "../../../services/documentService";
-import { useSearch, mapFrontendFiltersToAPI, type SearchRequest, type SearchResultItem } from "../../../services/searchService";
+
+import {
+  useSearch,
+  mapFrontendFiltersToAPI,
+  type SearchRequest,
+  type SearchResultItem,
+} from "../../../services/searchService";
 
 // =====================================================
 // SCROLL
 // =====================================================
 
 function useScrollDirection(
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>
+  scrollContainerRef: React.RefObject<
+    HTMLDivElement | null
+  >
 ) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] =
+    useState(true);
 
   useEffect(() => {
-    const container = scrollContainerRef.current;
+    const container =
+      scrollContainerRef.current;
 
     if (!container) return;
 
-    let previousScrollTop = container.scrollTop;
+    let previousScrollTop =
+      container.scrollTop;
 
     const handleScroll = () => {
-      const currentScrollTop = container.scrollTop;
+      const currentScrollTop =
+        container.scrollTop;
 
       if (currentScrollTop <= 0) {
         setIsVisible(true);
-      } else if (currentScrollTop > previousScrollTop) {
+      } else if (
+        currentScrollTop >
+        previousScrollTop
+      ) {
         setIsVisible(false);
-      } else if (currentScrollTop < previousScrollTop) {
+      } else if (
+        currentScrollTop <
+        previousScrollTop
+      ) {
         setIsVisible(true);
       }
 
-      previousScrollTop = currentScrollTop;
+      previousScrollTop =
+        currentScrollTop;
     };
 
-    container.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
+    container.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true,
+      }
+    );
 
     return () => {
-      container.removeEventListener("scroll", handleScroll);
+      container.removeEventListener(
+        "scroll",
+        handleScroll
+      );
     };
   }, [scrollContainerRef]);
 
@@ -66,9 +97,12 @@ function useScrollDirection(
 // =====================================================
 
 const obtenerAño = (fecha: string) => {
-  const coincidencia = fecha.match(/\d{4}/);
+  const coincidencia =
+    fecha.match(/\d{4}/);
 
-  return coincidencia ? coincidencia[0] : "";
+  return coincidencia
+    ? coincidencia[0]
+    : "";
 };
 
 // =====================================================
@@ -76,44 +110,85 @@ const obtenerAño = (fecha: string) => {
 // =====================================================
 
 const contieneAlguno = (
-  valoresDocumento: string[] | undefined,
+  valoresDocumento:
+    | string[]
+    | undefined,
   valoresSeleccionados: string[]
 ) => {
-  if (valoresSeleccionados.length === 0) {
+  if (
+    valoresSeleccionados.length ===
+    0
+  ) {
     return true;
   }
 
-  if (!valoresDocumento || valoresDocumento.length === 0) {
+  if (
+    !valoresDocumento ||
+    valoresDocumento.length === 0
+  ) {
     return false;
   }
 
-  return valoresSeleccionados.some((valor) =>
-    valoresDocumento.includes(valor)
+  return valoresSeleccionados.some(
+    (valor: string) =>
+      valoresDocumento.includes(valor)
   );
 };
 
 // =====================================================
-// TRANSFORMAR RESULTADOS DE BÚSQUEDA
+// TRANSFORMAR RESULTADOS
 // =====================================================
 
-const transformSearchResultToDocumento = (searchResult: SearchResultItem): Documento => {
-  const fecha = searchResult.creacion 
-    ? new Date(searchResult.creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
-    : 'Sin fecha';
+const transformSearchResultToDocumento = (
+  searchResult: SearchResultItem
+): Documento => {
+  const fecha = searchResult.creacion
+    ? new Date(
+        searchResult.creacion
+      ).toLocaleDateString(
+        "es-ES",
+        {
+          year: "numeric",
+          month: "long",
+        }
+      )
+    : "Sin fecha";
 
   return {
     id: searchResult.documentid,
+
     titulo: searchResult.titulo,
-    tipo: searchResult.tipodocumento || searchResult.nommetadato || 'Documento',
-    estado: searchResult.estadovigencia || 'Vigente',
-    fecha: fecha,
-    organismo: searchResult.nommetadato || 'Universidad',
-    descripcion: searchResult.excerpt || '',
+
+    tipo:
+      searchResult.tipodocumento ||
+      searchResult.nommetadato ||
+      "Documento",
+
+    estado:
+      searchResult.estadovigencia ||
+      "Vigente",
+
+    fecha,
+
+    organismo:
+      searchResult.nommetadato ||
+      "Universidad",
+
+    descripcion:
+      searchResult.excerpt || "",
+
     archivo: `/Pdf/documento_${searchResult.documentid}.pdf`,
-    area: searchResult.categorias[0] || undefined,
-    sede: searchResult.sedes,
-    departamento: [], // Would need to be populated from departamento relation
-    carrera: [], // Would need to be populated from carrera relation
+
+    area:
+      searchResult.categorias[0] ||
+      undefined,
+
+    sede:
+      searchResult.sedes,
+
+    departamento: [],
+
+    carrera: [],
   };
 };
 
@@ -125,66 +200,80 @@ const filtrarDocumentos = (
   lista: Documento[],
   filtros: Filtros
 ) => {
-  return lista.filter((doc) => {
-    // Tipo
-    if (
-      filtros.tipoDocumento !== "Todos" &&
-      doc.tipo !== filtros.tipoDocumento
-    ) {
-      return false;
-    }
+  return lista.filter(
+    (doc: Documento) => {
 
-    // Estado
-    if (
-      filtros.estado !== "Todos" &&
-      doc.estado !== filtros.estado
-    ) {
-      return false;
-    }
+      // Tipo
+      if (
+        filtros.tipoDocumento !==
+          "Todos" &&
+        doc.tipo !==
+          filtros.tipoDocumento
+      ) {
+        return false;
+      }
 
-    // Año
-    if (
-      filtros.año.length > 0 &&
-      !filtros.año.includes(obtenerAño(doc.fecha))
-    ) {
-      return false;
-    }
+      // Estado
+      if (
+        filtros.estado !== "Todos" &&
+        doc.estado !== filtros.estado
+      ) {
+        return false;
+      }
 
-    // Área
-    if (
-      filtros.area.length > 0 &&
-      !filtros.area.includes(doc.area ?? "")
-    ) {
-      return false;
-    }
+      // Año
+      if (
+        filtros.año.length > 0 &&
+        !filtros.año.includes(
+          obtenerAño(doc.fecha)
+        )
+      ) {
+        return false;
+      }
 
-    // Sede
-    if (!contieneAlguno(doc.sede, filtros.sede)) {
-      return false;
-    }
+      // Área
+      if (
+        filtros.area.length > 0 &&
+        !filtros.area.includes(
+          doc.area ?? ""
+        )
+      ) {
+        return false;
+      }
 
-    // Departamento
-    if (
-      !contieneAlguno(
-        doc.departamento,
-        filtros.departamento
-      )
-    ) {
-      return false;
-    }
+      // Sede
+      if (
+        !contieneAlguno(
+          doc.sede,
+          filtros.sede
+        )
+      ) {
+        return false;
+      }
 
-    // Carrera
-    if (
-      !contieneAlguno(
-        doc.carrera,
-        filtros.carrera
-      )
-    ) {
-      return false;
-    }
+      // Departamento
+      if (
+        !contieneAlguno(
+          doc.departamento,
+          filtros.departamento
+        )
+      ) {
+        return false;
+      }
 
-    return true;
-  });
+      // Carrera
+      if (
+        !contieneAlguno(
+          doc.carrera,
+          filtros.carrera
+        )
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+  );
 };
 
 // =====================================================
@@ -192,128 +281,219 @@ const filtrarDocumentos = (
 // =====================================================
 
 export default function PaginaDocumentos() {
-  const [searchParams] = useSearchParams();
+  const [searchParams] =
+    useSearchParams();
 
   const tipoUrl =
-    searchParams.get("tipo") || "Todos";
+    searchParams.get("tipo") ||
+    "Todos";
 
   // ===================================================
   // SEARCH QUERY
   // ===================================================
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [
+    searchQuery,
+    setSearchQuery,
+  ] = useState("");
 
   // ===================================================
   // DOCUMENTOS - REACT QUERY
   // ===================================================
 
-  const { 
-    data: documentosFromRegular = [], 
-    isLoading: isLoadingDocuments, 
+  const {
+    data: documentosFromRegular = [],
+    isLoading:
+      isLoadingDocuments,
     error: documentsError,
-    refetch: refetchDocuments 
+    refetch:
+      refetchDocuments,
   } = useDocuments(0, 50);
 
   // ===================================================
-  // FILTROS
+  // FILTROS APLICADOS
   // ===================================================
 
-  const [filtros, setFiltros] =
-    useState<Filtros>({
-      tipoDocumento: tipoUrl,
-      estado: "Todos",
-      area: [],
-      sede: [],
-      departamento: [],
-      carrera: [],
-      año: [],
-    });
+  const [
+    filtros,
+    setFiltros,
+  ] = useState<Filtros>({
+    tipoDocumento: tipoUrl,
+    estado: "Todos",
+    area: [],
+    sede: [],
+    departamento: [],
+    carrera: [],
+    año: [],
+  });
+
+  // ===================================================
+  // FILTROS PENDIENTES - SOLO MÓVIL
+  // ===================================================
+
+  const [
+    filtrosPendientes,
+    setFiltrosPendientes,
+  ] = useState<Filtros>({
+    tipoDocumento: tipoUrl,
+    estado: "Todos",
+    area: [],
+    sede: [],
+    departamento: [],
+    carrera: [],
+    año: [],
+  });
 
   // ===================================================
   // SEARCH - REACT QUERY
   // ===================================================
 
-  // Determine if we should use search (when filters are applied or query is not empty)
-  const hasActiveFilters = 
-    filtros.tipoDocumento !== "Todos" ||
+  const hasActiveFilters =
+    filtros.tipoDocumento !==
+      "Todos" ||
     filtros.estado !== "Todos" ||
     filtros.area.length > 0 ||
     filtros.sede.length > 0 ||
-    filtros.departamento.length > 0 ||
+    filtros.departamento.length >
+      0 ||
     filtros.carrera.length > 0 ||
     filtros.año.length > 0 ||
     searchQuery.trim() !== "";
 
   const searchRequest: SearchRequest = {
     query: searchQuery,
-    filters: mapFrontendFiltersToAPI(filtros),
+
+    filters:
+      mapFrontendFiltersToAPI(
+        filtros
+      ),
+
     page: 1,
+
     page_size: 50,
   };
 
-  const { 
-    data: searchResults, 
-    isLoading: isLoadingSearch, 
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearch,
     error: searchError,
-    refetch: refetchSearch 
-  } = useSearch(searchRequest, hasActiveFilters);
-
-  // Transform search results to Document format
-  const documentosFromSearch = useMemo(() => {
-    if (!searchResults?.results) return [];
-    return searchResults.results.map(transformSearchResultToDocumento);
-  }, [searchResults]);
-
-  // Use search results when filters are active, otherwise use regular documents
-  const documentosActivos = hasActiveFilters ? documentosFromSearch : documentosFromRegular;
-  const isLoading = hasActiveFilters ? isLoadingSearch : isLoadingDocuments;
-  const error = hasActiveFilters ? searchError : documentsError;
-  const refetch = hasActiveFilters ? refetchSearch : refetchDocuments;
+    refetch: refetchSearch,
+  } = useSearch(
+    searchRequest,
+    hasActiveFilters
+  );
 
   // ===================================================
-  // PANEL GENERAL DE FILTROS - SOLO MÓVIL
+  // TRANSFORMAR RESULTADOS
   // ===================================================
 
-  const [mostrarFiltros, setMostrarFiltros] =
-    useState(false);
+  const documentosFromSearch =
+    useMemo(() => {
+      if (
+        !searchResults?.results
+      ) {
+        return [];
+      }
+
+      return searchResults.results.map(
+        (
+          item: SearchResultItem
+        ) =>
+          transformSearchResultToDocumento(
+            item
+          )
+      );
+    }, [searchResults]);
 
   // ===================================================
-  // SCROLL DE DOCUMENTOS
+  // DOCUMENTOS ACTIVOS
+  // ===================================================
+
+  const documentosActivos =
+    hasActiveFilters
+      ? documentosFromSearch
+      : documentosFromRegular;
+
+  const isLoading =
+    hasActiveFilters
+      ? isLoadingSearch
+      : isLoadingDocuments;
+
+  const error =
+    hasActiveFilters
+      ? searchError
+      : documentsError;
+
+  const refetch =
+    hasActiveFilters
+      ? refetchSearch
+      : refetchDocuments;
+
+  // ===================================================
+  // PANEL MÓVIL
+  // ===================================================
+
+  const [
+    mostrarFiltros,
+    setMostrarFiltros,
+  ] = useState(false);
+
+  // ===================================================
+  // SCROLL DOCUMENTOS
   // ===================================================
 
   const scrollContainerRef =
     useRef<HTMLDivElement>(null);
 
   const headerVisible =
-    useScrollDirection(scrollContainerRef);
+    useScrollDirection(
+      scrollContainerRef
+    );
 
   // ===================================================
   // ACTUALIZAR TIPO DESDE URL
   // ===================================================
 
   useEffect(() => {
-    setFiltros((actual) => ({
-      ...actual,
-      tipoDocumento: tipoUrl,
-    }));
+    setFiltros(
+      (actual: Filtros) => ({
+        ...actual,
+        tipoDocumento: tipoUrl,
+      })
+    );
+
+    setFiltrosPendientes(
+      (actual: Filtros) => ({
+        ...actual,
+        tipoDocumento: tipoUrl,
+      })
+    );
   }, [tipoUrl]);
 
   // ===================================================
-  // REFETCH SEARCH WHEN FILTERS CHANGE
+  // REFETCH SEARCH
   // ===================================================
 
   useEffect(() => {
-    if (hasActiveFilters && refetchSearch) {
+    if (
+      hasActiveFilters &&
+      refetchSearch
+    ) {
       refetchSearch();
     }
-  }, [filtros, searchQuery, hasActiveFilters, refetchSearch]);
+  }, [
+    filtros,
+    searchQuery,
+    hasActiveFilters,
+    refetchSearch,
+  ]);
 
   // ===================================================
-  // LIMPIAR
+  // LIMPIAR FILTROS APLICADOS
   // ===================================================
 
   const limpiarFiltros = () => {
-    setFiltros({
+    const filtrosVacios: Filtros = {
       tipoDocumento: "Todos",
       estado: "Todos",
       area: [],
@@ -321,18 +501,128 @@ export default function PaginaDocumentos() {
       departamento: [],
       carrera: [],
       año: [],
+    };
+
+    setFiltros(
+      filtrosVacios
+    );
+  };
+
+  // ===================================================
+  // ABRIR FILTROS MÓVILES
+  // ===================================================
+
+  const abrirFiltros = () => {
+    setFiltrosPendientes({
+      ...filtros,
+      area: [
+        ...filtros.area,
+      ],
+      sede: [
+        ...filtros.sede,
+      ],
+      departamento: [
+        ...filtros.departamento,
+      ],
+      carrera: [
+        ...filtros.carrera,
+      ],
+      año: [
+        ...filtros.año,
+      ],
+    });
+
+    setMostrarFiltros(true);
+  };
+
+  // ===================================================
+  // ACTUALIZAR FILTROS PENDIENTES
+  // ===================================================
+
+  const actualizarFiltrosPendientes = (
+    nuevosFiltros: Filtros
+  ) => {
+    setFiltrosPendientes({
+      ...nuevosFiltros,
+      area: [
+        ...nuevosFiltros.area,
+      ],
+      sede: [
+        ...nuevosFiltros.sede,
+      ],
+      departamento: [
+        ...nuevosFiltros.departamento,
+      ],
+      carrera: [
+        ...nuevosFiltros.carrera,
+      ],
+      año: [
+        ...nuevosFiltros.año,
+      ],
     });
   };
 
   // ===================================================
-  // FILTROS APLICADOS (DISABLED FOR NOW)
+  // LIMPIAR FILTROS PENDIENTES
   // ===================================================
 
-  // const documentosFiltrados =
-  //   filtrarDocumentos(
-  //     documentos,
-  //     filtros
-  //   );
+  const limpiarFiltrosPendientes =
+    () => {
+      setFiltrosPendientes({
+        tipoDocumento: "Todos",
+        estado: "Todos",
+        area: [],
+        sede: [],
+        departamento: [],
+        carrera: [],
+        año: [],
+      });
+    };
+
+  // ===================================================
+  // APLICAR FILTROS MÓVILES
+  // ===================================================
+
+  const aplicarFiltros = () => {
+    setFiltros({
+      ...filtrosPendientes,
+
+      area: [
+        ...filtrosPendientes.area,
+      ],
+
+      sede: [
+        ...filtrosPendientes.sede,
+      ],
+
+      departamento: [
+        ...filtrosPendientes.departamento,
+      ],
+
+      carrera: [
+        ...filtrosPendientes.carrera,
+      ],
+
+      año: [
+        ...filtrosPendientes.año,
+      ],
+    });
+
+    setMostrarFiltros(false);
+
+    requestAnimationFrame(() => {
+      scrollContainerRef.current?.scrollTo(
+        {
+          top: 0,
+          behavior: "smooth",
+        }
+      );
+    });
+  };
+
+  // ===================================================
+  // RENDER
+  // ===================================================
 
   return (
     <SidebarLayout>
@@ -376,8 +666,12 @@ export default function PaginaDocumentos() {
             >
               <FilterSidebar
                 filtros={filtros}
-                onFiltrosChange={setFiltros}
-                onLimpiarFiltros={limpiarFiltros}
+                onFiltrosChange={
+                  setFiltros
+                }
+                onLimpiarFiltros={
+                  limpiarFiltros
+                }
               />
             </aside>
 
@@ -436,22 +730,30 @@ export default function PaginaDocumentos() {
 
                 {/* BUSCADOR */}
 
-                <SearchBox 
+                <SearchBox
                   value={searchQuery}
-                  onChange={setSearchQuery}
+                  onChange={
+                    setSearchQuery
+                  }
                 />
 
                 {/* =================================================
-                    BOTÓN GENERAL - SOLO MÓVIL
+                    BOTÓN FILTROS - SOLO MÓVIL
                 ================================================= */}
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setMostrarFiltros(
-                      !mostrarFiltros
-                    )
-                  }
+                  onClick={() => {
+                    if (
+                      mostrarFiltros
+                    ) {
+                      setMostrarFiltros(
+                        false
+                      );
+                    } else {
+                      abrirFiltros();
+                    }
+                  }}
                   className="
                     mt-3
                     flex
@@ -513,7 +815,9 @@ export default function PaginaDocumentos() {
               >
                 <FilterSidebar
                   filtros={filtros}
-                  onFiltrosChange={setFiltros}
+                  onFiltrosChange={
+                    setFiltros
+                  }
                   onLimpiarFiltros={
                     limpiarFiltros
                   }
@@ -522,11 +826,13 @@ export default function PaginaDocumentos() {
               </div>
 
               {/* =================================================
-                  DOCUMENTOS + PANEL DE FILTROS MÓVIL
+                  DOCUMENTOS + FILTROS MÓVIL
               ================================================= */}
 
               <div
-                ref={scrollContainerRef}
+                ref={
+                  scrollContainerRef
+                }
                 className="
                   min-h-0
                   flex-1
@@ -539,57 +845,114 @@ export default function PaginaDocumentos() {
                 "
               >
 
-                {/* PANEL COMPLETO DE FILTROS - SOLO MÓVIL */}
+                {/* =================================================
+                    PANEL MÓVIL
+                ================================================= */}
 
                 {mostrarFiltros && (
                   <div
                     className="
                       mb-4
+                      h-[65dvh]
+                      max-h-[65dvh]
+                      min-h-0
+                      overflow-hidden
                       rounded-xl
                       border
                       border-slate-200
-                      bg-slate-50
+                      bg-white
                       shadow-sm
                       md:hidden
                     "
                   >
                     <FilterSidebar
-                      filtros={filtros}
+                      filtros={
+                        filtrosPendientes
+                      }
                       onFiltrosChange={
-                        setFiltros
+                        actualizarFiltrosPendientes
                       }
                       onLimpiarFiltros={
-                        limpiarFiltros
+                        limpiarFiltrosPendientes
                       }
-                      scrollable={false}
+                      onAplicarFiltros={
+                        aplicarFiltros
+                      }
+                      scrollable={true}
                     />
                   </div>
                 )}
 
-                {/* LISTA DE DOCUMENTOS */}
+                {/* =================================================
+                    LISTA DE DOCUMENTOS
+                ================================================= */}
 
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
-                      <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-sidebar"></div>
-                      <p className="text-sm text-slate-600">Cargando documentos...</p>
+
+                      <div
+                        className="
+                          mb-4
+                          h-8
+                          w-8
+                          animate-spin
+                          rounded-full
+                          border-4
+                          border-slate-200
+                          border-t-sidebar
+                        "
+                      />
+
+                      <p className="text-sm text-slate-600">
+                        Cargando documentos...
+                      </p>
+
                     </div>
                   </div>
                 ) : error ? (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+                  <div
+                    className="
+                      rounded-lg
+                      border
+                      border-red-200
+                      bg-red-50
+                      p-6
+                      text-center
+                    "
+                  >
                     <p className="text-sm text-red-800">
-                      {error instanceof Error ? error.message : 'Error al cargar los documentos. Por favor, intenta nuevamente.'}
+                      {error instanceof
+                      Error
+                        ? error.message
+                        : "Error al cargar los documentos. Por favor, intenta nuevamente."}
                     </p>
+
                     <button
-                      onClick={() => refetch()}
-                      className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                      type="button"
+                      onClick={() =>
+                        refetch()
+                      }
+                      className="
+                        mt-4
+                        rounded-lg
+                        bg-red-600
+                        px-4
+                        py-2
+                        text-sm
+                        font-semibold
+                        text-white
+                        hover:bg-red-700
+                      "
                     >
                       Reintentar
                     </button>
                   </div>
                 ) : (
                   <DocumentList
-                    documentos={documentosActivos}
+                    documentos={
+                      documentosActivos
+                    }
                   />
                 )}
 
@@ -601,4 +964,3 @@ export default function PaginaDocumentos() {
     </SidebarLayout>
   );
 }
-

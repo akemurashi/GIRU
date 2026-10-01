@@ -90,7 +90,7 @@ const fetchDocumentById = async (id: number): Promise<Documento> => {
   return transformToDocumento(response.data);
 };
 
-const getDocumentUrl = async (id: number): Promise<string> => {
+export const getDocumentUrl = async (id: number): Promise<string> => {
   const response = await api.get<DocumentUrlResponse>(`/documents/${id}/url`);
   return response.data.url;
 };
