@@ -11,10 +11,18 @@ const sugerencias = [
   "Normativa de estudiantes",
 ];
 
+type SearchBoxProps = {
+  value?: string;
+  onChange?: (value: string) => void;
+};
 
-export const SearchBox = () => {
+export const SearchBox = ({ value: controlledValue, onChange }: SearchBoxProps = {}) => {
 
-  const [busqueda, setBusqueda] = useState("");
+  const [internalValue, setInternalValue] = useState("");
+  
+  // Use controlled value if provided, otherwise use internal state
+  const busqueda = controlledValue !== undefined ? controlledValue : internalValue;
+  const setBusqueda = onChange || setInternalValue;
 
   const sugerenciasFiltradas = sugerencias.filter((item) =>
     item

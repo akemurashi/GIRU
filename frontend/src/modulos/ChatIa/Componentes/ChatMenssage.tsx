@@ -13,6 +13,10 @@ export type ChatMessageProps = {
   sourceDocumentUpdated?: string;
   sourceQuote?: string;
   sourceButtonText?: string;
+  sourceDocumentOriginalTitle?: string;
+
+  isStreaming?: boolean;
+  onViewDocument?: (documentTitle: string) => void;
 };
 
 export const ChatMessage = ({
@@ -27,6 +31,9 @@ export const ChatMessage = ({
   sourceDocumentUpdated,
   sourceQuote,
   sourceButtonText,
+  sourceDocumentOriginalTitle,
+  isStreaming,
+  onViewDocument,
 }: ChatMessageProps) => {
   const isUser = type === "user";
 
@@ -60,48 +67,61 @@ export const ChatMessage = ({
             </h3>
 
             <p className="text-sm leading-7 text-gray-700">
-              {interpretationText}
+              {isStreaming ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-pulse">Analizando documentos y generando respuesta...</span>
+                  <i className="pi pi-spinner pi-spin"></i>
+                </span>
+              ) : (
+                interpretationText || <span className="text-gray-400 italic">Esperando respuesta...</span>
+              )}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-sky-900">
-                {sourceTitle}
-              </h3>
+          {!isStreaming && interpretationText && sourceDocumentTitle && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-sky-900">
+                  {sourceTitle}
+                </h3>
 
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                <i className="pi pi-check-circle"></i>
-                {sourceStatus}
-              </span>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                  <i className="pi pi-check-circle"></i>
+                  {sourceStatus}
+                </span>
+              </div>
+
+              <div className="mb-4">
+                <p className="font-semibold text-gray-900">
+                  {sourceDocumentTitle}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {sourceDocumentMeta}
+                </p>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  {sourceDocumentUpdated}
+                </p>
+              </div>
+
+              <div className="mb-5 rounded-r-xl border-l-4 border-sky-900 bg-sky-50 p-4">
+                <p className="text-sm italic leading-6 text-gray-700">
+                  {sourceQuote}
+                </p>
+              </div>
+
+              <button
+                onClick={() => sourceDocumentOriginalTitle && onViewDocument?.(sourceDocumentOriginalTitle)}
+                disabled={!sourceDocumentOriginalTitle}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <i className="pi pi-file-pdf"></i>
+                {sourceButtonText}
+                <i className="pi pi-external-link text-xs"></i>
+              </button>
             </div>
-
-            <div className="mb-4">
-              <p className="font-semibold text-gray-900">
-                {sourceDocumentTitle}
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                {sourceDocumentMeta}
-              </p>
-
-              <p className="mt-1 text-xs text-gray-400">
-                {sourceDocumentUpdated}
-              </p>
-            </div>
-
-            <div className="mb-5 rounded-r-xl border-l-4 border-sky-900 bg-sky-50 p-4">
-              <p className="text-sm italic leading-6 text-gray-700">
-                {sourceQuote}
-              </p>
-            </div>
-
-            <button className="inline-flex items-center gap-2 rounded-xl bg-sky-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-800">
-              <i className="pi pi-file-pdf"></i>
-              {sourceButtonText}
-              <i className="pi pi-external-link text-xs"></i>
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

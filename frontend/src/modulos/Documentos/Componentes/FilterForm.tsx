@@ -1,152 +1,46 @@
-
 import { useMemo, useState } from "react";
 import type { Filtros } from "./FilterSidebar";
+import {
+  useFilterOptions,
+  type FilterOption,
+} from "../../../services/searchService";
 
-const tiposDocumento = [
-  "Todos",
-  "Reglamento",
-  "Normativa",
-  "Resolución",
-  "Instructivo",
-];
+// =====================================================
+// AÑOS
+// =====================================================
 
-const estados = [
-  "Todos",
-  "Vigente",
-  "Reemplazado",
-  "Derogado",
-  "Complementario",
-];
+const AÑO_INICIO = 1972;
+const AÑO_ACTUAL = new Date().getFullYear();
 
-const areas = [
-  "Académica",
-  "Administrativa",
-  "Estudiantil",
-  "Disciplinaria",
-];
+const años = Array.from(
+  {
+    length:
+      AÑO_ACTUAL -
+      AÑO_INICIO +
+      1,
+  },
+  (_, index) =>
+    String(AÑO_ACTUAL - index)
+);
 
-const sedes = [
-  "Casa Central Valparaíso",
-  "Campus San Joaquín",
-  "Campus Vitacura",
-  "Sede Viña del Mar",
-  "Sede Concepción",
-];
-
-const departamentos = [
-  "Departamento de Aeronáutica",
-  "Departamento de Arquitectura",
-  "Departamento de Ciencias (Sede Viña del Mar)",
-  "Departamento de Ciencias (Sede Concepción)",
-  "Departamento de Construcción y Prevención de Riesgos (Sede Viña del Mar)",
-  "Departamento de Construcción y Prevención de Riesgos (Sede Concepción)",
-  "Departamento de Diseño y Manufactura",
-  "Departamento de Educación Física, Deportes y Recreación",
-  "Departamento de Electricidad",
-  "Departamento de Electrónica",
-  "Departamento de Electrónica e Informática",
-  "Departamento de Electrotecnia e Informática",
-  "Departamento de Estudios Humanísticos",
-  "Departamento de Física",
-  "Departamento de Industrias",
-  "Departamento de Informática",
-  "Departamento de Ingeniería Comercial",
-  "Departamento de Ingeniería Eléctrica",
-  "Departamento de Ingeniería en Diseño",
-  "Departamento de Ingeniería Mecánica",
-  "Departamento de Ingeniería de Minas, Metalurgia y Materiales",
-  "Departamento de Ingeniería Química y Ambiental",
-  "Departamento de Matemática",
-  "Departamento de Mecánica (Sede Viña del Mar)",
-  "Departamento de Mecánica (Sede Concepción)",
-  "Departamento de Obras Civiles",
-  "Departamento de Química",
-  "Departamento de Química y Medio Ambiente (Sede Viña del Mar)",
-  "Departamento de Química y Medio Ambiente (Sede Concepción)",
-];
-
-const carreras = [
-  "Arquitectura",
-  "Construcción Civil",
-  "Ingeniería Civil",
-  "Ingeniería Civil Ambiental",
-  "Ingeniería Civil de Minas",
-  "Ingeniería Civil Eléctrica",
-  "Ingeniería Civil Electrónica",
-  "Ingeniería Civil en Biotecnología",
-  "Ingeniería Civil Física",
-  "Ingeniería Civil Industrial",
-  "Ingeniería Civil Informática",
-  "Ingeniería Civil Matemática",
-  "Ingeniería Civil Mecánica",
-  "Ingeniería Civil Metalúrgica",
-  "Ingeniería Civil Plan Común",
-  "Ingeniería Civil Química",
-  "Ingeniería Civil Telemática",
-  "Ingeniería Comercial",
-  "Ingeniería en Aviación Comercial",
-  "Ingeniería en Biotecnología",
-  "Ingeniería en Diseño de Productos",
-  "Ingeniería en Fabricación y Diseño Industrial",
-  "Ingeniería en Informática",
-  "Ingeniería en Mantenimiento Industrial",
-  "Ingeniería en Prevención de Riesgos Laborales y Ambientales",
-  "Licenciatura en Astrofísica",
-  "Licenciatura en Ciencias, mención Química",
-  "Licenciatura en Física",
-  "Químico",
-  "Dibujante Proyectista",
-  "Administración de Empresas",
-  "Alimentos",
-  "Automatización y Control",
-  "Biotecnología",
-  "Ciencia de Datos",
-  "Construcción",
-  "Control del Medio Ambiente",
-  "Electricidad",
-  "Electrónica",
-  "Energías Renovables",
-  "Informática",
-  "Mantenimiento Aeronáutico",
-  "Mantenimiento Industrial",
-  "Mecánica Automotriz",
-  "Mecánica Industrial",
-  "Minería y Metalurgia",
-  "Proyectos de Ingeniería",
-  "Química mención Analítica",
-  "Química mención Industrial",
-  "Robótica y Mecatrónica",
-  "Telecomunicaciones y Redes",
-];
-
-const años = [
-  "2026",
-  "2025",
-  "2024",
-  "2023",
-  "2022",
-  "2021",
-  "2020",
-  "2019",
-  "2018",
-  "2017",
-  "2016",
-  "2015",
-  "2014",
-  "2013",
-  "2012",
-  "2011",
-  "2010",
-];
+// =====================================================
+// PROPS
+// =====================================================
 
 type FilterFormProps = {
   filtros: Filtros;
+
   onFiltroChange: (
     campo: keyof Filtros,
     valor: string | string[]
   ) => void;
-  onLimpiarFiltros: () => void;
+
+  mostrarTodos: boolean;
 };
+
+// =====================================================
+// SELECT
+// =====================================================
 
 type SelectFilterProps = {
   label: string;
@@ -187,8 +81,11 @@ const SelectFilter = ({
           focus:ring-sidebar/20
         "
       >
-        {options.map((option) => (
-          <option key={option} value={option}>
+        {options.map((option: string) => (
+          <option
+            key={option}
+            value={option}
+          >
             {option}
           </option>
         ))}
@@ -196,6 +93,10 @@ const SelectFilter = ({
     </div>
   );
 };
+
+// =====================================================
+// AÑO
+// =====================================================
 
 type YearFilterProps = {
   selected: string[];
@@ -213,7 +114,7 @@ const YearFilter = ({
       return años;
     }
 
-    return años.filter((año) =>
+    return años.filter((año: string) =>
       año.includes(busqueda.trim())
     );
   }, [busqueda]);
@@ -221,10 +122,15 @@ const YearFilter = ({
   const toggleAño = (año: string) => {
     if (selected.includes(año)) {
       onChange(
-        selected.filter((item) => item !== año)
+        selected.filter(
+          (item: string) => item !== año
+        )
       );
     } else {
-      onChange([...selected, año]);
+      onChange([
+        ...selected,
+        año,
+      ]);
     }
   };
 
@@ -257,7 +163,9 @@ const YearFilter = ({
         inputMode="numeric"
         placeholder="Buscar año..."
         value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
+        onChange={(e) =>
+          setBusqueda(e.target.value)
+        }
         className="
           mb-3
           h-10
@@ -293,35 +201,39 @@ const YearFilter = ({
             sm:grid-cols-4
           "
         >
-          {añosFiltrados.map((año) => {
-            const seleccionado =
-              selected.includes(año);
+          {añosFiltrados.map(
+            (año: string) => {
+              const seleccionado =
+                selected.includes(año);
 
-            return (
-              <button
-                key={año}
-                type="button"
-                onClick={() => toggleAño(año)}
-                className={`
-                  min-w-0
-                  rounded-md
-                  border
-                  px-2
-                  py-2
-                  text-sm
-                  font-medium
-                  transition
-                  ${
-                    seleccionado
-                      ? "border-sidebar bg-sidebar text-white"
-                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+              return (
+                <button
+                  key={año}
+                  type="button"
+                  onClick={() =>
+                    toggleAño(año)
                   }
-                `}
-              >
-                {año}
-              </button>
-            );
-          })}
+                  className={`
+                    min-w-0
+                    rounded-md
+                    border
+                    px-2
+                    py-2
+                    text-sm
+                    font-medium
+                    transition
+                    ${
+                      seleccionado
+                        ? "border-sidebar bg-sidebar text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                    }
+                  `}
+                >
+                  {año}
+                </button>
+              );
+            }
+          )}
         </div>
 
         {añosFiltrados.length === 0 && (
@@ -333,6 +245,10 @@ const YearFilter = ({
     </div>
   );
 };
+
+// =====================================================
+// MULTISELECT
+// =====================================================
 
 type MultiSelectFilterProps = {
   label: string;
@@ -347,28 +263,42 @@ const MultiSelectFilter = ({
   selected,
   onChange,
 }: MultiSelectFilterProps) => {
-  const [abierto, setAbierto] = useState(false);
-  const [busqueda, setBusqueda] = useState("");
+  const [abierto, setAbierto] =
+    useState(false);
+
+  const [busqueda, setBusqueda] =
+    useState("");
 
   const opcionesFiltradas = useMemo(() => {
     if (!busqueda.trim()) {
       return options;
     }
 
-    return options.filter((option) =>
-      option
-        .toLowerCase()
-        .includes(busqueda.toLowerCase())
+    return options.filter(
+      (option: string) =>
+        option
+          .toLowerCase()
+          .includes(
+            busqueda.toLowerCase()
+          )
     );
   }, [options, busqueda]);
 
-  const toggleOpcion = (opcion: string) => {
+  const toggleOpcion = (
+    opcion: string
+  ) => {
     if (selected.includes(opcion)) {
       onChange(
-        selected.filter((item) => item !== opcion)
+        selected.filter(
+          (item: string) =>
+            item !== opcion
+        )
       );
     } else {
-      onChange([...selected, opcion]);
+      onChange([
+        ...selected,
+        opcion,
+      ]);
     }
   };
 
@@ -398,7 +328,9 @@ const MultiSelectFilter = ({
 
       <button
         type="button"
-        onClick={() => setAbierto(!abierto)}
+        onClick={() =>
+          setAbierto(!abierto)
+        }
         className="
           flex
           min-h-11
@@ -427,16 +359,21 @@ const MultiSelectFilter = ({
           {selected.length === 0
             ? `Seleccionar ${label.toLowerCase()}`
             : `${selected.length} seleccionado${
-                selected.length !== 1 ? "s" : ""
+                selected.length !== 1
+                  ? "s"
+                  : ""
               }`}
         </span>
 
-        {/* SE MANTIENE EL SÍMBOLO DE LOS SELECTORES */}
         <span
           className={`
             shrink-0
             transition-transform
-            ${abierto ? "rotate-180" : ""}
+            ${
+              abierto
+                ? "rotate-180"
+                : ""
+            }
           `}
         >
           ▼
@@ -464,7 +401,9 @@ const MultiSelectFilter = ({
             placeholder={`Buscar ${label.toLowerCase()}...`}
             value={busqueda}
             onChange={(e) =>
-              setBusqueda(e.target.value)
+              setBusqueda(
+                e.target.value
+              )
             }
             className="
               mb-2
@@ -483,51 +422,60 @@ const MultiSelectFilter = ({
           />
 
           <div className="max-h-48 overflow-y-auto">
-            {opcionesFiltradas.map((opcion) => {
-              const seleccionado =
-                selected.includes(opcion);
+            {opcionesFiltradas.map(
+              (opcion: string) => {
+                const seleccionado =
+                  selected.includes(
+                    opcion
+                  );
 
-              return (
-                <label
-                  key={opcion}
-                  className="
-                    flex
-                    cursor-pointer
-                    items-start
-                    gap-2
-                    rounded-md
-                    px-2
-                    py-2
-                    text-sm
-                    text-slate-700
-                    hover:bg-slate-100
-                  "
-                >
-                  <input
-                    type="checkbox"
-                    checked={seleccionado}
-                    onChange={() =>
-                      toggleOpcion(opcion)
-                    }
+                return (
+                  <label
+                    key={opcion}
                     className="
-                      mt-0.5
-                      h-4
-                      w-4
-                      shrink-0
-                      rounded
-                      border-slate-300
-                      accent-sidebar
+                      flex
+                      cursor-pointer
+                      items-start
+                      gap-2
+                      rounded-md
+                      px-2
+                      py-2
+                      text-sm
+                      text-slate-700
+                      hover:bg-slate-100
                     "
-                  />
+                  >
+                    <input
+                      type="checkbox"
+                      checked={
+                        seleccionado
+                      }
+                      onChange={() =>
+                        toggleOpcion(
+                          opcion
+                        )
+                      }
+                      className="
+                        mt-0.5
+                        h-4
+                        w-4
+                        shrink-0
+                        rounded
+                        border-slate-300
+                        accent-sidebar
+                      "
+                    />
 
-                  <span className="leading-5">
-                    {opcion}
-                  </span>
-                </label>
-              );
-            })}
+                    <span className="leading-5">
+                      {opcion}
+                    </span>
+                  </label>
+                );
+              }
+            )}
 
-            {opcionesFiltradas.length === 0 && (
+            {opcionesFiltradas.length ===
+              0 && (
               <p className="px-2 py-3 text-sm text-slate-500">
                 No se encontraron resultados.
               </p>
@@ -538,23 +486,27 @@ const MultiSelectFilter = ({
 
       {selected.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
-          {selected.slice(0, 3).map((item) => (
-            <span
-              key={item}
-              className="
-                max-w-full
-                truncate
-                rounded-md
-                bg-sidebar/10
-                px-2
-                py-1
-                text-xs
-                text-sidebar
-              "
-            >
-              {item}
-            </span>
-          ))}
+          {selected
+            .slice(0, 3)
+            .map(
+              (item: string) => (
+                <span
+                  key={item}
+                  className="
+                    max-w-full
+                    truncate
+                    rounded-md
+                    bg-sidebar/10
+                    px-2
+                    py-1
+                    text-xs
+                    text-sidebar
+                  "
+                >
+                  {item}
+                </span>
+              )
+            )}
 
           {selected.length > 3 && (
             <span
@@ -576,26 +528,182 @@ const MultiSelectFilter = ({
   );
 };
 
+// =====================================================
+// FILTER FORM
+// =====================================================
+
 export const FilterForm = ({
   filtros,
   onFiltroChange,
-  onLimpiarFiltros,
+  mostrarTodos,
 }: FilterFormProps) => {
-  const [mostrarTodos, setMostrarTodos] =
-    useState(false);
+  // ===================================================
+  // API - OPCIONES
+  // ===================================================
+
+  const {
+    data: filterOptions,
+  } = useFilterOptions();
+
+  // ===================================================
+  // TIPO DOCUMENTO
+  // ===================================================
+
+  const tiposDocumento = useMemo(() => {
+    if (
+      filterOptions?.tipos_documento
+    ) {
+      return [
+        "Todos",
+        ...filterOptions.tipos_documento.map(
+          (opt: FilterOption) =>
+            opt.nombre
+        ),
+      ];
+    }
+
+    return [
+      "Todos",
+      "Reglamento",
+      "Decreto",
+      "Acta",
+      "Convenio",
+      "Elección",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // ESTADOS
+  // ===================================================
+
+  const estados = useMemo(() => {
+    if (
+      filterOptions?.estados_vigencia
+    ) {
+      return [
+        "Todos",
+        ...filterOptions.estados_vigencia.map(
+          (opt: FilterOption) =>
+            opt.nombre
+        ),
+      ];
+    }
+
+    return [
+      "Todos",
+      "Vigente",
+      "Reemplazado",
+      "Derogado",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // ÁREAS
+  // ===================================================
+
+  const areas = useMemo(() => {
+    if (
+      filterOptions?.tipos_area
+    ) {
+      return filterOptions.tipos_area.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Académica",
+      "Administrativa",
+      "Estudiantil",
+      "Disciplinaria",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // SEDES
+  // ===================================================
+
+  const sedes = useMemo(() => {
+    if (
+      filterOptions?.sedes_campus
+    ) {
+      return filterOptions.sedes_campus.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Casa Central Valparaíso",
+      "Campus San Joaquín",
+      "Campus Vitacura",
+      "Sede Viña del Mar",
+      "Sede Concepción",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // DEPARTAMENTOS
+  // ===================================================
+
+  const departamentos = useMemo(() => {
+    if (
+      filterOptions?.departamentos
+    ) {
+      return filterOptions.departamentos.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Departamento de Aeronáutica",
+      "Departamento de Arquitectura",
+      "Departamento de Informática",
+      "Departamento de Electrónica",
+      "Departamento de Industrias",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // CARRERAS
+  // ===================================================
+
+  const carreras = useMemo(() => {
+    if (
+      filterOptions?.carreras
+    ) {
+      return filterOptions.carreras.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Arquitectura",
+      "Ingeniería Civil",
+      "Ingeniería Civil Informática",
+      "Ingeniería Civil Electrónica",
+      "Ingeniería Civil Mecánica",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // RENDER
+  // ===================================================
 
   return (
     <div className="mt-2 w-full">
 
-      {/* =========================
+      {/* =================================================
           FILTROS PRINCIPALES
-         ========================= */}
+      ================================================= */}
 
       <SelectFilter
         label="Tipo de documento"
         value={filtros.tipoDocumento}
         options={tiposDocumento}
-        onChange={(value) =>
+        onChange={(value: string) =>
           onFiltroChange(
             "tipoDocumento",
             value
@@ -607,7 +715,7 @@ export const FilterForm = ({
         label="Estado"
         value={filtros.estado}
         options={estados}
-        onChange={(value) =>
+        onChange={(value: string) =>
           onFiltroChange(
             "estado",
             value
@@ -617,7 +725,7 @@ export const FilterForm = ({
 
       <YearFilter
         selected={filtros.año}
-        onChange={(values) =>
+        onChange={(values: string[]) =>
           onFiltroChange(
             "año",
             values
@@ -625,46 +733,9 @@ export const FilterForm = ({
         }
       />
 
-      {/* =========================
-          MOSTRAR MÁS FILTROS
-         ========================= */}
-
-      {!mostrarTodos && (
-        <div
-          className="
-            mb-5
-            flex
-            flex-col
-            gap-2
-            sm:flex-row
-          "
-        >
-          <button
-            type="button"
-            onClick={() => setMostrarTodos(true)}
-            className="
-              flex-1
-              rounded-lg
-              border
-              border-sidebar
-              px-3
-              py-2.5
-              text-sm
-              font-semibold
-              text-sidebar
-              transition
-              hover:bg-sidebar
-              hover:text-white
-            "
-          >
-            Mostrar más filtros
-          </button>
-        </div>
-      )}
-
-      {/* =========================
+      {/* =================================================
           FILTROS AVANZADOS
-         ========================= */}
+      ================================================= */}
 
       {mostrarTodos && (
         <div
@@ -678,7 +749,7 @@ export const FilterForm = ({
             label="Área"
             options={areas}
             selected={filtros.area}
-            onChange={(values) =>
+            onChange={(values: string[]) =>
               onFiltroChange(
                 "area",
                 values
@@ -690,7 +761,7 @@ export const FilterForm = ({
             label="Sede"
             options={sedes}
             selected={filtros.sede}
-            onChange={(values) =>
+            onChange={(values: string[]) =>
               onFiltroChange(
                 "sede",
                 values
@@ -701,8 +772,10 @@ export const FilterForm = ({
           <MultiSelectFilter
             label="Departamento"
             options={departamentos}
-            selected={filtros.departamento}
-            onChange={(values) =>
+            selected={
+              filtros.departamento
+            }
+            onChange={(values: string[]) =>
               onFiltroChange(
                 "departamento",
                 values
@@ -714,74 +787,15 @@ export const FilterForm = ({
             label="Carrera"
             options={carreras}
             selected={filtros.carrera}
-            onChange={(values) =>
+            onChange={(values: string[]) =>
               onFiltroChange(
                 "carrera",
                 values
               )
             }
           />
-
-          {/* =========================
-              BOTONES INFERIORES
-             ========================= */}
-
-          <div
-            className="
-              mb-5
-              flex
-              flex-col
-              gap-2
-              sm:flex-row
-            "
-          >
-            <button
-              type="button"
-              onClick={() => setMostrarTodos(false)}
-              className="
-                flex-1
-                rounded-lg
-                border
-                border-sidebar
-                px-3
-                py-2.5
-                text-sm
-                font-semibold
-                text-sidebar
-                transition
-                hover:bg-sidebar
-                hover:text-white
-              "
-            >
-              Menos filtros
-            </button>
-
-            <button
-              type="button"
-              onClick={onLimpiarFiltros}
-              className="
-                flex-1
-                rounded-lg
-                border
-                border-slate-300
-                px-3
-                py-2.5
-                text-sm
-                font-medium
-                text-slate-600
-                transition
-                hover:border-red-300
-                hover:bg-red-50
-                hover:text-red-600
-                sm:flex-none
-              "
-            >
-              Limpiar filtros
-            </button>
-          </div>
         </div>
       )}
     </div>
   );
 };
-

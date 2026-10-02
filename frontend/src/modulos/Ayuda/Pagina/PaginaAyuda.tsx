@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-import Sidebar from "../../Compartido/Sidebar";
+import SidebarLayout from "../../Compartido/SidebarLayout";
 
 import { GuideList } from "../Componentes/GuideList";
 import { PageHeader } from "../Componentes/PageHeader";
@@ -26,26 +26,22 @@ export default function PaginaAyuda() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
+    <SidebarLayout>
+      <PageHeader />
 
-      <main className="min-w-0 lg:pl-64">
-        <PageHeader />
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
+        <VideoTutorial videoRef={videoRef} />
 
-        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
-          <VideoTutorial videoRef={videoRef} />
+        <VideoTutorials
+          onSelectChapter={onSelectChapter}
+        />
 
-          <VideoTutorials
-            onSelectChapter={onSelectChapter}
-          />
+        <GuideList />
 
-          <GuideList />
+        <BestPractices />
 
-          <BestPractices />
-
-          <UseCases />
-        </div>
-      </main>
-    </div>
+        <UseCases />
+      </div>
+    </SidebarLayout>
   );
 }
