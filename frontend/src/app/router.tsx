@@ -7,6 +7,7 @@ import PaginaFaq from "../modulos/Faq/Pagina/PaginaFaq";
 import PaginaAyuda from "../modulos/Ayuda/Pagina/PaginaAyuda";
 import PaginaLogin from "../modulos/Auth/Pagina/PaginaLogin";
 import PaginaCallback from "../modulos/Auth/Pagina/PaginaCallback";
+import PaginaAdministracion from "../modulos/Administracion/Pagina/PaginaAministracion";
 
 const router = createBrowserRouter([
   {
@@ -36,7 +37,12 @@ const router = createBrowserRouter([
   {
     path: "/callback",
     element: <PaginaCallback />,
+  },
+  {
+    path: "/administracion",
+    element: <PaginaAdministracion />,
   }
+
 ]);
 
 export default router;
