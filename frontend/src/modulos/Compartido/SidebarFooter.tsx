@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { authService, type User } from "../../services/authService";
@@ -26,9 +26,16 @@ export const SidebarFooter = () => {
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user.name}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-white truncate">
+                  {user.name}
+                </p>
+                {user.role === "admin" && (
+                  <span className="flex items-center text-amber-400" title="Administrador">
+                    <i className="pi pi-crown text-sm" />
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-white/60 truncate">
                 {user.email}
               </p>

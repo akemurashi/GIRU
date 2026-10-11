@@ -1,3 +1,4 @@
+
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { InputNumber } from "primereact/inputnumber";
@@ -26,18 +27,22 @@ export type FormFieldType =
   | "multiselect"
   | "number";
 
-export type FormFieldValue = string | number | boolean | number[] | null | undefined;
+export type FormFieldValue =
+  | string
+  | number
+  | boolean
+  | number[]
+  | null
+  | undefined;
 
 export type FormFieldProps = {
   label: string;
   type: FormFieldType;
   value: FormFieldValue;
   options?: FormFieldOption[];
-  /** Opciones agrupadas por padre (solo multiselect). Tiene prioridad sobre `options`. */
   groups?: FormFieldGroup[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (value: any) => void;
-  /** Id único del input; obligatorio si el mismo label se repite en la pantalla */
   id?: string;
   readOnly?: boolean;
   required?: boolean;
@@ -45,26 +50,43 @@ export type FormFieldProps = {
   helperText?: string;
   error?: string;
   className?: string;
-  /** Solo type="number" */
   min?: number;
   max?: number;
   fractionDigits?: number;
 };
 
-// "2025-01-31" → Date local. new Date("2025-01-31") se interpreta como UTC y en Chile mostraría el día anterior.
-const parseISODate = (v: unknown): Date | null => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v ?? ""));
-  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+// Convierte "2025-01-31" a una fecha local para evitar desfases de zona horaria.
+const parseISODate = (value: unknown): Date | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(
+    String(value ?? "")
+  );
+
+  if (!match) return null;
+
+  return new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3])
+  );
 };
 
-const toISODate = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const toISODate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(date.getDate()).padStart(2, "0")}`;
 
-const FOCUS = "transition focus:border-[#003d7a]! focus:ring-4! focus:ring-[#003d7a]/10! focus:shadow-none!";
+const FOCUS =
+  "transition focus:border-[#003d7a]! focus:ring-4! focus:ring-[#003d7a]/10! focus:shadow-none!";
+
 const BASE =
   "w-full rounded-xl border-slate-300 bg-white p-3 text-sm text-slate-800 shadow-none placeholder:text-slate-400 disabled:bg-slate-100 disabled:text-slate-500";
+
 const SELECT =
   "w-full rounded-xl border-slate-300 bg-white text-sm shadow-none transition [&.p-focus]:border-[#003d7a]! [&.p-focus]:ring-4! [&.p-focus]:ring-[#003d7a]/10! [&.p-focus]:shadow-none!";
+
+const PANEL_CLASS =
+  "giru-dropdown-panel !z-[9999] !border !border-slate-200 !bg-white !opacity-100 !shadow-xl !rounded-xl overflow-hidden text-sm";
 
 export function FormField({
   label,
@@ -84,7 +106,9 @@ export function FormField({
   max,
   fractionDigits = 0,
 }: FormFieldProps) {
-  const fieldId = id ?? `form-field-${label.toLowerCase().replace(/\s+/g, "-")}`;
+  const fieldId =
+    id ?? `form-field-${label.toLowerCase().replace(/\s+/g, "-")}`;
+
   const invalid = error ? " p-invalid border-red-400!" : "";
   const inputCls = `${BASE} ${FOCUS}${invalid}`;
 
@@ -95,7 +119,7 @@ export function FormField({
           <InputTextarea
             id={fieldId}
             value={typeof value === "string" ? value : ""}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             disabled={readOnly}
             placeholder={placeholder}
             rows={4}
@@ -110,7 +134,7 @@ export function FormField({
             id={fieldId}
             type="url"
             value={typeof value === "string" ? value : ""}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             disabled={readOnly}
             placeholder={placeholder}
             className={inputCls}
@@ -122,7 +146,7 @@ export function FormField({
           <InputNumber
             inputId={fieldId}
             value={typeof value === "number" ? value : null}
-            onValueChange={(e) => onChange(e.value ?? null)}
+            onValueChange={(event) => onChange(event.value ?? null)}
             disabled={readOnly}
             placeholder={placeholder}
             useGrouping={false}
@@ -140,13 +164,24 @@ export function FormField({
           <Calendar
             inputId={fieldId}
             value={parseISODate(value)}
-            onChange={(e) => onChange(e.value instanceof Date ? toISODate(e.value) : "")}
+            onChange={(event) =>
+              onChange(
+                event.value instanceof Date
+                  ? toISODate(event.value)
+                  : ""
+              )
+            }
             disabled={readOnly}
             dateFormat="dd/mm/yy"
             showIcon
             placeholder={placeholder ?? "dd/mm/aaaa"}
-            className={`w-full${invalid}`}
+            className={`w-full giru-calendar${invalid}`}
             inputClassName={inputCls}
+            panelClassName="giru-calendar-panel"
+            appendTo={
+              typeof document !== "undefined" ? document.body : undefined
+            }
+            showButtonBar
           />
         );
 
@@ -156,7 +191,7 @@ export function FormField({
             <InputSwitch
               inputId={fieldId}
               checked={Boolean(value)}
-              onChange={(e) => onChange(Boolean(e.value))}
+              onChange={(event) => onChange(Boolean(event.value))}
               disabled={readOnly}
             />
           </div>
@@ -172,16 +207,21 @@ export function FormField({
             optionGroupChildren={groups ? "items" : undefined}
             optionLabel="label"
             optionValue="value"
-            onChange={(e) => onChange(e.value)}
+            onChange={(event) => onChange(event.value)}
             disabled={readOnly}
             display="chip"
             filter
             showClear={!readOnly}
-            placeholder={placeholder ?? "Seleccione una o más opciones"}
+            placeholder={
+              placeholder ?? "Seleccione una o más opciones"
+            }
             emptyFilterMessage="Sin resultados"
             emptyMessage="Sin opciones disponibles"
             className={`${SELECT}${invalid}`}
-            panelClassName="text-sm"
+            panelClassName={PANEL_CLASS}
+            appendTo={
+              typeof document !== "undefined" ? document.body : undefined
+            }
           />
         );
 
@@ -189,11 +229,15 @@ export function FormField({
         return (
           <Dropdown
             inputId={fieldId}
-            value={typeof value === "number" || typeof value === "string" ? value : null}
+            value={
+              typeof value === "number" || typeof value === "string"
+                ? value
+                : null
+            }
             options={options}
             optionLabel="label"
             optionValue="value"
-            onChange={(e) => onChange(e.value ?? null)}
+            onChange={(event) => onChange(event.value ?? null)}
             disabled={readOnly}
             filter={options.length > 8}
             showClear={!required && !readOnly}
@@ -201,7 +245,15 @@ export function FormField({
             emptyMessage="Sin opciones disponibles"
             emptyFilterMessage="Sin resultados"
             className={`${SELECT}${invalid}`}
-            panelClassName="text-sm"
+            panelClassName={PANEL_CLASS}
+            appendTo={
+              typeof document !== "undefined" ? document.body : undefined
+            }
+            itemTemplate={(option) => (
+              <div className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2">
+                <span>{option.label}</span>
+              </div>
+            )}
           />
         );
 
@@ -211,7 +263,7 @@ export function FormField({
           <InputText
             id={fieldId}
             value={typeof value === "string" ? value : ""}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             disabled={readOnly}
             placeholder={placeholder}
             className={inputCls}
@@ -222,13 +274,24 @@ export function FormField({
 
   if (type === "boolean") {
     return (
-      <div className={`flex min-w-0 items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 ${className}`}>
+      <div
+        className={`flex min-w-0 items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 ${className}`}
+      >
         <div className="min-w-0">
-          <label htmlFor={fieldId} className="cursor-pointer text-sm font-semibold text-slate-700">
+          <label
+            htmlFor={fieldId}
+            className="cursor-pointer text-sm font-semibold text-slate-700"
+          >
             {label}
           </label>
-          {helperText && <p className="m-0 mt-0.5 text-xs text-slate-500">{helperText}</p>}
+
+          {helperText && (
+            <p className="m-0 mt-0.5 text-xs text-slate-500">
+              {helperText}
+            </p>
+          )}
         </div>
+
         {renderField()}
       </div>
     );
@@ -236,18 +299,34 @@ export function FormField({
 
   return (
     <div className={`flex min-w-0 flex-col gap-2 ${className}`}>
-      <label htmlFor={fieldId} className="text-sm font-semibold text-slate-700">
+      <label
+        htmlFor={fieldId}
+        className="text-sm font-semibold text-slate-700"
+      >
         {label}
-        {required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}
+        {required && (
+          <span className="ml-1 text-red-600" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
+
       {renderField()}
+
       {error ? (
-        <small className="flex items-center gap-1.5 text-red-600" role="alert">
+        <small
+          className="flex items-center gap-1.5 text-red-600"
+          role="alert"
+        >
           <i className="pi pi-exclamation-circle text-xs" />
           {error}
         </small>
       ) : (
-        helperText && <small className="text-xs leading-5 text-slate-500">{helperText}</small>
+        helperText && (
+          <small className="text-xs leading-5 text-slate-500">
+            {helperText}
+          </small>
+        )
       )}
     </div>
   );

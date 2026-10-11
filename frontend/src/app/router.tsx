@@ -8,6 +8,7 @@ import PaginaAyuda from "../modulos/Ayuda/Pagina/PaginaAyuda";
 import PaginaLogin from "../modulos/Auth/Pagina/PaginaLogin";
 import PaginaCallback from "../modulos/Auth/Pagina/PaginaCallback";
 import PaginaAdministracion from "../modulos/Administracion/Pagina/PaginaAministracion";
+import PaginaChatIaTest from "../modulos/ChatIa/Componentes/DonFedeTest";
 
 const router = createBrowserRouter([
   {
@@ -41,7 +42,12 @@ const router = createBrowserRouter([
   {
     path: "/administracion",
     element: <PaginaAdministracion />,
-  }
+  },
+    {
+    path: "/chat-ia-test",
+    element: <PaginaChatIaTest />,
+  },
+
 
 ]);
 

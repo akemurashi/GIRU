@@ -3,7 +3,7 @@
 
 export type CatalogOption = {
   label: string;
-  value: number;
+  value: number | string;
   /** siglaMacro (macrocategoría) o numCategoria (categoría); se usa para el prefijo de nomMetaDato */
   code?: string;
   /** FK al padre en catálogos jerárquicos (idMacroCategoria, idTipoArea, idTipoPrograma, idNivel) */
@@ -43,7 +43,7 @@ export type RelacionEditable = {
   /** Clave de cliente, estable mientras se edita (rel-<idrelacion> si ya existe en BD) */
   key: string;
   idrelacion?: number;
-  iddocumentodestino: number | null;
+  iddocumentodestino: string | null;
   idtiporelacion: number | null;
   idrespaldolegal: number | null;
   idfuentedeteccion: number | null;
@@ -55,7 +55,7 @@ export type RelacionEditable = {
 };
 
 export type EditableDocument = {
-  iddocumento: number;
+  iddocumento: string;
   // Identificación
   numero: string;
   idtipodocumento: number | null;
@@ -96,7 +96,7 @@ export type FieldErrors = Record<string, string>;
 
 export type OnChange = <K extends keyof EditableDocument>(key: K, value: EditableDocument[K]) => void;
 
-export const emptyDocument = (id: number): EditableDocument => ({
+export const emptyDocument = (id: string): EditableDocument => ({
   iddocumento: id,
   numero: "",
   idtipodocumento: null,

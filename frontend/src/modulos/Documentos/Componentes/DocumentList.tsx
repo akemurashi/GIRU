@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { PdfModal } from "./PdfModal";
+import { authService, type User } from "../../../services/authService";
 
 type Documento = {
-  id: number;
+  id: number | string;
   titulo: string;
   tipo: string;
   estado: string;
@@ -54,7 +56,14 @@ export const DocumentList = ({
   const [
     pdfSeleccionado,
     setPdfSeleccionado,
-  ] = useState<number | null>(null);
+  ] = useState<number | string | null>(null);
+
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(authService.getUser());
+  }, []);
 
   return (
     <>
@@ -173,30 +182,57 @@ export const DocumentList = ({
                 {/* =================================================
                     BOTÓN
                 ================================================= */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPdfSeleccionado(
+                        doc.id
+                      )
+                    }
+                    className="
+                      mt-3
+                      w-full
+                      rounded-lg
+                      bg-sidebar
+                      py-2
+                      text-sm
+                      text-white
+                      transition
+                      hover:opacity-90
+                      md:w-auto
+                      md:px-4
+                    "
+                  >
+                    Ver documento
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPdfSeleccionado(
-                      doc.id
-                    )
-                  }
-                  className="
-                    mt-3
-                    w-full
-                    rounded-lg
-                    bg-sidebar
-                    py-2
-                    text-sm
-                    text-white
-                    transition
-                    hover:opacity-90
-                    md:w-auto
-                    md:px-4
-                  "
-                >
-                  Ver documento
-                </button>
+                  {user?.role === "admin" && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/administracion?docId=${doc.id}`)}
+                      className="
+                        mt-3
+                        w-full
+                        flex
+                        items-center
+                        justify-center
+                        rounded-lg
+                        border
+                        border-amber-400
+                        text-amber-500
+                        hover:bg-amber-50
+                        py-2
+                        text-sm
+                        transition
+                        md:w-auto
+                        md:px-4
+                      "
+                    >
+                      <i className="pi pi-pencil mr-2"></i> Editar
+                    </button>
+                  )}
+                </div>
               </article>
             );
           })}
@@ -210,7 +246,7 @@ export const DocumentList = ({
       {pdfSeleccionado !== null && (
         <PdfModal
           documentId={
-            pdfSeleccionado
+            pdfSeleccionado as number
           }
           onClose={() =>
             setPdfSeleccionado(null)

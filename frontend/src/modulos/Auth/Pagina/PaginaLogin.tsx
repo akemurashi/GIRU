@@ -1,73 +1,73 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "primereact/button";
-import { ProgressSpinner } from "primereact/progressspinner";
 import axios from "axios";
+import PantallaCargaVideo from "../Componentes/PantallaCargaVideo";
 
 export default function PaginaLogin() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const handleLogin = async () => {
-      setLoading(true);
-      setError(null);
+      const token = localStorage.getItem("auth_token");
+
+      if (token) {
+        navigate("/", { replace: true });
+        return;
+      }
 
       try {
-        // Get login URL from backend
-        const response = await axios.get("http://localhost:8000/api/v1/auth/login-url");
-        
-        // Check if user is already authenticated
-        const token = localStorage.getItem("auth_token");
-        if (token) {
-          navigate("/");
-          return;
+        const response = await axios.get(
+          "http://localhost:8000/api/v1/auth/login-url"
+        );
+
+        if (cancelled) return;
+
+        const loginUrl = response.data?.url;
+
+        if (!loginUrl) {
+          throw new Error("El servidor no devolvió la URL de inicio de sesión");
         }
-        
-        // Redirect to Cognito login
-        window.location.href = response.data.url;
+
+        window.location.href = loginUrl;
       } catch (err) {
-        setError("Error al iniciar sesión. Por favor intenta nuevamente.");
-        setLoading(false);
+        if (cancelled) return;
+
+        console.error("Login error:", err);
+        setError("Error al iniciar sesión. Por favor, inténtalo nuevamente.");
       }
     };
 
     handleLogin();
-  }, [navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <ProgressSpinner className="mb-4" />
-          <p className="text-gray-600">Redirigiendo a login...</p>
-        </div>
-      </div>
-    );
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-lg shadow-md">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button 
-            label="Reintentar" 
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+          <p className="mb-5 text-red-600">{error}</p>
+
+          <button
             onClick={() => window.location.reload()}
-            className="p-button-primary"
-          />
+            className="rounded-lg bg-blue-600 px-5 py-2.5 text-white transition hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <ProgressSpinner className="mb-4" />
-        <p className="text-gray-600">Redirigiendo a login...</p>
-      </div>
-    </div>
+    <PantallaCargaVideo
+      mensaje="Bienvenido a GIRU"
+      subtitulo="Preparando tu acceso seguro a la plataforma institucional."
+    />
   );
 }

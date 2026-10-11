@@ -55,7 +55,7 @@ export const ConfirmModal = ({ visible, changes, onHide, onConfirm }: ConfirmMod
           icon="pi pi-check"
           onClick={onConfirm}
           disabled={changes.length === 0}
-          className="rounded-xl border-[#003d7a]! bg-[#003d7a]! hover:bg-[#002f5f]!"
+          className="rounded-xl border-sidebar! bg-sidebar! hover:bg-[#002f5f]!"
         />
       </div>
     </Dialog>

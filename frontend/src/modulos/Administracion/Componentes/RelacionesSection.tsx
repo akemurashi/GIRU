@@ -17,6 +17,7 @@ interface Props {
 export function RelacionesSection({ relaciones, catalogs, documentOptions, errors, onChange }: Props) {
   const fuenteManual =
     catalogs.fuentesDeteccion.find((f) => f.label.toLowerCase() === "manual")?.value ?? null;
+  const fuenteManualId = typeof fuenteManual === "number" ? fuenteManual : null;
 
   const update = (key: string, patch: Partial<RelacionEditable>) =>
     onChange(relaciones.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -100,7 +101,7 @@ export function RelacionesSection({ relaciones, catalogs, documentOptions, error
 
         <div>
           <Button type="button" label="Agregar relación" icon="pi pi-plus" outlined severity="secondary" className="rounded-xl"
-            onClick={() => onChange([...relaciones, emptyRelacion(fuenteManual)])} />
+            onClick={() => onChange([...relaciones, emptyRelacion(fuenteManualId)])} />
         </div>
       </div>
     </EditorSection>

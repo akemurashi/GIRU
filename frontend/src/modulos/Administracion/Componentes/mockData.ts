@@ -51,7 +51,7 @@ export const mockCatalogs: Catalogs = {
 
 export const mockDocuments: EditableDocument[] = [
   {
-    ...emptyDocument(1),
+    ...emptyDocument("1"),
     numero: "REG-2025-001",
     idtipodocumento: 3,
     titulo: "Reglamento General de Estudios",
@@ -73,7 +73,7 @@ export const mockDocuments: EditableDocument[] = [
     roles: [1, 2],
   },
   {
-    ...emptyDocument(2),
+    ...emptyDocument("2"),
     numero: "DEC-2024-015",
     idtipodocumento: 1,
     titulo: "Decreto de Evaluación Académica",

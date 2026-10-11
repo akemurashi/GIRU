@@ -1,4 +1,9 @@
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { authService, type User } from "../../../services/authService";
+
 type DocumentCardProps = {
+  id: string | number;
   titulo: string;
   tipo: string;
   fecha: string;
@@ -8,6 +13,7 @@ type DocumentCardProps = {
 };
 
 export const DocumentCard = ({
+  id,
   titulo,
   tipo,
   fecha,
@@ -15,6 +21,13 @@ export const DocumentCard = ({
   estado,
   descripcion,
 }: DocumentCardProps) => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(authService.getUser());
+  }, []);
+
   return (
     <article
       className="
@@ -66,6 +79,23 @@ export const DocumentCard = ({
         >
           Ver documento
         </button>
+
+        {user?.role === "admin" && (
+          <button
+            onClick={() => navigate(`/administracion?docId=${id}`)}
+            className="
+              rounded-lg
+              border
+              border-amber-400
+              text-amber-500
+              hover:bg-amber-50
+              px-4
+              py-2
+            "
+          >
+            <i className="pi pi-pencil mr-2"></i> Editar
+          </button>
+        )}
 
         <button
           className="

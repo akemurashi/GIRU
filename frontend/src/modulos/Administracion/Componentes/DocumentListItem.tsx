@@ -34,16 +34,16 @@ export const DocumentListItem = ({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`group mb-2 flex min-h-23.5 w-full cursor-pointer items-center gap-5 rounded-2xl border px-5 py-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#003d7a]/20 sm:px-6 ${
+      className={`group mb-2 flex min-h-23.5 w-full cursor-pointer items-center gap-5 rounded-2xl border px-5 py-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sidebar/20 sm:px-6 ${
         active
-          ? "border-[#003d7a] bg-blue-50/60 shadow-sm"
+          ? "border-sidebar bg-blue-50/60 shadow-sm"
           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
       }`}
     >
       <span
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
           active
-            ? "bg-[#003d7a] text-white"
+            ? "bg-sidebar text-white"
             : "bg-slate-100 text-slate-400 group-hover:text-slate-600"
         }`}
       >
@@ -67,7 +67,7 @@ export const DocumentListItem = ({
 
       <i
         className={`pi pi-chevron-right shrink-0 text-xs transition ${
-          active ? "text-[#003d7a]" : "text-slate-300 group-hover:translate-x-0.5 group-hover:text-slate-500"
+          active ? "text-sidebar" : "text-slate-300 group-hover:translate-x-0.5 group-hover:text-slate-500"
         }`}
       />
     </button>

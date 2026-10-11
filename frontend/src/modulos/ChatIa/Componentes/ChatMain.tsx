@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { externalAiService } from "../../../services/externalAiService";
 import api from "../../../services/api";
@@ -47,15 +48,18 @@ export const ChatMain = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [showPdfModal, setShowPdfModal] = useState(false);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(
+    null
+  );
+
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize session on mount
+  // Inicializa la sesión real, igual que antes.
   useEffect(() => {
     initializeSession();
   }, []);
 
-  // Scroll to bottom when messages change
+  // Mantiene la conversación desplazada hacia el último mensaje.
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -63,11 +67,13 @@ export const ChatMain = () => {
   const initializeSession = async () => {
     try {
       const userId = localStorage.getItem("user_id") || "default-user";
+
       const response = await externalAiService.createSession({
         user_id: userId,
         titulo: "Nueva consulta",
         modo: "cascade",
       });
+
       setSessionId(response.id);
     } catch (error) {
       console.error("Error creating session:", error);
@@ -81,8 +87,10 @@ export const ChatMain = () => {
 
   const handleViewDocument = async (documentTitle: string) => {
     try {
-      // Get document ID from title (handles .md extension)
-      const response = await api.get<{ id: number; titulo: string }>(`/documents/by-title/${encodeURIComponent(documentTitle)}`);
+      const response = await api.get<{ id: number; titulo: string }>(
+        `/documents/by-title/${encodeURIComponent(documentTitle)}`
+      );
+
       setSelectedDocumentId(response.data.id);
       setShowPdfModal(true);
     } catch (error) {
@@ -92,8 +100,7 @@ export const ChatMain = () => {
   };
 
   const cleanDocumentTitle = (title: string): string => {
-    // Remove .md extension if present
-    return title.replace(/\.md$/, '');
+    return title.replace(/\.md$/i, "");
   };
 
   const handleSendMessage = async () => {
@@ -103,14 +110,16 @@ export const ChatMain = () => {
     setInputValue("");
     setIsLoading(true);
 
-    // Add user message
+    // Añade el mensaje del usuario.
     const userMsg: Message = {
       type: "user",
       messageText: userMessage,
     };
+
     setMessages((prev) => [...prev, userMsg]);
 
-    // Create placeholder for assistant message
+    // Añade el mensaje provisional del asistente.
+    // isStreaming activa el video del avatar mientras llega la respuesta.
     const assistantMsg: Message = {
       type: "assistant",
       interpretationTitle: "Interpretación de la consulta",
@@ -124,10 +133,12 @@ export const ChatMain = () => {
       sourceButtonText: "Ver documento completo",
       isStreaming: true,
     };
+
     setMessages((prev) => [...prev, assistantMsg]);
 
     try {
       const userId = localStorage.getItem("user_id") || "default-user";
+
       const request: AskRequest = {
         user_id: userId,
         session_id: sessionId,
@@ -140,9 +151,8 @@ export const ChatMain = () => {
       await externalAiService.askStream(
         request,
         (chunk) => {
-          // Handle streaming chunks (can be status updates or text fragments)
+          // Recibe actualizaciones de estado o fragmentos de texto.
           if (chunk.status) {
-            // Status update (phase information)
             setMessages((prev) =>
               prev.map((msg, idx) =>
                 idx === prev.length - 1 && msg.type === "assistant"
@@ -151,8 +161,8 @@ export const ChatMain = () => {
               )
             );
           } else if (chunk.chunk) {
-            // Text fragment
             fullResponse += chunk.chunk;
+
             setMessages((prev) =>
               prev.map((msg, idx) =>
                 idx === prev.length - 1 && msg.type === "assistant"
@@ -163,9 +173,9 @@ export const ChatMain = () => {
           }
         },
         (complete) => {
-          // Handle complete response
+          // La respuesta terminó: el SVG volverá a mostrarse.
           const response = complete as AskResponse;
-          const firstSource = response.fuentes[0];
+          const firstSource = response.fuentes?.[0];
 
           setMessages((prev) =>
             prev.map((msg, idx) =>
@@ -173,7 +183,9 @@ export const ChatMain = () => {
                 ? {
                     ...msg,
                     interpretationText: response.respuesta,
-                    sourceDocumentTitle: firstSource ? cleanDocumentTitle(firstSource.documento) : "Documento no especificado",
+                    sourceDocumentTitle: firstSource
+                      ? cleanDocumentTitle(firstSource.documento)
+                      : "Documento no especificado",
                     sourceDocumentMeta: firstSource?.referencia || "",
                     sourceDocumentOriginalTitle: firstSource?.documento || "",
                     sourceQuote: response.respuesta.slice(0, 200) + "...",
@@ -186,10 +198,15 @@ export const ChatMain = () => {
         (error) => {
           console.error("Stream error:", error);
           console.error("Error details:", typeof error, error);
+
           setMessages((prev) =>
             prev.map((msg, idx) =>
               idx === prev.length - 1 && msg.type === "assistant"
-                ? { ...msg, interpretationText: `Error: ${error}`, isStreaming: false }
+                ? {
+                    ...msg,
+                    interpretationText: `Error: ${error}`,
+                    isStreaming: false,
+                  }
                 : msg
             )
           );
@@ -197,10 +214,16 @@ export const ChatMain = () => {
       );
     } catch (error) {
       console.error("Error sending message:", error);
+
       setMessages((prev) =>
         prev.map((msg, idx) =>
           idx === prev.length - 1 && msg.type === "assistant"
-            ? { ...msg, interpretationText: "Error al obtener respuesta. Por favor, intenta nuevamente.", isStreaming: false }
+            ? {
+                ...msg,
+                interpretationText:
+                  "Error al obtener respuesta. Por favor, intenta nuevamente.",
+                isStreaming: false,
+              }
             : msg
         )
       );
@@ -235,12 +258,7 @@ export const ChatMain = () => {
             transition-all
             duration-300
             ease-in-out
-            ${
-              showHeader
-                ? "max-h-24 opacity-100"
-                : "max-h-0 opacity-0"
-            }
-
+            ${showHeader ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}
             md:max-h-none
             md:opacity-100
           `}
@@ -260,7 +278,10 @@ export const ChatMain = () => {
           "
         >
           <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-10">
-            <ChatConversation messages={messages} onViewDocument={handleViewDocument} />
+            <ChatConversation
+              messages={messages}
+              onViewDocument={handleViewDocument}
+            />
             <div ref={conversationEndRef} />
           </div>
         </div>

@@ -1,10 +1,10 @@
 import type { DocumentChange } from "./ConfirmModal";
 import type { CatalogOption, Catalogs, EditableDocument, FieldErrors, RelacionEditable } from "./types";
 
-const labelOf = (opts: CatalogOption[], id: number | null | undefined) =>
-  id == null ? "" : opts.find((o) => o.value === id)?.label ?? `#${id}`;
+const labelOf = (opts: CatalogOption[], id: number | string | null | undefined) =>
+  id == null ? "" : opts.find((o) => String(o.value) === String(id))?.label ?? `#${id}`;
 
-const labelsOf = (opts: CatalogOption[], ids: number[]) =>
+const labelsOf = (opts: CatalogOption[], ids: Array<number | string>) =>
   ids.map((id) => labelOf(opts, id)).sort((a, b) => a.localeCompare(b, "es")).join(", ");
 
 const yn = (v: boolean) => (v ? "Sí" : "No");

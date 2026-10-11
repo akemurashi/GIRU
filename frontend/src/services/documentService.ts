@@ -14,7 +14,7 @@ export interface Categoria {
 }
 
 export interface DocumentoAPI {
-  iddocumento: number;
+  iddocumento: string;
   numero: string;
   titulo: string;
   nommetadato: string;
@@ -34,7 +34,7 @@ export interface DocumentoAPI {
 }
 
 export interface Documento {
-  id: number;
+  id: string;
   titulo: string;
   tipo: string;
   estado: string;
@@ -85,12 +85,12 @@ const fetchDocuments = async (skip: number = 0, limit: number = 50): Promise<Doc
   return response.data.map(transformToDocumento);
 };
 
-const fetchDocumentById = async (id: number): Promise<Documento> => {
+const fetchDocumentById = async (id: string): Promise<Documento> => {
   const response = await api.get<DocumentoAPI>(`/documents/${id}`);
   return transformToDocumento(response.data);
 };
 
-export const getDocumentUrl = async (id: number): Promise<string> => {
+export const getDocumentUrl = async (id: string): Promise<string> => {
   const response = await api.get<DocumentUrlResponse>(`/documents/${id}/url`);
   return response.data.url;
 };
@@ -104,7 +104,7 @@ export const useDocuments = (skip: number = 0, limit: number = 50) => {
   });
 };
 
-export const useDocument = (id: number) => {
+export const useDocument = (id: string) => {
   return useQuery({
     queryKey: ['document', id],
     queryFn: () => fetchDocumentById(id),
@@ -113,7 +113,7 @@ export const useDocument = (id: number) => {
   });
 };
 
-export const useDocumentUrl = (id: number | null) => {
+export const useDocumentUrl = (id: string | null) => {
   return useQuery({
     queryKey: ['documentUrl', id],
     queryFn: () => id ? getDocumentUrl(id) : Promise.reject('No ID'),
@@ -144,17 +144,17 @@ export interface DocumentUpdateData {
   areaseemisorasids?: number[];
 }
 
-const updateDocument = async (id: number, data: DocumentUpdateData): Promise<DocumentoAPI> => {
+const updateDocument = async (id: string, data: DocumentUpdateData): Promise<DocumentoAPI> => {
   const response = await api.put<DocumentoAPI>(`/documents/${id}`, data);
   return response.data;
 };
 
-const toggleDocumentActive = async (id: number): Promise<DocumentoAPI> => {
+const toggleDocumentActive = async (id: string): Promise<DocumentoAPI> => {
   const response = await api.patch<DocumentoAPI>(`/documents/${id}/toggle-active`);
   return response.data;
 };
 
-const deleteDocument = async (id: number): Promise<void> => {
+const deleteDocument = async (id: string): Promise<void> => {
   await api.delete(`/documents/${id}`);
 };
 
@@ -162,7 +162,7 @@ export const useUpdateDocument = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: DocumentUpdateData }) => 
+    mutationFn: ({ id, data }: { id: string; data: DocumentUpdateData }) => 
       updateDocument(id, data),
     onSuccess: (_, variables) => {
       // Invalidate and refetch documents queries
@@ -177,7 +177,7 @@ export const useToggleDocumentActive = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id: number) => toggleDocumentActive(id),
+    mutationFn: (id: string) => toggleDocumentActive(id),
     onSuccess: (_, id) => {
       // Invalidate and refetch documents queries
       queryClient.invalidateQueries({ queryKey: ['documents'] });
@@ -191,11 +191,79 @@ export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id: number) => deleteDocument(id),
+    mutationFn: (id: string) => deleteDocument(id),
     onSuccess: () => {
       // Invalidate and refetch documents queries
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['search'] });
     },
   });
+};
+
+export const getAdminCatalogs = async (): Promise<any> => {
+  const response = await api.get('/documents/admin/catalogs');
+  const d = response.data;
+  const mo = (arr: any[] = []) => arr.map(x => ({ value: x.id, label: x.nombre }));
+  return {
+    tiposDocumento: mo(d.tipos_documento),
+    estadosVigencia: mo(d.estados_vigencia),
+    tiposSesion: mo(d.tipos_sesion),
+    tiposDecision: mo(d.tipos_decision),
+    macroCategorias: mo(d.macro_categorias),
+    categorias: mo(d.categorias),
+    tiposArea: mo(d.tipos_area),
+    subAreas: mo(d.sub_areas),
+    tiposPrograma: mo(d.tipos_programa),
+    niveles: mo(d.niveles_academicos),
+    carreras: mo(d.carreras),
+    jornadas: mo(d.jornadas),
+    departamentos: mo(d.departamentos),
+    sedes: mo(d.sedes_campus),
+    roles: mo(d.roles_institucionales),
+    beneficios: mo(d.beneficios),
+    nombramientos: mo(d.tipos_nombramiento),
+    tiposRelacion: mo(d.tipos_relacion),
+    fuentesDeteccion: mo(d.fuentes_deteccion),
+    respaldosLegales: mo(d.respaldos_legales)
+  };
+};
+
+export const getEditableDocument = async (id: string): Promise<any> => {
+  const response = await api.get(`/documents/${id}/editable`);
+  const d = response.data;
+  return {
+    ...d,
+    areasemisoras: d.areaseemisorasids || [],
+    niveles: d.nivelesids || [],
+    carreras: d.carrerasids || [],
+    jornadas: d.jornadasids || [],
+    departamentos: d.departamentosids || [],
+    sedes: d.sedesids || [],
+    roles: d.rolesids || [],
+    beneficios: d.beneficiosids || [],
+    nombramientos: d.nombramientosids || [],
+    relaciones: d.relaciones || []
+  };
+};
+
+export const saveEditableDocument = async (id: string, data: any): Promise<any> => {
+  const payload = {
+    ...data,
+    areaseemisorasids: data.areasemisoras,
+    nivelesids: data.niveles,
+    carrerasids: data.carreras,
+    jornadasids: data.jornadas,
+    departamentosids: data.departamentos,
+    sedesids: data.sedes,
+    rolesids: data.roles,
+    beneficiosids: data.beneficios,
+    nombramientosids: data.nombramientos,
+  };
+  const response = await api.put(`/documents/${id}`, payload);
+  return response.data;
+};
+
+export const searchDocumentsForAdmin = async (query: string): Promise<any> => {
+  const response = await api.post('/search', { query, filters: {}, page: 1, page_size: 50 });
+  return response.data.results;
 };

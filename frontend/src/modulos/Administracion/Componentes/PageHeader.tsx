@@ -2,7 +2,7 @@ export const PageHeader = () => {
   return (
     <header className="w-full border-b border-slate-200 bg-white px-4 py-6">
       <div className="mx-auto flex w-full max-w-5xl items-center gap-4 sm:px-8">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#003d7a] text-white shadow-sm">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sidebar text-white shadow-sm">
           <i className="pi pi-cog text-xl" />
         </div>
         <div className="min-w-0">

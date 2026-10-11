@@ -63,9 +63,9 @@ export function DocumentEditor({ initial, catalogs, documentOptions, onSave, onC
 
   return (
     <section id="document-editor" className="mt-8 w-full overflow-clip rounded-3xl border border-slate-200 bg-slate-100/70 p-3 sm:p-5 lg:p-6">
-      <div className="mb-6 rounded-2xl border border-l-4 border-slate-200 border-l-[#003d7a] bg-white p-5 shadow-sm sm:p-6">
+      <div className="mb-6 rounded-2xl border border-l-4 border-slate-200 border-l-sidebar bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#003d7a] text-white">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sidebar text-white">
             <i className="pi pi-pencil" style={{ fontSize: "23px" }} />
           </div>
           <div className="min-w-0">
