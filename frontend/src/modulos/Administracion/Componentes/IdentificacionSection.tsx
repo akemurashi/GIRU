@@ -24,7 +24,6 @@ export function IdentificacionSection({
   return (
     <div className="col-span-full w-full min-w-0">
       <EditorSection
-        title="Identificación del documento"
         description="Información principal para identificar y clasificar la normativa institucional."
         icon={<i className="pi pi-id-card text-xl" />}
       >
@@ -39,6 +38,7 @@ export function IdentificacionSection({
               <h3 className="m-0 text-sm font-bold text-[#173b60]">
                 Datos generales
               </h3>
+
               <p className="m-0 mt-1 text-xs leading-5 text-slate-600">
                 Identificación y clasificación de la normativa.
               </p>
@@ -63,10 +63,12 @@ export function IdentificacionSection({
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1769AA]/10 text-[#1769AA]">
                     <i className="pi pi-hashtag text-sm" />
                   </div>
+
                   <div>
                     <p className="m-0 text-sm font-semibold text-[#234565]">
                       Número de documento
                     </p>
+
                     <p className="m-0 mt-0.5 text-xs text-slate-500">
                       Código institucional
                     </p>
@@ -84,16 +86,18 @@ export function IdentificacionSection({
                 />
               </div>
 
-              {/* Tipo de documento: dropdown */}
+              {/* Tipo de documento */}
               <div className="group relative isolate z-10 min-w-0 rounded-xl border border-[#d8d9f0] bg-linear-to-br from-[#e9e9fa] to-[#f4f3fc] p-4 transition-all duration-200 hover:border-[#b8b9e3] hover:shadow-sm focus-within:z-50 focus-within:border-[#9294d5] focus-within:ring-2 focus-within:ring-[#7779c5]/10 sm:p-5">
                 <div className="mb-4 flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7779c5]/10 text-[#686bb7]">
                     <i className="pi pi-folder text-sm" />
                   </div>
+
                   <div>
                     <p className="m-0 text-sm font-semibold text-[#383d70]">
                       Tipo de documento
                     </p>
+
                     <p className="m-0 mt-0.5 text-xs text-slate-500">
                       Categoría documental
                     </p>
@@ -111,35 +115,6 @@ export function IdentificacionSection({
                 />
               </div>
 
-              {/* Título */}
-              <div className="group relative min-w-0 rounded-xl border border-[#cce4df] bg-linear-to-br from-[#e0f1ed] to-[#eff8f5] p-4 transition-all duration-200 hover:border-[#a3d1c7] hover:shadow-sm focus-within:border-[#65aa9c] focus-within:ring-2 focus-within:ring-[#2b8b78]/10 md:col-span-2 sm:p-5">
-                <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-[#2b8b78]/70 transition-colors group-focus-within:bg-[#23806f]" />
-
-                <div className="mb-4 flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2b8b78]/10 text-[#23806f]">
-                    <i className="pi pi-file text-sm" />
-                  </div>
-                  <div>
-                    <p className="m-0 text-sm font-semibold text-[#245c53]">
-                      Título del documento
-                    </p>
-                    <p className="m-0 mt-0.5 text-xs text-slate-500">
-                      Nombre oficial de la normativa
-                    </p>
-                  </div>
-                </div>
-
-                <FormField
-                  label="Título del documento"
-                  type="text"
-                  required
-                  value={document.titulo}
-                  error={errors.titulo}
-                  helperText="Introduce el título completo de la normativa institucional."
-                  onChange={(v) => onChange("titulo", v)}
-                />
-              </div>
-
               {/* Descripción */}
               <div className="group relative min-w-0 rounded-xl border border-[#eadbc2] bg-linear-to-br from-[#f7eddd] to-[#fbf6ed] p-4 transition-all duration-200 hover:border-[#dfc69e] hover:shadow-sm focus-within:border-[#c8a66e] focus-within:ring-2 focus-within:ring-[#b88943]/10 md:col-span-2 sm:p-5">
                 <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-[#b88943]/70 transition-colors group-focus-within:bg-[#a97832]" />
@@ -148,10 +123,12 @@ export function IdentificacionSection({
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#b88943]/10 text-[#a97832]">
                     <i className="pi pi-align-left text-sm" />
                   </div>
+
                   <div>
                     <p className="m-0 text-sm font-semibold text-[#76562c]">
                       Descripción
                     </p>
+
                     <p className="m-0 mt-0.5 text-xs text-slate-500">
                       Resumen del contenido y propósito
                     </p>
@@ -173,9 +150,10 @@ export function IdentificacionSection({
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/70 text-[#1769AA]">
                 <i className="pi pi-info-circle text-sm" />
               </div>
+
               <p className="m-0 text-xs leading-5 text-[#405a73]">
-                Verifica que el número y el título coincidan con los datos
-                oficiales del documento antes de guardar los cambios.
+                Verifica que el número coincida con los datos oficiales del
+                documento antes de guardar los cambios.
               </p>
             </div>
           </div>

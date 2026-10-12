@@ -1,15 +1,77 @@
+
+import { useState } from "react";
 import { useIsMobile } from "../../../Hooks/useIsMobile";
 import { PdfMobile } from "./PdfMobile";
 import { useDocumentUrl } from "../../../services/documentService";
 
 type PdfModalProps = {
-  documentId: number;
+  documentId: string;
   onClose: () => void;
 };
 
-export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
+type PdfDesktopViewerProps = {
+  url: string;
+};
+
+const PdfLoadingPlayer = () => {
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center overflow-hidden bg-gray-200">
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-label="Animación de carga del documento"
+        className="h-56 w-56 object-contain drop-shadow-[0_0_3px_rgba(0,61,122,0.65)] sm:h-72 sm:w-72"
+      >
+        <source
+          src="/giruLupa.webm"
+          type="video/webm"
+        />
+        <source
+          src="/videos/giru-loading.mp4"
+          type="video/mp4"
+        />
+      </video>
+
+      <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+        <i className="pi pi-spin pi-spinner text-[#1769AA]" />
+        <span>Cargando documento...</span>
+      </div>
+    </div>
+  );
+};
+
+const PdfDesktopViewer = ({ url }: PdfDesktopViewerProps) => {
+  const [isPdfLoading, setIsPdfLoading] = useState(true);
+
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-gray-200">
+      <iframe
+        key={url}
+        src={url}
+        title="Documento PDF"
+        onLoad={() => setIsPdfLoading(false)}
+        className="h-full w-full border-0"
+      />
+
+      {isPdfLoading && <PdfLoadingPlayer />}
+    </div>
+  );
+};
+
+export const PdfModal = ({
+  documentId,
+  onClose,
+}: PdfModalProps) => {
   const isMobile = useIsMobile();
-  const { data: url, isLoading, error } = useDocumentUrl(String(documentId));
+
+  const {
+    data: url,
+    isLoading,
+    error,
+  } = useDocumentUrl(documentId);
 
   return (
     <div
@@ -46,13 +108,8 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
         {/* CONTENT */}
         <div className="min-h-0 flex-1 bg-gray-200">
           {isLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center">
-                <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-sidebar" />
-                <p className="text-slate-800">
-                  Cargando documento...
-                </p>
-              </div>
+            <div className="relative h-full w-full">
+              <PdfLoadingPlayer />
             </div>
           ) : error || !url ? (
             <div className="flex h-full items-center justify-center p-4">
@@ -60,6 +117,7 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
                 <p className="mb-2 font-semibold text-red-800">
                   Error al cargar el documento
                 </p>
+
                 <p className="text-sm text-red-700">
                   No se pudo obtener la URL de origen.
                 </p>
@@ -68,11 +126,7 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
           ) : isMobile ? (
             <PdfMobile archivo={url} />
           ) : (
-            <iframe
-              src={url}
-              title="Documento PDF"
-              className="h-full w-full border-0"
-            />
+            <PdfDesktopViewer url={url} />
           )}
         </div>
       </div>

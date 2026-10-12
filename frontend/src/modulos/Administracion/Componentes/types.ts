@@ -1,46 +1,37 @@
-// Convención del DBA: tablas y columnas en minúsculas dentro de PostgreSQL ("giru").
-// Por eso las claves de EditableDocument están en minúsculas (iddocumento, idtipodocumento, nommetadato...).
 
 export type CatalogOption = {
   label: string;
   value: number | string;
-  /** siglaMacro (macrocategoría) o numCategoria (categoría); se usa para el prefijo de nomMetaDato */
+  /** Sigla de macrocategoría o número de categoría. */
   code?: string;
-  /** FK al padre en catálogos jerárquicos (idMacroCategoria, idTipoArea, idTipoPrograma, idNivel) */
+  /** ID del catálogo padre, cuando corresponda. */
   parentId?: number;
 };
 
 export type Catalogs = {
-  // Lookups 1:N (columnas de Documento)
   tiposDocumento: CatalogOption[];
   estadosVigencia: CatalogOption[];
   tiposSesion: CatalogOption[];
   tiposDecision: CatalogOption[];
-  // MacroCategoria → Categoria
   macroCategorias: CatalogOption[];
   categorias: CatalogOption[];
-  // TipoArea → SubArea (AreaEmisora)
   tiposArea: CatalogOption[];
   subAreas: CatalogOption[];
-  // TipoPrograma → NivelAcademico → Carrera
   tiposPrograma: CatalogOption[];
   niveles: CatalogOption[];
   carreras: CatalogOption[];
-  // Tablas puente N:M
   jornadas: CatalogOption[];
   departamentos: CatalogOption[];
   sedes: CatalogOption[];
   roles: CatalogOption[];
   beneficios: CatalogOption[];
   nombramientos: CatalogOption[];
-  // RelacionDocumental
   tiposRelacion: CatalogOption[];
   fuentesDeteccion: CatalogOption[];
   respaldosLegales: CatalogOption[];
 };
 
 export type RelacionEditable = {
-  /** Clave de cliente, estable mientras se edita (rel-<idrelacion> si ya existe en BD) */
   key: string;
   idrelacion?: number;
   iddocumentodestino: string | null;
@@ -51,35 +42,40 @@ export type RelacionEditable = {
   confianza: number | null;
   verificada: boolean;
   textoevidencia: string;
-  fechaefecto: string; // YYYY-MM-DD
+  fechaefecto: string;
 };
 
 export type EditableDocument = {
   iddocumento: string;
+
   // Identificación
   numero: string;
   idtipodocumento: number | null;
   titulo: string;
   nommetadato: string;
   descripcion: string;
-  cant_paginas: number | null;
+
   // Categorización
   idcategoria: number | null;
+
   // Sesión y acuerdo
   idtiposesion: number | null;
   numsesion: number | null;
   numacuerdo: number | null;
   idtipodecision: number | null;
+
   // Vigencia
   idestadovigencia: number | null;
   creacion: string;
   derogacion: string;
   aplicacioninmediata: boolean;
   isactive: boolean;
-  // Archivo
+
+  // Se conserva para compatibilidad, pero no se edita.
   urlarchivooriginals3: string;
-  // Tablas puente (listas de IDs)
-  areasemisoras: number[]; // SubArea.idSubArea
+
+  // Tablas puente
+  areasemisoras: number[];
   niveles: number[];
   carreras: number[];
   jornadas: number[];
@@ -88,13 +84,17 @@ export type EditableDocument = {
   roles: number[];
   beneficios: number[];
   nombramientos: number[];
-  // RelacionDocumental (este documento como origen)
+
+  // Se conserva el tipo, pero las relaciones no se editan en esta pantalla.
   relaciones: RelacionEditable[];
 };
 
 export type FieldErrors = Record<string, string>;
 
-export type OnChange = <K extends keyof EditableDocument>(key: K, value: EditableDocument[K]) => void;
+export type OnChange = <K extends keyof EditableDocument>(
+  key: K,
+  value: EditableDocument[K]
+) => void;
 
 export const emptyDocument = (id: string): EditableDocument => ({
   iddocumento: id,
@@ -103,7 +103,6 @@ export const emptyDocument = (id: string): EditableDocument => ({
   titulo: "",
   nommetadato: "",
   descripcion: "",
-  cant_paginas: null,
   idcategoria: null,
   idtiposesion: null,
   numsesion: null,
@@ -127,7 +126,9 @@ export const emptyDocument = (id: string): EditableDocument => ({
   relaciones: [],
 });
 
-export const emptyRelacion = (idfuentedeteccion: number | null): RelacionEditable => ({
+export const emptyRelacion = (
+  idfuentedeteccion: number | null
+): RelacionEditable => ({
   key: `rel-new-${Math.random().toString(36).slice(2)}`,
   iddocumentodestino: null,
   idtiporelacion: null,
@@ -135,14 +136,22 @@ export const emptyRelacion = (idfuentedeteccion: number | null): RelacionEditabl
   idfuentedeteccion,
   detallemodificacion: "",
   confianza: 1,
-  verificada: true, // ingreso manual = certeza total
+  verificada: true,
   textoevidencia: "",
   fechaefecto: "",
 });
 
-/** Agrupa opciones hijas bajo su padre (para dropdowns/multiselect agrupados) */
-export function groupOptions(items: CatalogOption[], parents: CatalogOption[]) {
+/** Agrupa opciones hijas bajo su padre. */
+export function groupOptions(
+  items: CatalogOption[],
+  parents: CatalogOption[]
+) {
   return parents
-    .map((p) => ({ label: p.label, items: items.filter((i) => i.parentId === p.value) }))
-    .filter((g) => g.items.length > 0);
+    .map((parent) => ({
+      label: parent.label,
+      items: items.filter(
+        (item) => String(item.parentId) === String(parent.value)
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 }

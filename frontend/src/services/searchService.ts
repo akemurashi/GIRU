@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useQuery } from "@tanstack/react-query";
 import api from "./api";
 
 // =====================================================
@@ -13,70 +14,67 @@ export interface SearchRequest {
 }
 
 export interface SearchFilters {
-  // Basic document metadata
   numero?: string;
   nommetadato?: string;
   numacuerdo?: number;
   numsesion?: number;
 
-  // Vigencia (EstadoVigencia)
+  // Vigencia
   idestadovigencia?: number;
 
-  // Dates
+  // Fechas
   creaciondesde?: string;
   creacionhasta?: string;
   derogaciondesde?: string;
   derogacionhasta?: string;
 
-  // Boolean filters
+  // Booleanos
   aplicacioninmediata?: boolean;
   isactive?: boolean;
 
-  // Tipo documento (TipoDocumento)
+  // Tipo de documento
   idtipodocumento?: number;
 
-  // Tipo decisión (TipoDecision)
+  // Tipo de decisión
   idtipodecision?: number;
 
-  // Tipo sesión (TipoSesion)
+  // Tipo de sesión
   idtiposesion?: number;
 
-  // Categoría (Categoria → MacroCategoria)
+  // Categoría
   idcategoria?: number;
   idmacrocategoria?: number;
 
-  // Área (TipoArea → subAreas)
+  // Área
   idtipoarea?: number;
   idsubarea?: number;
 
-  // Beneficios (BeneficioInterno → DocumentoBeneficio)
+  // Beneficios
   idbeneficio?: number;
 
-  // Sede / Campus (SedeCampus → DocumentoSedeCampus)
+  // Sede / Campus
   idrecintouniversitario?: number;
 
-  // Departamento (Departamento → DocumentoDepartamento)
+  // Departamento
   iddepartamento?: number;
 
-  // Carrera (Carrera → DocumentoCarrera)
+  // Carrera
   idcarrera?: number;
 
-  // Tipo programa (TipoPrograma → NivelAcademico)
+  // Programa / nivel académico
   idtipoprograma?: number;
-
-  // Nivel académico (NivelAcademico → DocumentoNivel)
   idnivel?: number;
 
-  // Rol / Nombramiento (TipoNombramiento → DocumentoNombramiento)
+  // Nombramiento
   idtiponombramiento?: number;
 
-  // Jornada (Jornada → DocumentoJornada)
+  // Jornada
   idjornada?: number;
 
-  // Rol institucional (RolInstitucional → DocumentoRol)
+  // Rol institucional
   idrol?: number;
 
-  // Linaje/trazabilidad (RelacionDocumental)
+  // Trazabilidad
   idrespaldolegal?: number;
   idtiporelacion?: number;
   idfuente?: number;
@@ -84,7 +82,7 @@ export interface SearchFilters {
   confianzamin?: number;
   confianzamax?: number;
 
-  // Chunks (DocumentoChunk)
+  // Chunks
   idtipopagina?: number;
 }
 
@@ -121,7 +119,6 @@ export interface FilterOption {
 }
 
 export interface FilterOptions {
-  // Catálogos base (15 tablas)
   tipos_area: FilterOption[];
   macro_categorias: FilterOption[];
   tipos_documento: FilterOption[];
@@ -139,8 +136,7 @@ export interface FilterOptions {
   tipos_relacion: FilterOption[];
   fuentes_deteccion: FilterOption[];
   tipos_pagina: FilterOption[];
-  
-  // Entidades jerárquicas (4 tablas)
+
   sub_areas: FilterOption[];
   categorias: FilterOption[];
   niveles_academicos: FilterOption[];
@@ -151,13 +147,22 @@ export interface FilterOptions {
 // API FUNCTIONS
 // =====================================================
 
-const searchDocuments = async (request: SearchRequest): Promise<SearchResponse> => {
-  const response = await api.post<SearchResponse>('/search/', request);
+const searchDocuments = async (
+  request: SearchRequest
+): Promise<SearchResponse> => {
+  const response = await api.post<SearchResponse>(
+    "/search/",
+    request
+  );
+
   return response.data;
 };
 
 const fetchFilterOptions = async (): Promise<FilterOptions> => {
-  const response = await api.get<FilterOptions>('/search/filters');
+  const response = await api.get<FilterOptions>(
+    "/search/filters"
+  );
+
   return response.data;
 };
 
@@ -165,20 +170,23 @@ const fetchFilterOptions = async (): Promise<FilterOptions> => {
 // REACT QUERY HOOKS
 // =====================================================
 
-export const useSearch = (request: SearchRequest, enabled: boolean = true) => {
+export const useSearch = (
+  request: SearchRequest,
+  enabled: boolean = true
+) => {
   return useQuery({
-    queryKey: ['search', request],
+    queryKey: ["search", request],
     queryFn: () => searchDocuments(request),
-    enabled: enabled && (request.query !== '' || Object.keys(request.filters).length > 0),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    enabled,
+    staleTime: 1000 * 60 * 2,
   });
 };
 
 export const useFilterOptions = () => {
   return useQuery({
-    queryKey: ['filterOptions'],
+    queryKey: ["filterOptions"],
     queryFn: fetchFilterOptions,
-    staleTime: 1000 * 60 * 30, // 30 minutes - filter options don't change often
+    staleTime: 1000 * 60 * 30,
   });
 };
 
@@ -186,50 +194,71 @@ export const useFilterOptions = () => {
 // HELPER FUNCTIONS
 // =====================================================
 
-// Map frontend filter names to API filter IDs
-export const mapFrontendFiltersToAPI = (frontendFilters: any): SearchFilters => {
+export const mapFrontendFiltersToAPI = (
+  frontendFilters: any
+): SearchFilters => {
   const apiFilters: SearchFilters = {};
 
   // Tipo de documento
-  if (frontendFilters.tipoDocumento && frontendFilters.tipoDocumento !== 'Todos') {
-    // Map "Decreto" to ID 2, "Reglamento" to ID 1, etc.
+  if (
+    frontendFilters.tipoDocumento &&
+    frontendFilters.tipoDocumento !== "Todos"
+  ) {
     const tipoDocumentoMap: Record<string, number> = {
-      'Reglamento': 1,
-      'Decreto': 2,
-      'Decreto Exento': 3,
-      'Resolución': 4,
-      'Resolución Rectoría': 5,
-      'Instructivo': 6,
-      'Normativa': 7,
-      'Acta': 8,
-      'Documento': 9,
+      Reglamento: 1,
+      Decreto: 2,
+      "Decreto Exento": 3,
+      Resolución: 4,
+      "Resolución Rectoría": 5,
+      Instructivo: 6,
+      Normativa: 7,
+      Acta: 8,
+      Documento: 9,
     };
-    apiFilters.idtipodocumento = tipoDocumentoMap[frontendFilters.tipoDocumento];
+
+    const tipoDocumentoId =
+      tipoDocumentoMap[frontendFilters.tipoDocumento];
+
+    if (tipoDocumentoId !== undefined) {
+      apiFilters.idtipodocumento = tipoDocumentoId;
+    }
   }
 
   // Estado
-  if (frontendFilters.estado && frontendFilters.estado !== 'Todos') {
+  if (
+    frontendFilters.estado &&
+    frontendFilters.estado !== "Todos"
+  ) {
     const estadoMap: Record<string, number> = {
-      'Vigente': 1,
-      'Derogado': 2,
-      'Modificado': 3,
-      'En Revisión': 4,
-      'No Vigente': 5,
+      Vigente: 1,
+      Derogado: 2,
+      Modificado: 3,
+      "En Revisión": 4,
+      "No Vigente": 5,
     };
-    apiFilters.idestadovigencia = estadoMap[frontendFilters.estado];
+
+    const estadoId = estadoMap[frontendFilters.estado];
+
+    if (estadoId !== undefined) {
+      apiFilters.idestadovigencia = estadoId;
+    }
   }
 
-  // Año - map to date range
-  if (frontendFilters.año && frontendFilters.año.length > 0) {
+  // Año: rango entre el año menor y el mayor seleccionado.
+  if (
+    frontendFilters.año &&
+    frontendFilters.año.length > 0
+  ) {
     const years = frontendFilters.año.map(Number);
     const minYear = Math.min(...years);
     const maxYear = Math.max(...years);
+
     apiFilters.creaciondesde = `${minYear}-01-01`;
     apiFilters.creacionhasta = `${maxYear}-12-31`;
   }
 
-  // These would need proper mapping from names to IDs using the filter options
-  // For now, we'll leave them empty as they require the filter options API
-  
+  // Área, sede, departamento y carrera mantienen
+  // el comportamiento del mapeo original.
+
   return apiFilters;
 };

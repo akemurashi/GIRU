@@ -24,7 +24,7 @@ export default function PantallaCargaVideo({
         preload="auto"
         aria-hidden="true"
       >
-        <source src="/giruLupa.mp4" type="video/mp4" />
+        <source src="/giruLupa.webm" type="video/webm" />
       </video>
 
       {/* Mensaje de carga */}
