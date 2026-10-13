@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import api from "./api";
 
@@ -143,6 +142,21 @@ export interface FilterOptions {
   carreras: FilterOption[];
 }
 
+export interface LexicalSuggestionItem {
+  documentid: string;
+  numero: string;
+  titulo: string;
+  nommetadato: string;
+  matched_field: "titulo" | "nommetadato";
+  suggestion: string;
+}
+
+export interface AutocompleteResponse {
+  query: string;
+  is_lexical: boolean;
+  suggestions: LexicalSuggestionItem[];
+}
+
 // =====================================================
 // API FUNCTIONS
 // =====================================================
@@ -162,6 +176,22 @@ const fetchFilterOptions = async (): Promise<FilterOptions> => {
   const response = await api.get<FilterOptions>(
     "/search/filters"
   );
+
+  return response.data;
+};
+
+export const fetchAutocomplete = async (
+  query: string,
+  limit: number = 8
+): Promise<AutocompleteResponse> => {
+  const trimmed = query.trim();
+  if (!trimmed.startsWith("#")) {
+    return { query, is_lexical: false, suggestions: [] };
+  }
+
+  const response = await api.get<AutocompleteResponse>("/search/autocomplete", {
+    params: { q: trimmed, limit },
+  });
 
   return response.data;
 };
@@ -187,6 +217,19 @@ export const useFilterOptions = () => {
     queryKey: ["filterOptions"],
     queryFn: fetchFilterOptions,
     staleTime: 1000 * 60 * 30,
+  });
+};
+
+export const useAutocomplete = (query: string, limit: number = 8) => {
+  const trimmed = query.trim();
+  const term = trimmed.replace(/^#+/, "").trim();
+  const isLexical = trimmed.startsWith("#") && term.length >= 2;
+
+  return useQuery({
+    queryKey: ["autocomplete", trimmed, limit],
+    queryFn: () => fetchAutocomplete(trimmed, limit),
+    enabled: isLexical,
+    staleTime: 1000 * 30,
   });
 };
 

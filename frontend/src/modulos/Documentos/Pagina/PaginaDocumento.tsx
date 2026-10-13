@@ -460,7 +460,8 @@ export default function PaginaDocumentos() {
               <header
                 className={`
                   shrink-0
-                  overflow-hidden
+                  relative
+                  z-30
                   border-b
                   border-slate-200
                   bg-white
@@ -473,8 +474,8 @@ export default function PaginaDocumentos() {
                   md:opacity-100
                   ${
                     headerVisible
-                      ? "max-h-55 opacity-100"
-                      : "max-h-0 border-b-0! py-0! opacity-0"
+                      ? "max-h-55 opacity-100 overflow-visible"
+                      : "max-h-0 border-b-0! py-0! opacity-0 overflow-hidden pointer-events-none"
                   }
                 `}
               >
