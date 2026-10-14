@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { authService, type User } from "../../services/authService";
@@ -12,9 +12,9 @@ export const SidebarFooter = () => {
     setUser(currentUser);
   }, []);
 
+  // El loader de la ruta /logout limpia la sesión y redirige a Cognito
   const handleLogout = () => {
-    authService.logout();
-    navigate("/login");
+    navigate("/logout");
   };
 
   return (
@@ -31,14 +31,15 @@ export const SidebarFooter = () => {
                   {user.name}
                 </p>
                 {user.role === "admin" && (
-                  <span className="flex items-center text-amber-400" title="Administrador">
+                  <span
+                    className="flex items-center text-amber-400"
+                    title="Administrador"
+                  >
                     <i className="pi pi-crown text-sm" />
                   </span>
                 )}
               </div>
-              <p className="text-xs text-white/60 truncate">
-                {user.email}
-              </p>
+              <p className="text-xs text-white/60 truncate">{user.email}</p>
             </div>
           </div>
           <Button

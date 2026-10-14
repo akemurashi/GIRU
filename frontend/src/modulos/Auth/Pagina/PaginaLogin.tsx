@@ -18,9 +18,13 @@ export default function PaginaLogin() {
         return;
       }
 
+      // Si venimos de un logout, forzamos que Microsoft pida credenciales
+      const force = localStorage.getItem("force_login") === "1";
+
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/v1/auth/login-url"
+          "http://localhost:8000/api/v1/auth/login-url",
+          { params: { force } }
         );
 
         if (cancelled) return;
@@ -31,6 +35,8 @@ export default function PaginaLogin() {
           throw new Error("El servidor no devolvió la URL de inicio de sesión");
         }
 
+        // Se consume la marca solo cuando ya vamos a redirigir
+        localStorage.removeItem("force_login");
         window.location.href = loginUrl;
       } catch (err) {
         if (cancelled) return;
