@@ -5,3 +5,163 @@
   --color-sidebar-hover: #1b548d;
   --color-sidebar-active: #4170a3;
 }
+/* Menú desplegable de GIRU */
+.giru-dropdown-panel {
+  z-index: 9999 !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+  border: 1px solid #d5e2f0 !important;
+  border-radius: 14px !important;
+  padding: 6px !important;
+  box-shadow: 0 12px 28px rgba(15, 45, 75, 0.16) !important;
+  overflow: hidden !important;
+}
+
+/* Lista de opciones */
+.giru-dropdown-panel .p-dropdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 2px !important;
+}
+
+/* Opción normal */
+.giru-dropdown-panel .p-dropdown-item {
+  border-radius: 9px !important;
+  padding: 4px !important;
+  background: transparent !important;
+}
+
+/* Opción al pasar el cursor */
+.giru-dropdown-panel .p-dropdown-item:not(.p-highlight):hover {
+  background: #e8f2fc !important;
+  color: #003d7a !important;
+}
+
+/* Opción seleccionada */
+.giru-dropdown-panel .p-dropdown-item.p-highlight {
+  background: #dceafa !important;
+  color: #003d7a !important;
+  font-weight: 600;
+}
+
+/* Foco por teclado */
+.giru-dropdown-panel .p-dropdown-item:focus,
+.giru-dropdown-panel .p-dropdown-item.p-focus {
+  background: #e8f2fc !important;
+  color: #003d7a !important;
+  box-shadow: inset 0 0 0 2px #8bb8e3 !important;
+}
+
+/* Texto del filtro */
+.giru-dropdown-panel .p-dropdown-filter {
+  border-radius: 9px !important;
+  border-color: #cbdced !important;
+  background: #f8fbff !important;
+  color: #1e293b !important;
+}
+
+/* Resalta el filtro cuando se usa */
+.giru-dropdown-panel .p-dropdown-filter:focus {
+  border-color: #1769AA !important;
+  box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.12) !important;
+}
+
+/* Panel del calendario GIRU */
+.giru-calendar-panel {
+  z-index: 9999 !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+  border: 1px solid #cbdced !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 28px rgba(15, 45, 75, 0.18) !important;
+  overflow: hidden !important;
+  padding: 10px !important;
+}
+
+/* Fondo opaco de la estructura interna */
+.giru-calendar-panel .p-datepicker-group-container,
+.giru-calendar-panel .p-datepicker-group,
+.giru-calendar-panel .p-datepicker-calendar-container {
+  background: #ffffff !important;
+}
+
+/* Encabezado: mes y año */
+.giru-calendar-panel .p-datepicker-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #dceafa !important;
+  color: #003d7a !important;
+  padding: 8px 4px 12px !important;
+}
+
+/* Botones para cambiar de mes */
+.giru-calendar-panel .p-datepicker-prev,
+.giru-calendar-panel .p-datepicker-next {
+  color: #003d7a !important;
+  border-radius: 8px !important;
+  transition: background-color 150ms ease;
+}
+
+.giru-calendar-panel .p-datepicker-prev:hover,
+.giru-calendar-panel .p-datepicker-next:hover {
+  background: #e8f2fc !important;
+  color: #1769aa !important;
+}
+
+/* Días de la semana */
+.giru-calendar-panel .p-datepicker-calendar th {
+  color: #64748b !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  padding: 8px 4px !important;
+}
+
+/* Celdas del calendario */
+.giru-calendar-panel .p-datepicker-calendar td {
+  padding: 2px !important;
+}
+
+/* Día normal */
+.giru-calendar-panel .p-datepicker-calendar td > span {
+  border-radius: 8px !important;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+/* Hover en un día */
+.giru-calendar-panel .p-datepicker-calendar td > span:not(.p-highlight):not(.p-disabled):hover {
+  background: #e8f2fc !important;
+  color: #003d7a !important;
+}
+
+/* Día seleccionado */
+.giru-calendar-panel .p-datepicker-calendar td > span.p-highlight {
+  background: #003d7a !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Día actual */
+.giru-calendar-panel .p-datepicker-calendar td > span.p-datepicker-today:not(.p-highlight) {
+  background: #dceafa !important;
+  color: #003d7a !important;
+  font-weight: 700 !important;
+}
+
+/* Barra inferior de botones */
+.giru-calendar-panel .p-datepicker-buttonbar {
+  border-top: 1px solid #dceafa !important;
+  background: #ffffff !important;
+  padding-top: 10px !important;
+}
+
+/* Botones inferiores */
+.giru-calendar-panel .p-datepicker-buttonbar button {
+  color: #003d7a !important;
+  border-radius: 8px !important;
+}
+
+.giru-calendar-panel .p-datepicker-buttonbar button:hover {
+  background: #e8f2fc !important;
+}

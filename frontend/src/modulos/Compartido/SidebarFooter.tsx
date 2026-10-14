@@ -12,9 +12,9 @@ export const SidebarFooter = () => {
     setUser(currentUser);
   }, []);
 
+  // El loader de la ruta /logout limpia la sesión y redirige a Cognito
   const handleLogout = () => {
-    authService.logout();
-    navigate("/login");
+    navigate("/logout");
   };
 
   return (
@@ -26,12 +26,20 @@ export const SidebarFooter = () => {
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user.name}
-              </p>
-              <p className="text-xs text-white/60 truncate">
-                {user.email}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-white truncate">
+                  {user.name}
+                </p>
+                {user.role === "admin" && (
+                  <span
+                    className="flex items-center text-amber-400"
+                    title="Administrador"
+                  >
+                    <i className="pi pi-crown text-sm" />
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-white/60 truncate">{user.email}</p>
             </div>
           </div>
           <Button

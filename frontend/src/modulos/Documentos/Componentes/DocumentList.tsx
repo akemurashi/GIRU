@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { PdfModal } from "./PdfModal";
+import {
+  authService,
+  type User,
+} from "../../../services/authService";
 
 type Documento = {
-  id: number;
+  id: number | string;
   titulo: string;
   tipo: string;
   estado: string;
@@ -17,33 +22,27 @@ type DocumentListProps = {
 };
 
 const obtenerEstiloEstado = (estado: string) => {
-  const estadoNormalizado = estado
-    .trim()
-    .toLowerCase();
+  const estadoNormalizado = estado.trim().toLowerCase();
 
   switch (estadoNormalizado) {
     case "vigente":
       return {
-        clase:
-          "bg-green-100 text-green-700",
+        clase: "bg-green-100 text-green-700",
       };
 
     case "derogado":
       return {
-        clase:
-          "bg-red-100 text-red-700",
+        clase: "bg-red-100 text-red-700",
       };
 
     case "modificado":
       return {
-        clase:
-          "bg-yellow-100 text-yellow-700",
+        clase: "bg-yellow-100 text-yellow-700",
       };
 
     default:
       return {
-        clase:
-          "bg-slate-100 text-slate-600",
+        clase: "bg-slate-100 text-slate-600",
       };
   }
 };
@@ -51,10 +50,16 @@ const obtenerEstiloEstado = (estado: string) => {
 export const DocumentList = ({
   documentos,
 }: DocumentListProps) => {
-  const [
-    pdfSeleccionado,
-    setPdfSeleccionado,
-  ] = useState<number | null>(null);
+  const [pdfSeleccionado, setPdfSeleccionado] =
+    useState<string | null>(null);
+
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setUser(authService.getUser());
+  }, []);
 
   return (
     <>
@@ -65,10 +70,7 @@ export const DocumentList = ({
 
         <div className="space-y-3 pb-6">
           {documentos.map((doc) => {
-            const estiloEstado =
-              obtenerEstiloEstado(
-                doc.estado
-              );
+            const estiloEstado = obtenerEstiloEstado(doc.estado);
 
             return (
               <article
@@ -83,19 +85,9 @@ export const DocumentList = ({
                   md:p-6
                 "
               >
-                {/* =================================================
-                    TÍTULO + ESTADO
-                ================================================= */}
+                {/* TÍTULO Y ESTADO */}
 
-                <div
-                  className="
-                    flex
-                    flex-col
-                    gap-2
-                    md:flex-row
-                    md:items-start
-                  "
-                >
+                <div className="flex flex-col gap-2 md:flex-row md:items-start">
                   <h3
                     className="
                       min-w-0
@@ -109,8 +101,6 @@ export const DocumentList = ({
                   >
                     {doc.titulo}
                   </h3>
-
-                  {/* ESTADO */}
 
                   <span
                     className={`
@@ -127,94 +117,105 @@ export const DocumentList = ({
                   </span>
                 </div>
 
-                {/* =================================================
-                    INFORMACIÓN
-                ================================================= */}
+                {/* INFORMACIÓN */}
 
-                <div
-                  className="
-                    mt-2
-                    flex
-                    flex-wrap
-                    gap-2
-                    text-xs
-                    text-slate-400
-                    md:text-sm
-                  "
-                >
-                  <span>
-                    {doc.tipo}
-                  </span>
-
-                  <span>
-                    {doc.fecha}
-                  </span>
-
-                  <span>
-                    {doc.organismo}
-                  </span>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400 md:text-sm">
+                  <span>{doc.tipo}</span>
+                  <span>{doc.fecha}</span>
+                  <span>{doc.organismo}</span>
                 </div>
 
-                {/* =================================================
-                    DESCRIPCIÓN
-                ================================================= */}
+                {/* DESCRIPCIÓN */}
 
-                <p
-                  className="
-                    mt-2
-                    wrap-break-word
-                    text-sm
-                    text-slate-600
-                  "
-                >
+                <p className="mt-2 wrap-break-word text-sm text-slate-600">
                   {doc.descripcion}
                 </p>
 
-                {/* =================================================
-                    BOTÓN
-                ================================================= */}
+                {/* ACCIONES */}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPdfSeleccionado(
-                      doc.id
-                    )
-                  }
-                  className="
-                    mt-3
-                    w-full
-                    rounded-lg
-                    bg-sidebar
-                    py-2
-                    text-sm
-                    text-white
-                    transition
-                    hover:opacity-90
-                    md:w-auto
-                    md:px-4
-                  "
-                >
-                  Ver documento
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const documentId = String(doc.id).trim();
+
+                      if (
+                        !documentId ||
+                        documentId === "NaN" ||
+                        documentId === "undefined" ||
+                        documentId === "null"
+                      ) {
+                        console.error(
+                          "Identificador de documento inválido:",
+                          doc.id
+                        );
+                        return;
+                      }
+
+                      setPdfSeleccionado(documentId);
+                    }}
+                    className="
+                      mt-3
+                      w-full
+                      rounded-lg
+                      bg-sidebar
+                      py-2
+                      text-sm
+                      text-white
+                      transition
+                      hover:opacity-90
+                      md:w-auto
+                      md:px-4
+                    "
+                  >
+                    Ver documento
+                  </button>
+
+                  {user?.role === "admin" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/administracion?docId=${encodeURIComponent(
+                            String(doc.id)
+                          )}`
+                        )
+                      }
+                      className="
+                        mt-3
+                        flex
+                        w-full
+                        items-center
+                        justify-center
+                        rounded-lg
+                        border
+                        border-amber-400
+                        py-2
+                        text-sm
+                        text-amber-500
+                        transition
+                        hover:bg-amber-50
+                        md:w-auto
+                        md:px-4
+                      "
+                    >
+                      <i className="pi pi-pencil mr-2" />
+                      Editar
+                    </button>
+                  )}
+                </div>
               </article>
             );
           })}
         </div>
       </div>
 
-      {/* =================================================
-          PDF
-      ================================================= */}
+      {/* VISUALIZADOR PDF */}
 
       {pdfSeleccionado !== null && (
         <PdfModal
-          documentId={
-            pdfSeleccionado
-          }
-          onClose={() =>
-            setPdfSeleccionado(null)
-          }
+          documentId={pdfSeleccionado}
+          onClose={() => setPdfSeleccionado(null)}
         />
       )}
     </>

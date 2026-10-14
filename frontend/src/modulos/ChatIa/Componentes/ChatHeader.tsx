@@ -1,12 +1,12 @@
 export const ChatHeader = () => {
   return (
     <header className="relative z-0 shrink-0 overflow-hidden border-b border-gray-200 bg-white px-4 py-2 sm:px-6 sm:py-3 lg:px-10">
-      <div className="flex h-16 items-center gap-3 sm:h-20 sm:gap-4">
-        <div className="relative flex h-16 w-20 shrink-0 items-center justify-center sm:h-20 sm:w-28">
+      <div className="flex h-20 items-center gap-1 sm:h-24 sm:gap-2">
+        <div className="relative flex h-20 w-24 shrink-0 items-center justify-center sm:h-24 sm:w-36">
           <img
-            src="/assets/Don fede.svg"
+            src="/assets/Don fede2.svg"
             alt="Don Fede"
-            className="h-20 w-20 object-contain sm:h-32 sm:w-32"
+            className="h-13.5 w-13.5 -translate-y-1 object-contain sm:h-19 sm:w-19"
           />
         </div>
 

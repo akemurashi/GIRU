@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ProgressSpinner } from "primereact/progressspinner";
 import { authService } from "../../../services/authService";
+import PantallaCargaVideo from "../Componentes/PantallaCargaVideo";
 
 export default function PaginaCallback() {
   const navigate = useNavigate();
@@ -28,22 +28,21 @@ export default function PaginaCallback() {
       }
 
       try {
-        // Exchange code for tokens - the redirect URI must match what was sent to Cognito
         const redirectUri = "http://localhost:5173/callback";
         const tokens = await authService.exchangeCode(code, redirectUri);
+        const token = tokens.id_token || tokens.access_token;
 
-        // Store the access token
-        authService.setToken(tokens.access_token);
+        authService.setToken(token);
 
-        // Get user information
-        const user = await authService.getCurrentUser(tokens.id_token || tokens.access_token);
+        const user = await authService.getCurrentUser(token);
         authService.setUser(user);
 
-        // Redirect to home page
         navigate("/");
       } catch (err) {
         console.error("Auth error:", err);
-        setError("Error al procesar la autenticación. Por favor intenta nuevamente.");
+        setError(
+          "Error al procesar la autenticación. Por favor intenta nuevamente."
+        );
       }
     };
 
@@ -52,12 +51,12 @@ export default function PaginaCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-lg shadow-md">
-          <p className="text-red-600 mb-4">{error}</p>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+          <p className="mb-5 text-red-600">{error}</p>
           <button
             onClick={() => navigate("/login")}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="rounded-lg bg-blue-600 px-5 py-2.5 text-white transition hover:bg-blue-700"
           >
             Volver a intentar
           </button>
@@ -67,11 +66,9 @@ export default function PaginaCallback() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <ProgressSpinner className="mb-4" />
-        <p className="text-gray-600">Procesando autenticación...</p>
-      </div>
-    </div>
+    <PantallaCargaVideo
+      mensaje="Verificando tu sesión"
+      subtitulo="Estamos validando tus credenciales y preparando tu acceso."
+    />
   );
 }

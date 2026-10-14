@@ -1,3 +1,4 @@
+
 import { ChatMessage } from "./ChatMenssage";
 
 interface Message {
@@ -21,18 +22,24 @@ interface ChatConversationProps {
   onViewDocument?: (documentTitle: string) => void;
 }
 
-export const ChatConversation = ({ messages, onViewDocument }: ChatConversationProps) => {
+export const ChatConversation = ({
+  messages,
+  onViewDocument,
+}: ChatConversationProps) => {
   if (messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
-          <i className="pi pi-book text-3xl text-sky-900"></i>
+          <i className="pi pi-book text-3xl text-sky-900" />
         </div>
+
         <h3 className="mb-2 text-lg font-semibold text-gray-900">
           Bienvenido al asistente de reglamentos
         </h3>
+
         <p className="max-w-md text-sm text-gray-600">
-          Haz preguntas sobre reglamentos, normativas o resoluciones y recibirás respuestas basadas en los documentos oficiales.
+          Haz preguntas sobre reglamentos, normativas o resoluciones y recibirás
+          respuestas basadas en los documentos oficiales.
         </p>
       </div>
     );
@@ -55,6 +62,7 @@ export const ChatConversation = ({ messages, onViewDocument }: ChatConversationP
           sourceQuote={message.sourceQuote}
           sourceButtonText={message.sourceButtonText}
           sourceDocumentOriginalTitle={message.sourceDocumentOriginalTitle}
+          isStreaming={message.isStreaming}
           onViewDocument={onViewDocument}
         />
       ))}
