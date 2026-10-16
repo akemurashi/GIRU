@@ -301,7 +301,7 @@ export const ChatMain = () => {
       {/* PDF MODAL */}
       {showPdfModal && selectedDocumentId && (
         <PdfModal
-          documentId={selectedDocumentId}
+          documentId={String(selectedDocumentId)}
           onClose={() => {
             setShowPdfModal(false);
             setSelectedDocumentId(null);

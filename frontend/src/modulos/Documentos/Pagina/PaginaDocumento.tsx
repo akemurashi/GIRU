@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useState,
@@ -8,6 +7,7 @@ import {
 } from "react";
 
 import { useSearchParams } from "react-router-dom";
+import { useQueries } from "@tanstack/react-query";
 
 import SidebarLayout from "../../Compartido/SidebarLayout";
 import { SearchBox } from "../../Compartido/Busqueda";
@@ -21,9 +21,14 @@ import { DocumentList } from "../Componentes/DocumentList";
 
 import {
   useSearch,
+  useAutocomplete,
+  useDocumentById,
+  fetchDocumentById,
   mapFrontendFiltersToAPI,
   type SearchRequest,
   type SearchResultItem,
+  type DocumentoDetalle,
+  type LexicalSuggestionItem,
 } from "../../../services/searchService";
 
 // =====================================================
@@ -83,19 +88,28 @@ function useScrollDirection(
 }
 
 // =====================================================
+// FORMATEAR FECHA UNIFICADA
+// =====================================================
+
+const formatearFecha = (fechaStr?: string | null): string => {
+  if (!fechaStr) return "Sin fecha";
+  try {
+    return new Date(fechaStr).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+    });
+  } catch {
+    return "Sin fecha";
+  }
+};
+
+// =====================================================
 // TRANSFORMAR RESULTADOS DE BÚSQUEDA
 // =====================================================
 
 const transformSearchResultToDocumento = (
   searchResult: SearchResultItem
 ): Documento => {
-  const fecha = searchResult.creacion
-    ? new Date(searchResult.creacion).toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "long",
-      })
-    : "Sin fecha";
-
   return {
     id: searchResult.documentid,
     titulo: searchResult.titulo,
@@ -104,10 +118,36 @@ const transformSearchResultToDocumento = (
       searchResult.nommetadato ||
       "Documento",
     estado: searchResult.estadovigencia || "Vigente",
-    fecha,
+    fecha: formatearFecha(searchResult.creacion),
     organismo: searchResult.nommetadato || "Universidad",
     descripcion: searchResult.excerpt || "",
     archivo: `/Pdf/documento_${searchResult.documentid}.pdf`,
+  };
+};
+
+const transformarDetalleADocumento = (
+  detalle: DocumentoDetalle,
+  fallbackId: string
+): Documento => {
+  const id = detalle.iddocumento || fallbackId;
+
+  return {
+    id,
+    titulo: detalle.titulo || "Documento sin título",
+    tipo:
+      detalle.tipodocumento ||
+      detalle.tipodecision ||
+      detalle.nommetadato ||
+      "Documento",
+    estado:
+      detalle.estadovigencia ||
+      (detalle.isactive === false ? "No vigente" : "Vigente"),
+    fecha: formatearFecha(detalle.creacion),
+    organismo: detalle.nommetadato || "Universidad",
+    descripcion: detalle.descripcion || "",
+    archivo:
+      detalle.urlarchivooriginals3 ||
+      `/Pdf/documento_${id}.pdf`,
   };
 };
 
@@ -160,15 +200,21 @@ const generarNumerosPagina = (
 // =====================================================
 
 export default function PaginaDocumentos() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const tipoUrl = searchParams.get("tipo") || "Todos";
+  const queryUrl = searchParams.get("query") || "";
+  const documentoSeleccionadoId = searchParams.get("docId");
 
   // ===================================================
   // BÚSQUEDA
   // ===================================================
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(queryUrl);
+
+  const consultaConfirmada = queryUrl.trim();
+  const esBusquedaLexica = consultaConfirmada.startsWith("#");
+  const terminoLimpio = consultaConfirmada.replace(/^#+/, "").trim();
 
   // ===================================================
   // PAGINACIÓN
@@ -206,49 +252,183 @@ export default function PaginaDocumentos() {
     });
 
   // ===================================================
-  // DETERMINAR SI HAY FILTROS ACTIVOS
-  // ===================================================
-
-
-  // ===================================================
-  // SOLICITUD DE BÚSQUEDA
-  // Se utiliza para todos los listados.
+  // 1. BÚSQUEDA GENERAL (Cuando NO es léxica)
   // ===================================================
 
   const searchRequest: SearchRequest = {
-    query: searchQuery.trim(),
+    query: terminoLimpio,
     filters: mapFrontendFiltersToAPI(filtros),
     page: paginaActual,
     page_size: DOCUMENTOS_POR_PAGINA,
   };
 
+  const busquedaGeneralHabilitada = !documentoSeleccionadoId && !esBusquedaLexica;
+
   const {
     data: searchResults,
-    isLoading,
-    error,
-    refetch,
-  } = useSearch(searchRequest, true);
+    isLoading: isLoadingBusqueda,
+    error: errorBusqueda,
+    refetch: refetchBusqueda,
+  } = useSearch(searchRequest, busquedaGeneralHabilitada);
 
   // ===================================================
-  // TRANSFORMAR RESULTADOS DE BÚSQUEDA
+  // 2. BÚSQUEDA PARCIAL LÉXICA
+  // ===================================================
+  const busquedaLexicaHabilitada =
+    !documentoSeleccionadoId &&
+    esBusquedaLexica &&
+    terminoLimpio.length >= 2;
+
+  const {
+    data: lexicalResults,
+    isFetching: isLoadingLexical,
+    isError: errorLexical,
+    refetch: refetchLexical,
+  } = useAutocomplete(
+    `#${terminoLimpio}`,
+    undefined, // <--- SIN LÍMITE: backend y frontend operan sin restricción de cantidad
+    busquedaLexicaHabilitada
+  );
+
+  // Extraer IDs únicos encontrados por la búsqueda léxica
+  const uniqueDocIds = useMemo(() => {
+    if (!lexicalResults?.suggestions) return [];
+    const ids = new Set<string>();
+    for (const item of lexicalResults.suggestions) {
+      if (item.documentid) {
+        ids.add(String(item.documentid));
+      }
+    }
+    return Array.from(ids);
+  }, [lexicalResults]);
+
+  // Cargar el documento completo para cada ID encontrado (idéntico a la card normal)
+  const lexicalDocDetails = useQueries({
+    queries: uniqueDocIds.map((id) => ({
+      queryKey: ["document-detail", id],
+      queryFn: ({ signal }: { signal: AbortSignal }) => fetchDocumentById(id, signal),
+      enabled: Boolean(id) && esBusquedaLexica,
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const isLoadingLexicalDetails = lexicalDocDetails.some((q) => q.isLoading);
+
+  // ===================================================
+  // 3. DETALLE DE DOCUMENTO SELECCIONADO
+  // ===================================================
+
+  const {
+    data: detalleDocumento,
+    isLoading: isLoadingDetalle,
+    error: errorDetalle,
+    refetch: refetchDetalle,
+  } = useDocumentById(documentoSeleccionadoId);
+
+  // ===================================================
+  // ESTADOS DE CARGA Y ERROR
+  // ===================================================
+
+  const isLoading = documentoSeleccionadoId
+    ? isLoadingDetalle
+    : esBusquedaLexica
+      ? isLoadingLexical || isLoadingLexicalDetails
+      : isLoadingBusqueda;
+
+  const error = documentoSeleccionadoId
+    ? errorDetalle
+    : esBusquedaLexica
+      ? errorLexical ? new Error("Error en la búsqueda parcial léxica") : null
+      : errorBusqueda;
+
+  const refetch = () => {
+    if (documentoSeleccionadoId) {
+      refetchDetalle();
+    } else if (esBusquedaLexica) {
+      refetchLexical();
+    } else {
+      refetchBusqueda();
+    }
+  };
+
+  // ===================================================
+  // TRANSFORMAR RESULTADOS (Cards idénticas en ambas búsquedas)
   // ===================================================
 
   const documentosActivos = useMemo<Documento[]>(() => {
-    if (!searchResults?.results) {
-      return [];
+    // Caso 1: Detalle por docId específico
+    if (documentoSeleccionadoId) {
+      if (!detalleDocumento) return [];
+
+      return [
+        transformarDetalleADocumento(
+          detalleDocumento,
+          documentoSeleccionadoId
+        ),
+      ];
     }
+
+    // Caso 2: Coincidencias de búsqueda léxica (formateadas idénticas a las normales)
+    if (esBusquedaLexica) {
+      const docsCompletos: Documento[] = [];
+
+      for (let i = 0; i < uniqueDocIds.length; i++) {
+        const id = uniqueDocIds[i];
+        const detailQuery = lexicalDocDetails[i];
+
+        if (detailQuery?.data) {
+          docsCompletos.push(transformarDetalleADocumento(detailQuery.data, id));
+        } else {
+          // Si el detalle aún está resolviéndose, mostrar la información disponible
+          const item = lexicalResults?.suggestions.find((s) => String(s.documentid) === id);
+          if (item) {
+            docsCompletos.push({
+              id,
+              titulo: item.titulo || "Documento sin título",
+              tipo: item.nommetadato || "Documento",
+              estado: "Vigente",
+              fecha: "Sin fecha",
+              organismo: item.nommetadato || "Universidad",
+              descripcion: "",
+              archivo: `/Pdf/documento_${id}.pdf`,
+            });
+          }
+        }
+      }
+
+      const inicio = (paginaActual - 1) * DOCUMENTOS_POR_PAGINA;
+      return docsCompletos.slice(inicio, inicio + DOCUMENTOS_POR_PAGINA);
+    }
+
+    // Caso 3: Búsqueda normal sin '#'
+    if (!searchResults?.results) return [];
 
     return searchResults.results.map(
       (item: SearchResultItem) =>
         transformSearchResultToDocumento(item)
     );
-  }, [searchResults]);
+  }, [
+    documentoSeleccionadoId,
+    detalleDocumento,
+    esBusquedaLexica,
+    uniqueDocIds,
+    lexicalDocDetails,
+    lexicalResults,
+    searchResults,
+    paginaActual,
+  ]);
 
   // ===================================================
   // TOTAL DE DOCUMENTOS Y PÁGINAS
   // ===================================================
 
-  const totalDocumentos = searchResults?.total ?? 0;
+  const totalDocumentos = documentoSeleccionadoId
+    ? detalleDocumento
+      ? 1
+      : 0
+    : esBusquedaLexica
+      ? uniqueDocIds.length
+      : searchResults?.total ?? 0;
 
   const totalPaginas = Math.max(
     1,
@@ -256,7 +436,6 @@ export default function PaginaDocumentos() {
   );
 
   const hayPaginaAnterior = paginaActual > 1;
-
   const hayPaginaSiguiente = paginaActual < totalPaginas;
 
   const primerDocumento =
@@ -285,12 +464,7 @@ export default function PaginaDocumentos() {
   // ===================================================
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
   const headerVisible = useScrollDirection(scrollContainerRef);
-
-  // ===================================================
-  // VOLVER AL INICIO DE LA LISTA
-  // ===================================================
 
   const volverAlInicio = () => {
     scrollContainerRef.current?.scrollTo({
@@ -298,6 +472,77 @@ export default function PaginaDocumentos() {
       behavior: "smooth",
     });
   };
+
+  // ===================================================
+  // EJECUTAR BÚSQUEDA AL PRESIONAR ENTER
+  // ===================================================
+
+  const handleSubmitSearch = (query: string) => {
+    const consulta = query.trim();
+
+    setSearchQuery(consulta);
+    setPaginaActual(1);
+
+    const params = new URLSearchParams(searchParams);
+
+    if (consulta) {
+      params.set("query", consulta);
+    } else {
+      params.delete("query");
+    }
+
+    params.delete("docId");
+
+    setSearchParams(params);
+
+    requestAnimationFrame(volverAlInicio);
+  };
+
+  // ===================================================
+  // SELECCIONAR UNA SUGERENCIA DEL DROPDOWN
+  // ===================================================
+
+  const handleSelectSuggestion = (
+    item: LexicalSuggestionItem
+  ) => {
+    const consulta = `#${item.suggestion}`;
+
+    setSearchQuery(consulta);
+    setPaginaActual(1);
+
+    const params = new URLSearchParams(searchParams);
+
+    params.set("query", consulta);
+    params.set("docId", String(item.documentid));
+
+    setSearchParams(params);
+
+    requestAnimationFrame(volverAlInicio);
+  };
+
+  // ===================================================
+  // CAMBIAR TEXTO DEL BUSCADOR
+  // ===================================================
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+
+    if (value.trim() === "" && queryUrl !== "") {
+      const params = new URLSearchParams(searchParams);
+      params.delete("query");
+      params.delete("docId");
+      setSearchParams(params);
+    }
+  };
+
+  // ===================================================
+  // SINCRONIZAR BÚSQUEDA DESDE LA URL
+  // ===================================================
+
+  useEffect(() => {
+    setSearchQuery(queryUrl);
+    setPaginaActual(1);
+  }, [queryUrl]);
 
   // ===================================================
   // ACTUALIZAR TIPO DESDE LA URL
@@ -318,14 +563,14 @@ export default function PaginaDocumentos() {
   }, [tipoUrl]);
 
   // ===================================================
-  // REINICIAR PAGINACIÓN AL CAMBIAR BÚSQUEDA O FILTROS
+  // REINICIAR PAGINACIÓN AL CAMBIAR FILTROS
   // ===================================================
 
   const filtrosKey = JSON.stringify(filtros);
 
   useEffect(() => {
     setPaginaActual(1);
-  }, [searchQuery, filtrosKey]);
+  }, [filtrosKey]);
 
   // ===================================================
   // LIMPIAR FILTROS APLICADOS
@@ -421,7 +666,10 @@ export default function PaginaDocumentos() {
   // ===================================================
 
   const cambiarPagina = (nuevaPagina: number) => {
-    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) {
+    if (
+      nuevaPagina < 1 ||
+      nuevaPagina > totalPaginas
+    ) {
       return;
     }
 
@@ -485,7 +733,9 @@ export default function PaginaDocumentos() {
 
                 <SearchBox
                   value={searchQuery}
-                  onChange={setSearchQuery}
+                  onChange={handleSearchChange}
+                  onSubmitSearch={handleSubmitSearch}
+                  onSelectSuggestion={handleSelectSuggestion}
                 />
 
                 {/* BOTÓN DE FILTROS - MÓVIL */}
@@ -577,9 +827,9 @@ export default function PaginaDocumentos() {
                   </div>
                 )}
 
-                {/* ESTADO DE CARGA */}
-
                 {isLoading ? (
+                  /* ESTADO DE CARGA */
+
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
                       <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-sidebar" />
@@ -601,7 +851,7 @@ export default function PaginaDocumentos() {
 
                     <button
                       type="button"
-                      onClick={() => refetch()}
+                      onClick={refetch}
                       className="
                         mt-4
                         rounded-lg
@@ -626,7 +876,6 @@ export default function PaginaDocumentos() {
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Se encontraron {totalDocumentos} documentos.
                       Prueba modificando la búsqueda o los filtros.
                     </p>
                   </div>
@@ -654,128 +903,127 @@ export default function PaginaDocumentos() {
 
                     {/* LISTA DE DOCUMENTOS */}
 
-                    <DocumentList documentos={documentosActivos} />
+                    <DocumentList
+                      documentos={documentosActivos}
+                      documentoSeleccionadoId={documentoSeleccionadoId}
+                    />
 
                     {/* CONTROLES DE PAGINACIÓN */}
 
-                    <nav
-                      aria-label="Paginación de documentos"
-                      className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 pt-5"
-                    >
-                      {/* ANTERIOR */}
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          cambiarPagina(paginaActual - 1)
-                        }
-                        disabled={!hayPaginaAnterior || isLoading}
-                        className="
-                          rounded-lg
-                          border
-                          border-slate-300
-                          bg-white
-                          px-4
-                          py-2
-                          text-sm
-                          font-medium
-                          text-slate-700
-                          transition
-                          hover:bg-slate-100
-                          disabled:cursor-not-allowed
-                          disabled:opacity-40
-                        "
+                    {!documentoSeleccionadoId && (
+                      <nav
+                        aria-label="Paginación de documentos"
+                        className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 pt-5"
                       >
-                        Anterior
-                      </button>
-
-                      {/* NÚMEROS DE PÁGINA */}
-
-                      <div className="flex flex-wrap items-center justify-center gap-1.5">
-                        {paginasVisibles.map((pagina, indice) => {
-                          if (pagina === "...") {
-                            return (
-                              <span
-                                key={`ellipsis-${indice}`}
-                                aria-hidden="true"
-                                className="px-1.5 py-2 text-sm text-slate-500"
-                              >
-                                …
-                              </span>
-                            );
+                        <button
+                          type="button"
+                          onClick={() =>
+                            cambiarPagina(paginaActual - 1)
                           }
+                          disabled={!hayPaginaAnterior || isLoading}
+                          className="
+                            rounded-lg
+                            border
+                            border-slate-300
+                            bg-white
+                            px-4
+                            py-2
+                            text-sm
+                            font-medium
+                            text-slate-700
+                            transition
+                            hover:bg-slate-100
+                            disabled:cursor-not-allowed
+                            disabled:opacity-40
+                          "
+                        >
+                          Anterior
+                        </button>
 
-                          const esPaginaActual =
-                            pagina === paginaActual;
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                          {paginasVisibles.map((pagina, indice) => {
+                            if (pagina === "...") {
+                              return (
+                                <span
+                                  key={`ellipsis-${indice}`}
+                                  aria-hidden="true"
+                                  className="px-1.5 py-2 text-sm text-slate-500"
+                                >
+                                  …
+                                </span>
+                              );
+                            }
 
-                          return (
-                            <button
-                              key={pagina}
-                              type="button"
-                              onClick={() => cambiarPagina(pagina)}
-                              disabled={isLoading || esPaginaActual}
-                              aria-label={`Ir a la página ${pagina}`}
-                              aria-current={
-                                esPaginaActual ? "page" : undefined
-                              }
-                              className={`
-                                flex
-                                h-9
-                                min-w-9
-                                items-center
-                                justify-center
-                                rounded-lg
-                                border
-                                px-2.5
-                                text-sm
-                                font-medium
-                                transition
-                                disabled:cursor-default
-                                ${
-                                  esPaginaActual
-                                    ? "border-sidebar bg-sidebar text-white"
-                                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                            const esPaginaActual =
+                              pagina === paginaActual;
+
+                            return (
+                              <button
+                                key={pagina}
+                                type="button"
+                                onClick={() => cambiarPagina(pagina)}
+                                disabled={isLoading || esPaginaActual}
+                                aria-label={`Ir a la página ${pagina}`}
+                                aria-current={
+                                  esPaginaActual ? "page" : undefined
                                 }
-                                disabled:opacity-100
-                              `}
-                            >
-                              {pagina}
-                            </button>
-                          );
-                        })}
-                      </div>
+                                className={`
+                                  flex
+                                  h-9
+                                  min-w-9
+                                  items-center
+                                  justify-center
+                                  rounded-lg
+                                  border
+                                  px-2.5
+                                  text-sm
+                                  font-medium
+                                  transition
+                                  disabled:cursor-default
+                                  ${
+                                    esPaginaActual
+                                      ? "border-sidebar bg-sidebar text-white"
+                                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                                  }
+                                  disabled:opacity-100
+                                `}
+                              >
+                                {pagina}
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                      {/* SIGUIENTE */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            cambiarPagina(paginaActual + 1)
+                          }
+                          disabled={!hayPaginaSiguiente || isLoading}
+                          className="
+                            rounded-lg
+                            border
+                            border-sidebar
+                            bg-sidebar
+                            px-4
+                            py-2
+                            text-sm
+                            font-semibold
+                            text-white
+                            transition
+                            hover:opacity-90
+                            disabled:cursor-not-allowed
+                            disabled:opacity-40
+                          "
+                        >
+                          Siguiente
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          cambiarPagina(paginaActual + 1)
-                        }
-                        disabled={!hayPaginaSiguiente || isLoading}
-                        className="
-                          rounded-lg
-                          border
-                          border-sidebar
-                          bg-sidebar
-                          px-4
-                          py-2
-                          text-sm
-                          font-semibold
-                          text-white
-                          transition
-                          hover:opacity-90
-                          disabled:cursor-not-allowed
-                          disabled:opacity-40
-                        "
-                      >
-                        Siguiente
-                      </button>
-
-                      <span className="w-full text-center text-xs text-slate-500">
-                        Página {paginaActual} de {totalPaginas}
-                      </span>
-                    </nav>
+                        <span className="w-full text-center text-xs text-slate-500">
+                          Página {paginaActual} de {totalPaginas}
+                        </span>
+                      </nav>
+                    )}
                   </>
                 )}
               </div>

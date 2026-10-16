@@ -1,10 +1,20 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from "react";
+
 import { useAutocomplete, type LexicalSuggestionItem } from "../../services/searchService";
+
+import { useDebouncedValue } from "../../Hooks/useDebouncedValue";
+
+// Referencia estable: evita que un `[]` nuevo en cada render dispare efectos.
+const SIN_SUGERENCIAS: LexicalSuggestionItem[] = [];
+
+// Pausa (ms) tras la última tecla antes de consultar el autocompletado.
+const AUTOCOMPLETE_DEBOUNCE_MS = 300;
 
 export type SearchBoxProps = {
   value?: string;
   onChange?: (value: string) => void;
   onSelectSuggestion?: (item: LexicalSuggestionItem) => void;
+  onSubmitSearch?: (query: string) => void;
   placeholder?: string;
   className?: string;
 };
@@ -13,6 +23,7 @@ export const SearchBox = ({
   value: controlledValue,
   onChange,
   onSelectSuggestion,
+  onSubmitSearch,
   placeholder = "Busca por tema, artículo, o usa '#' para búsqueda léxica directa",
   className = "",
 }: SearchBoxProps = {}) => {
@@ -25,23 +36,36 @@ export const SearchBox = ({
   const setBusqueda = onChange || setInternalValue;
 
   // Debounce para optimizar las peticiones de autocompletado en PostgreSQL
-  const [debouncedQuery, setDebouncedQuery] = useState(busqueda);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(busqueda);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [busqueda]);
+  const debouncedQuery = useDebouncedValue(busqueda, AUTOCOMPLETE_DEBOUNCE_MS);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Solo se activa cuando la consulta inicia con '#'
   const isLexical = busqueda.trim().startsWith("#");
   const lexicalTerm = busqueda.trim().replace(/^#+/, "").trim();
+  const hasEnoughChars = lexicalTerm.length >= 2;
 
-  // Consulta al backend solo si es búsqueda léxica y tiene al menos 2 caracteres
-  const { data, isLoading } = useAutocomplete(debouncedQuery, 8);
-  const sugerencias = isLexical && data?.suggestions ? data.suggestions : [];
+  // El usuario sigue escribiendo: el valor debounced aún no alcanzó al input.
+  const isDebouncing = busqueda.trim() !== debouncedQuery.trim();
+
+  // Consulta al backend solo si es búsqueda léxica, tiene al menos 2 caracteres
+  // y el desplegable está abierto.
+  const { data, isFetching, isError } = useAutocomplete(
+    debouncedQuery,
+    8,
+    isOpen
+  );
+
+  // Estado de "buscando" coherente con lo que se ve en el input:
+  // cubre tanto la espera del debounce como la petición en curso.
+  const isSearching = isLexical && hasEnoughChars && (isDebouncing || isFetching);
+
+  // Mientras el debounce no se asienta, `data` pertenece a un texto anterior:
+  // no se muestra para no ofrecer sugerencias que no corresponden.
+  const sugerencias =
+    isLexical && !isDebouncing && data?.suggestions
+      ? data.suggestions
+      : SIN_SUGERENCIAS;
 
   // Cerrar el dropdown al hacer click afuera
   useEffect(() => {
@@ -69,26 +93,45 @@ export const SearchBox = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || sugerencias.length === 0) {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
+    if (e.key === "Escape") {
+      setIsOpen(false);
       return;
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" && isOpen && sugerencias.length > 0) {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev < sugerencias.length - 1 ? prev + 1 : 0));
-    } else if (e.key === "ArrowUp") {
+      setHighlightedIndex((prev) =>
+        prev < sugerencias.length - 1 ? prev + 1 : 0
+      );
+      return;
+    }
+
+    if (e.key === "ArrowUp" && isOpen && sugerencias.length > 0) {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : sugerencias.length - 1));
-    } else if (e.key === "Enter") {
-      if (highlightedIndex >= 0 && highlightedIndex < sugerencias.length) {
-        e.preventDefault();
+      setHighlightedIndex((prev) =>
+        prev > 0 ? prev - 1 : sugerencias.length - 1
+      );
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      if (
+        isOpen &&
+        highlightedIndex >= 0 &&
+        highlightedIndex < sugerencias.length
+      ) {
         handleSelectSuggestion(sugerencias[highlightedIndex]);
+        return;
       }
-    } else if (e.key === "Escape") {
-      setIsOpen(false);
+
+      const query = busqueda.trim();
+      if (query) {
+        setIsOpen(false);
+        // Enviamos la query con '#' intacto para que PaginaDocumentos reconozca que es léxica
+        onSubmitSearch?.(query);
+      }
     }
   };
 
@@ -118,7 +161,7 @@ export const SearchBox = ({
 
       {/* Botón de limpiar o indicador de carga */}
       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-        {isLoading && isLexical && lexicalTerm.length >= 2 ? (
+        {isSearching ? (
           <i className="pi pi-spin pi-spinner text-blue-500 text-sm md:text-base" />
         ) : busqueda.length > 0 ? (
           <button
@@ -150,7 +193,7 @@ export const SearchBox = ({
           </div>
 
           {/* Estado 1: Escribió solo '#' o 1 caracter */}
-          {lexicalTerm.length < 2 && (
+          {!hasEnoughChars && (
             <div className="px-4 py-3 text-xs md:text-sm text-slate-500 flex items-center gap-2.5">
               <i className="pi pi-info-circle text-blue-500 text-sm shrink-0" />
               <span>
@@ -160,15 +203,22 @@ export const SearchBox = ({
           )}
 
           {/* Estado 2: Cargando */}
-          {isLoading && lexicalTerm.length >= 2 && (
+          {isSearching && sugerencias.length === 0 && (
             <div className="px-4 py-4 text-xs md:text-sm text-slate-500 flex items-center justify-center gap-2">
               <i className="pi pi-spin pi-spinner text-blue-500" />
               <span>Buscando coincidencias...</span>
             </div>
           )}
 
-          {/* Estado 3: Sin resultados */}
-          {!isLoading && lexicalTerm.length >= 2 && sugerencias.length === 0 && (
+          {/* Estado 3a: Error de red / backend */}
+          {!isSearching && hasEnoughChars && isError && (
+            <div className="px-4 py-4 text-xs md:text-sm text-red-600 text-center">
+              No se pudieron cargar las sugerencias. Inténtalo de nuevo.
+            </div>
+          )}
+
+          {/* Estado 3b: Sin resultados */}
+          {!isSearching && hasEnoughChars && !isError && sugerencias.length === 0 && (
             <div className="px-4 py-4 text-xs md:text-sm text-slate-500 text-center">
               No se encontraron títulos ni metadatos que coincidan con "<strong>{lexicalTerm}</strong>"
             </div>

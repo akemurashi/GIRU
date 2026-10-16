@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import api from "./api";
 
 // =====================================================
@@ -135,7 +135,6 @@ export interface FilterOptions {
   tipos_relacion: FilterOption[];
   fuentes_deteccion: FilterOption[];
   tipos_pagina: FilterOption[];
-
   sub_areas: FilterOption[];
   categorias: FilterOption[];
   niveles_academicos: FilterOption[];
@@ -158,40 +157,110 @@ export interface AutocompleteResponse {
 }
 
 // =====================================================
+// DETALLE DE UN DOCUMENTO
+// =====================================================
+
+export interface DocumentoDetalle {
+  iddocumento: string;
+  numero?: string | null;
+  titulo: string;
+  nommetadato?: string | null;
+  tipodocumento?: string | null;
+  tipodecision?: string | null;
+  tiposesion?: string | null;
+  estadovigencia?: string | null;
+  numacuerdo?: number | null;
+  numsesion?: number | null;
+  descripcion?: string | null;
+  creacion?: string | null;
+  derogacion?: string | null;
+  aplicacioninmediata?: boolean;
+  isactive?: boolean;
+  sedes?: unknown[];
+  categorias?: unknown[];
+  cant_paginas?: number;
+  urlarchivooriginals3?: string | null;
+  carreras?: unknown[];
+  beneficios?: unknown[];
+  nombramientos?: unknown[];
+  departamentos?: unknown[];
+  chunkcount?: number;
+}
+
+// =====================================================
 // API FUNCTIONS
 // =====================================================
 
 const searchDocuments = async (
-  request: SearchRequest
+  request: SearchRequest,
+  signal?: AbortSignal
 ): Promise<SearchResponse> => {
   const response = await api.post<SearchResponse>(
     "/search/",
-    request
+    request,
+    { signal }
   );
 
   return response.data;
 };
 
-const fetchFilterOptions = async (): Promise<FilterOptions> => {
+const fetchFilterOptions = async (
+  signal?: AbortSignal
+): Promise<FilterOptions> => {
   const response = await api.get<FilterOptions>(
-    "/search/filters"
+    "/search/filters",
+    { signal }
   );
 
   return response.data;
 };
 
-export const fetchAutocomplete = async (
-  query: string,
-  limit: number = 8
-): Promise<AutocompleteResponse> => {
-  const trimmed = query.trim();
-  if (!trimmed.startsWith("#")) {
-    return { query, is_lexical: false, suggestions: [] };
+// Obtener un único documento por su identificador.
+export const fetchDocumentById = async (
+  documentId: string,
+  signal?: AbortSignal
+): Promise<DocumentoDetalle> => {
+  const id = documentId.trim();
+
+  if (!id) {
+    throw new Error("El identificador del documento está vacío.");
   }
 
-  const response = await api.get<AutocompleteResponse>("/search/autocomplete", {
-    params: { q: trimmed, limit },
-  });
+  const response = await api.get<DocumentoDetalle>(
+    `/documents/${encodeURIComponent(id)}`,
+    { signal }
+  );
+
+  return response.data;
+};
+
+// Mantiene el comportamiento original: el autocompletado solo
+// consulta al backend cuando la búsqueda comienza con #.
+export const fetchAutocomplete = async (
+  query: string,
+  limit: undefined | number = undefined,
+  signal?: AbortSignal
+): Promise<AutocompleteResponse> => {
+  const trimmed = query.trim();
+
+  if (!trimmed.startsWith("#")) {
+    return {
+      query,
+      is_lexical: false,
+      suggestions: [],
+    };
+  }
+
+  const response = await api.get<AutocompleteResponse>(
+    "/search/autocomplete",
+    {
+      params: {
+        q: trimmed,
+        limit,
+      },
+      signal,
+    }
+  );
 
   return response.data;
 };
@@ -206,8 +275,22 @@ export const useSearch = (
 ) => {
   return useQuery({
     queryKey: ["search", request],
-    queryFn: () => searchDocuments(request),
+    queryFn: ({ signal }) => searchDocuments(request, signal),
     enabled,
+    staleTime: 1000 * 60 * 2,
+    placeholderData: keepPreviousData,
+  });
+};
+
+// Consultar el detalle de un documento seleccionado.
+export const useDocumentById = (
+  documentId: string | null
+) => {
+  return useQuery({
+    queryKey: ["document-detail", documentId],
+    queryFn: ({ signal }) =>
+      fetchDocumentById(documentId!, signal),
+    enabled: Boolean(documentId),
     staleTime: 1000 * 60 * 2,
   });
 };
@@ -215,20 +298,26 @@ export const useSearch = (
 export const useFilterOptions = () => {
   return useQuery({
     queryKey: ["filterOptions"],
-    queryFn: fetchFilterOptions,
+    queryFn: ({ signal }) => fetchFilterOptions(signal),
     staleTime: 1000 * 60 * 30,
   });
 };
 
-export const useAutocomplete = (query: string, limit: number = 8) => {
+export const useAutocomplete = (
+  query: string,
+  limit: number | undefined = undefined,
+  enabled: boolean = true
+) => {
   const trimmed = query.trim();
   const term = trimmed.replace(/^#+/, "").trim();
-  const isLexical = trimmed.startsWith("#") && term.length >= 2;
+  const isLexical =
+    trimmed.startsWith("#") && term.length >= 2;
 
   return useQuery({
     queryKey: ["autocomplete", trimmed, limit],
-    queryFn: () => fetchAutocomplete(trimmed, limit),
-    enabled: isLexical,
+    queryFn: ({ signal }) =>
+      fetchAutocomplete(trimmed, limit, signal),
+    enabled: isLexical && enabled,
     staleTime: 1000 * 30,
   });
 };
