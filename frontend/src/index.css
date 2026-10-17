@@ -67,6 +67,261 @@
   box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.12) !important;
 }
 
+/* =====================================================
+   GIRU · Componente MultiSelect (Selección múltiple)
+   ===================================================== */
+
+/* Contenedor principal del input MultiSelect */
+.p-multiselect {
+  min-height: 46px !important;
+  display: flex !important;
+  align-items: center !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  background: #ffffff !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.p-multiselect:not(.p-disabled):hover {
+  border-color: #94a3b8 !important;
+}
+
+.p-multiselect:not(.p-disabled).p-focus {
+  border-color: #003d7a !important;
+  box-shadow: 0 0 0 4px rgba(0, 61, 122, 0.12) !important;
+}
+
+/* Área de etiquetas / chips */
+.p-multiselect .p-multiselect-label-container {
+  display: flex !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.p-multiselect .p-multiselect-label {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 0.875rem !important;
+  color: #1e293b !important;
+  align-items: center !important;
+}
+
+.p-multiselect .p-multiselect-label.p-placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Chips / Tokens seleccionados */
+.p-multiselect .p-multiselect-token {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #e8f2fc !important;
+  border: 1px solid #cbdced !important;
+  color: #003d7a !important;
+  border-radius: 8px !important;
+  padding: 3px 8px !important;
+  font-size: 0.785rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  transition: all 0.15s ease !important;
+}
+
+.p-multiselect .p-multiselect-token:hover {
+  background: #dceafa !important;
+  border-color: #b9d5f3 !important;
+}
+
+.p-multiselect .p-multiselect-token .p-multiselect-token-label {
+  max-width: 220px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.p-multiselect .p-multiselect-token .p-multiselect-token-icon {
+  font-size: 0.75rem !important;
+  color: #003d7a !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: color 0.15s ease, transform 0.15s ease !important;
+}
+
+.p-multiselect .p-multiselect-token .p-multiselect-token-icon:hover {
+  color: #dc2626 !important;
+  transform: scale(1.15) !important;
+}
+
+/* Trigger y Clear Icons */
+.p-multiselect .p-multiselect-trigger {
+  width: 2.75rem !important;
+  color: #64748b !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.p-multiselect .p-multiselect-clear-icon {
+  color: #94a3b8 !important;
+  margin-right: 4px !important;
+  cursor: pointer !important;
+  transition: color 0.15s ease !important;
+}
+
+.p-multiselect .p-multiselect-clear-icon:hover {
+  color: #ef4444 !important;
+}
+
+/* Panel de MultiSelect: encabezado con filtro y select-all */
+.giru-dropdown-panel .p-multiselect-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 8px 10px !important;
+  background: #f8fbff !important;
+  border-bottom: 1px solid #dceafa !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+}
+
+.giru-dropdown-panel .p-multiselect-filter-container {
+  flex: 1 !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.giru-dropdown-panel .p-multiselect-filter-container .p-multiselect-filter {
+  width: 100% !important;
+  border-radius: 8px !important;
+  border: 1px solid #cbdced !important;
+  background: #ffffff !important;
+  padding: 6px 10px 6px 30px !important;
+  font-size: 0.8125rem !important;
+  color: #1e293b !important;
+  outline: none !important;
+}
+
+.giru-dropdown-panel .p-multiselect-filter-container .p-multiselect-filter:focus {
+  border-color: #003d7a !important;
+  box-shadow: 0 0 0 3px rgba(0, 61, 122, 0.12) !important;
+}
+
+.giru-dropdown-panel .p-multiselect-filter-container .p-multiselect-filter-icon {
+  position: absolute !important;
+  left: 9px !important;
+  color: #94a3b8 !important;
+  font-size: 0.8125rem !important;
+  pointer-events: none !important;
+}
+
+.giru-dropdown-panel .p-multiselect-close {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 7px !important;
+  color: #64748b !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.giru-dropdown-panel .p-multiselect-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Lista de opciones en MultiSelect */
+.giru-dropdown-panel .p-multiselect-items {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  padding: 6px !important;
+  list-style: none !important;
+  margin: 0 !important;
+}
+
+/* Agrupador de opciones */
+.giru-dropdown-panel .p-multiselect-item-group {
+  padding: 6px 10px !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+  border-radius: 6px !important;
+  margin: 4px 0 2px 0 !important;
+}
+
+/* Opción individual en MultiSelect */
+.giru-dropdown-panel .p-multiselect-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 7px 10px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  color: #1e293b !important;
+  font-size: 0.875rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.giru-dropdown-panel .p-multiselect-item:not(.p-highlight):hover {
+  background: #e8f2fc !important;
+  color: #003d7a !important;
+}
+
+.giru-dropdown-panel .p-multiselect-item.p-highlight {
+  background: #dceafa !important;
+  color: #003d7a !important;
+  font-weight: 600 !important;
+}
+
+/* Casillas de verificación (Checkbox) en MultiSelect */
+.giru-dropdown-panel .p-checkbox {
+  width: 18px !important;
+  height: 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+.giru-dropdown-panel .p-checkbox .p-checkbox-box {
+  width: 18px !important;
+  height: 18px !important;
+  border: 1.5px solid #94a3b8 !important;
+  border-radius: 5px !important;
+  background: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease !important;
+}
+
+.giru-dropdown-panel .p-checkbox .p-checkbox-box:hover {
+  border-color: #003d7a !important;
+}
+
+.giru-dropdown-panel .p-checkbox .p-checkbox-box.p-highlight {
+  background: #003d7a !important;
+  border-color: #003d7a !important;
+}
+
+.giru-dropdown-panel .p-checkbox .p-checkbox-box .p-checkbox-icon {
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: bold !important;
+}
+
+
 /* Panel del calendario GIRU */
 .giru-calendar-panel {
   z-index: 9999 !important;

@@ -10,6 +10,7 @@ import {
   AlcanceAcademicoSection,
   AudienciaSection,
 } from "./AlcanceSection";
+import { RelacionesSection } from "./RelacionesSection";
 import { ConfirmModal } from "./ConfirmModal";
 
 import {
@@ -19,6 +20,7 @@ import {
 } from "./documentUtils";
 
 import type {
+  CatalogOption,
   Catalogs,
   EditableDocument,
   OnChange,
@@ -30,6 +32,7 @@ type DocumentEditorProps = {
   /** Documento tal como está guardado. El editor mantiene su propio borrador. */
   initial: EditableDocument;
   catalogs: Catalogs;
+  documentOptions?: CatalogOption[];
   onSave: (document: EditableDocument) => void;
   onCancel: () => void;
   onDirtyChange?: (dirty: boolean) => void;
@@ -38,6 +41,7 @@ type DocumentEditorProps = {
 export function DocumentEditor({
   initial,
   catalogs,
+  documentOptions = [],
   onSave,
   onCancel,
   onDirtyChange,
@@ -171,6 +175,14 @@ export function DocumentEditor({
           document={draft}
           catalogs={catalogs}
           onChange={onChange}
+        />
+
+        <RelacionesSection
+          relaciones={draft.relaciones ?? []}
+          catalogs={catalogs}
+          documentOptions={documentOptions}
+          errors={errors}
+          onChange={(relaciones) => onChange("relaciones", relaciones)}
         />
       </div>
 

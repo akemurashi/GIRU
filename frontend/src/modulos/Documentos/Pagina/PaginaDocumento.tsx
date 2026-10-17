@@ -7,7 +7,6 @@ import {
 } from "react";
 
 import { useSearchParams } from "react-router-dom";
-import { useQueries } from "@tanstack/react-query";
 
 import SidebarLayout from "../../Compartido/SidebarLayout";
 import { SearchBox } from "../../Compartido/Busqueda";
@@ -21,9 +20,8 @@ import { DocumentList } from "../Componentes/DocumentList";
 
 import {
   useSearch,
-  useAutocomplete,
   useDocumentById,
-  fetchDocumentById,
+  useFilterOptions,
   mapFrontendFiltersToAPI,
   type SearchRequest,
   type SearchResultItem,
@@ -213,8 +211,6 @@ export default function PaginaDocumentos() {
   const [searchQuery, setSearchQuery] = useState(queryUrl);
 
   const consultaConfirmada = queryUrl.trim();
-  const esBusquedaLexica = consultaConfirmada.startsWith("#");
-  const terminoLimpio = consultaConfirmada.replace(/^#+/, "").trim();
 
   // ===================================================
   // PAGINACIÓN
@@ -252,17 +248,22 @@ export default function PaginaDocumentos() {
     });
 
   // ===================================================
-  // 1. BÚSQUEDA GENERAL (Cuando NO es léxica)
+  // CATÁLOGOS PARA FILTROS
+  // ===================================================
+  const { data: filterOptions } = useFilterOptions();
+
+  // ===================================================
+  // 1. BÚSQUEDA GENERAL Y FILTRADA
   // ===================================================
 
-  const searchRequest: SearchRequest = {
-    query: terminoLimpio,
-    filters: mapFrontendFiltersToAPI(filtros),
+  const searchRequest: SearchRequest = useMemo(() => ({
+    query: consultaConfirmada,
+    filters: mapFrontendFiltersToAPI(filtros, filterOptions),
     page: paginaActual,
     page_size: DOCUMENTOS_POR_PAGINA,
-  };
+  }), [consultaConfirmada, filtros, filterOptions, paginaActual]);
 
-  const busquedaGeneralHabilitada = !documentoSeleccionadoId && !esBusquedaLexica;
+  const busquedaGeneralHabilitada = !documentoSeleccionadoId;
 
   const {
     data: searchResults,
@@ -272,50 +273,7 @@ export default function PaginaDocumentos() {
   } = useSearch(searchRequest, busquedaGeneralHabilitada);
 
   // ===================================================
-  // 2. BÚSQUEDA PARCIAL LÉXICA
-  // ===================================================
-  const busquedaLexicaHabilitada =
-    !documentoSeleccionadoId &&
-    esBusquedaLexica &&
-    terminoLimpio.length >= 2;
-
-  const {
-    data: lexicalResults,
-    isFetching: isLoadingLexical,
-    isError: errorLexical,
-    refetch: refetchLexical,
-  } = useAutocomplete(
-    `#${terminoLimpio}`,
-    undefined, // <--- SIN LÍMITE: backend y frontend operan sin restricción de cantidad
-    busquedaLexicaHabilitada
-  );
-
-  // Extraer IDs únicos encontrados por la búsqueda léxica
-  const uniqueDocIds = useMemo(() => {
-    if (!lexicalResults?.suggestions) return [];
-    const ids = new Set<string>();
-    for (const item of lexicalResults.suggestions) {
-      if (item.documentid) {
-        ids.add(String(item.documentid));
-      }
-    }
-    return Array.from(ids);
-  }, [lexicalResults]);
-
-  // Cargar el documento completo para cada ID encontrado (idéntico a la card normal)
-  const lexicalDocDetails = useQueries({
-    queries: uniqueDocIds.map((id) => ({
-      queryKey: ["document-detail", id],
-      queryFn: ({ signal }: { signal: AbortSignal }) => fetchDocumentById(id, signal),
-      enabled: Boolean(id) && esBusquedaLexica,
-      staleTime: 1000 * 60 * 5,
-    })),
-  });
-
-  const isLoadingLexicalDetails = lexicalDocDetails.some((q) => q.isLoading);
-
-  // ===================================================
-  // 3. DETALLE DE DOCUMENTO SELECCIONADO
+  // 2. DETALLE DE DOCUMENTO SELECCIONADO
   // ===================================================
 
   const {
@@ -331,28 +289,22 @@ export default function PaginaDocumentos() {
 
   const isLoading = documentoSeleccionadoId
     ? isLoadingDetalle
-    : esBusquedaLexica
-      ? isLoadingLexical || isLoadingLexicalDetails
-      : isLoadingBusqueda;
+    : isLoadingBusqueda;
 
   const error = documentoSeleccionadoId
     ? errorDetalle
-    : esBusquedaLexica
-      ? errorLexical ? new Error("Error en la búsqueda parcial léxica") : null
-      : errorBusqueda;
+    : errorBusqueda;
 
   const refetch = () => {
     if (documentoSeleccionadoId) {
       refetchDetalle();
-    } else if (esBusquedaLexica) {
-      refetchLexical();
     } else {
       refetchBusqueda();
     }
   };
 
   // ===================================================
-  // TRANSFORMAR RESULTADOS (Cards idénticas en ambas búsquedas)
+  // TRANSFORMAR RESULTADOS
   // ===================================================
 
   const documentosActivos = useMemo<Documento[]>(() => {
@@ -368,39 +320,7 @@ export default function PaginaDocumentos() {
       ];
     }
 
-    // Caso 2: Coincidencias de búsqueda léxica (formateadas idénticas a las normales)
-    if (esBusquedaLexica) {
-      const docsCompletos: Documento[] = [];
-
-      for (let i = 0; i < uniqueDocIds.length; i++) {
-        const id = uniqueDocIds[i];
-        const detailQuery = lexicalDocDetails[i];
-
-        if (detailQuery?.data) {
-          docsCompletos.push(transformarDetalleADocumento(detailQuery.data, id));
-        } else {
-          // Si el detalle aún está resolviéndose, mostrar la información disponible
-          const item = lexicalResults?.suggestions.find((s) => String(s.documentid) === id);
-          if (item) {
-            docsCompletos.push({
-              id,
-              titulo: item.titulo || "Documento sin título",
-              tipo: item.nommetadato || "Documento",
-              estado: "Vigente",
-              fecha: "Sin fecha",
-              organismo: item.nommetadato || "Universidad",
-              descripcion: "",
-              archivo: `/Pdf/documento_${id}.pdf`,
-            });
-          }
-        }
-      }
-
-      const inicio = (paginaActual - 1) * DOCUMENTOS_POR_PAGINA;
-      return docsCompletos.slice(inicio, inicio + DOCUMENTOS_POR_PAGINA);
-    }
-
-    // Caso 3: Búsqueda normal sin '#'
+    // Caso 2: Resultados de búsqueda regular, filtrada o léxica (#)
     if (!searchResults?.results) return [];
 
     return searchResults.results.map(
@@ -410,12 +330,7 @@ export default function PaginaDocumentos() {
   }, [
     documentoSeleccionadoId,
     detalleDocumento,
-    esBusquedaLexica,
-    uniqueDocIds,
-    lexicalDocDetails,
-    lexicalResults,
     searchResults,
-    paginaActual,
   ]);
 
   // ===================================================
@@ -426,9 +341,7 @@ export default function PaginaDocumentos() {
     ? detalleDocumento
       ? 1
       : 0
-    : esBusquedaLexica
-      ? uniqueDocIds.length
-      : searchResults?.total ?? 0;
+    : searchResults?.total ?? 0;
 
   const totalPaginas = Math.max(
     1,

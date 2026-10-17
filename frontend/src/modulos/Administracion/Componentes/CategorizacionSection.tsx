@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormField } from "./FormField";
 import { EditorSection } from "./EditorSection";
 import type { CatalogOption } from "./types";
@@ -20,25 +20,40 @@ export function CategorizacionSection({
   error,
   onChange,
 }: Props) {
-  const [macro, setMacro] = useState<number | null>(
-    categorias.find((categoria) => categoria.value === idcategoria)
-      ?.parentId ?? null
-  );
+  const [macro, setMacro] = useState<number | null>(() => {
+    if (idcategoria == null) return null;
+    const found = categorias.find((c) => String(c.value) === String(idcategoria));
+    return found?.parentId != null ? Number(found.parentId) : null;
+  });
+
+  useEffect(() => {
+    if (idcategoria != null) {
+      const found = categorias.find((c) => String(c.value) === String(idcategoria));
+      if (found?.parentId != null) {
+        setMacro(Number(found.parentId));
+      }
+    }
+  }, [idcategoria, categorias]);
 
   const categoriasDeLaMacro =
     macro == null
       ? []
-      : categorias.filter((categoria) => categoria.parentId === macro);
+      : categorias.filter(
+          (categoria) =>
+            categoria.parentId != null &&
+            Number(categoria.parentId) === Number(macro)
+        );
 
-  const handleMacro = (value: number | null) => {
-    setMacro(value);
+  const handleMacro = (value: number | string | null) => {
+    const numVal = value != null ? Number(value) : null;
+    setMacro(numVal);
 
     if (
       idcategoria != null &&
       !categorias.some(
         (categoria) =>
-          categoria.value === idcategoria &&
-          categoria.parentId === value
+          Number(categoria.value) === Number(idcategoria) &&
+          Number(categoria.parentId) === numVal
       )
     ) {
       onChange(null);

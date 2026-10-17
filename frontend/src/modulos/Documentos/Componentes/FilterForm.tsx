@@ -551,7 +551,8 @@ export const FilterForm = ({
 
   const tiposDocumento = useMemo(() => {
     if (
-      filterOptions?.tipos_documento
+      filterOptions?.tipos_documento &&
+      filterOptions.tipos_documento.length > 0
     ) {
       return [
         "Todos",
@@ -566,9 +567,13 @@ export const FilterForm = ({
       "Todos",
       "Reglamento",
       "Decreto",
+      "Decreto Exento",
+      "Resolución",
+      "Resolución Rectoría",
+      "Instructivo",
+      "Normativa",
       "Acta",
-      "Convenio",
-      "Elección",
+      "Documento",
     ];
   }, [filterOptions]);
 
@@ -578,7 +583,8 @@ export const FilterForm = ({
 
   const estados = useMemo(() => {
     if (
-      filterOptions?.estados_vigencia
+      filterOptions?.estados_vigencia &&
+      filterOptions.estados_vigencia.length > 0
     ) {
       return [
         "Todos",
@@ -592,8 +598,10 @@ export const FilterForm = ({
     return [
       "Todos",
       "Vigente",
-      "Reemplazado",
       "Derogado",
+      "Modificado",
+      "En Revisión",
+      "No Vigente",
     ];
   }, [filterOptions]);
 
@@ -603,7 +611,8 @@ export const FilterForm = ({
 
   const areas = useMemo(() => {
     if (
-      filterOptions?.tipos_area
+      filterOptions?.tipos_area &&
+      filterOptions.tipos_area.length > 0
     ) {
       return filterOptions.tipos_area.map(
         (opt: FilterOption) =>
@@ -613,9 +622,11 @@ export const FilterForm = ({
 
     return [
       "Académica",
-      "Administrativa",
-      "Estudiantil",
-      "Disciplinaria",
+      "Administración y Finanzas",
+      "Asuntos Estudiantiles",
+      "Investigación y Postgrado",
+      "Vinculación con el Medio",
+      "Gobierno Superior y Rectoría",
     ];
   }, [filterOptions]);
 
@@ -624,17 +635,19 @@ export const FilterForm = ({
   // ===================================================
 
   const sedes = useMemo(() => {
-    if (
-      filterOptions?.sedes_campus
-    ) {
-      return filterOptions.sedes_campus.map(
+    const list = filterOptions?.sedes_campus?.length
+      ? filterOptions.sedes_campus
+      : filterOptions?.sedes;
+
+    if (list && list.length > 0) {
+      return list.map(
         (opt: FilterOption) =>
           opt.nombre
       );
     }
 
     return [
-      "Casa Central Valparaíso",
+      "Casa Central (Valparaíso)",
       "Campus San Joaquín",
       "Campus Vitacura",
       "Sede Viña del Mar",
@@ -648,7 +661,8 @@ export const FilterForm = ({
 
   const departamentos = useMemo(() => {
     if (
-      filterOptions?.departamentos
+      filterOptions?.departamentos &&
+      filterOptions.departamentos.length > 0
     ) {
       return filterOptions.departamentos.map(
         (opt: FilterOption) =>
@@ -657,11 +671,11 @@ export const FilterForm = ({
     }
 
     return [
-      "Departamento de Aeronáutica",
-      "Departamento de Arquitectura",
-      "Departamento de Informática",
-      "Departamento de Electrónica",
-      "Departamento de Industrias",
+      "Informática",
+      "Electrónica",
+      "Mecánica",
+      "Industrias",
+      "Matemática",
     ];
   }, [filterOptions]);
 
@@ -671,7 +685,8 @@ export const FilterForm = ({
 
   const carreras = useMemo(() => {
     if (
-      filterOptions?.carreras
+      filterOptions?.carreras &&
+      filterOptions.carreras.length > 0
     ) {
       return filterOptions.carreras.map(
         (opt: FilterOption) =>
@@ -680,10 +695,10 @@ export const FilterForm = ({
     }
 
     return [
-      "Arquitectura",
-      "Ingeniería Civil",
       "Ingeniería Civil Informática",
-      "Ingeniería Civil Electrónica",
+      "Técnico en Electrónica",
+      "Magíster en Informática",
+      "Doctorado en Industrias",
       "Ingeniería Civil Mecánica",
     ];
   }, [filterOptions]);

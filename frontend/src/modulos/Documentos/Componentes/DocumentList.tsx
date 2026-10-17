@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PdfModal } from "./PdfModal";
+import { RelacionesModal } from "./RelacionesModal";
 import { authService, type User } from "../../../services/authService";
 
 type Documento = {
@@ -31,6 +32,7 @@ const obtenerEstiloEstado = (estado: string) => {
 
 export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: DocumentListProps) => {
   const [pdfSeleccionado, setPdfSeleccionado] = useState<string | null>(null);
+  const [relacionesDocId, setRelacionesDocId] = useState<string | null>(null);
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
 
@@ -85,7 +87,19 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
                       setPdfSeleccionado(documentId);
                     }}
                     className="mt-3 w-full rounded-lg bg-sidebar py-2 text-sm text-white transition hover:opacity-90 md:w-auto md:px-4"
-                  >Ver documento</button>
+                  >
+                    Ver documento
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRelacionesDocId(String(doc.id))}
+                    className="mt-3 flex w-full items-center justify-center rounded-lg border border-slate-300 py-2 text-sm text-slate-700 transition hover:bg-slate-50 md:w-auto md:px-4"
+                  >
+                    <i className="pi pi-share-alt mr-2 text-sidebar" />
+                    Ver relaciones
+                  </button>
+
                   {user?.role === "admin" && (
                     <button
                       type="button"
@@ -103,6 +117,16 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
       </div>
       {pdfSeleccionado !== null && (
         <PdfModal documentId={pdfSeleccionado} onClose={() => setPdfSeleccionado(null)} />
+      )}
+      {relacionesDocId !== null && (
+        <RelacionesModal
+          documentId={relacionesDocId}
+          onClose={() => setRelacionesDocId(null)}
+          onVerDocumento={(targetId) => {
+            setRelacionesDocId(null);
+            setPdfSeleccionado(targetId);
+          }}
+        />
       )}
     </>
   );

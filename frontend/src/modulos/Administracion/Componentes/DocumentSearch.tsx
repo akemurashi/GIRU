@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Toast } from "primereact/toast";
 
 import { DocumentEditor } from "./DocumentEditor";
-import type { EditableDocument, Catalogs } from "./types";
+import type { EditableDocument, Catalogs, CatalogOption } from "./types";
+import api from "../../../services/api";
 
 import {
   getAdminCatalogs,
@@ -114,6 +115,7 @@ export const DocumentSearch = () => {
   const [selectedDocument, setSelectedDocument] =
     useState<EditableDocument | null>(null);
 
+  const [docOptions, setDocOptions] = useState<CatalogOption[]>([]);
   const [dirty, setDirty] = useState(false);
   const [catalogs, setCatalogs] = useState<Catalogs | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,6 +127,36 @@ export const DocumentSearch = () => {
 
   const documentProgress = useLoadingProgress(loading || !catalogs);
   const saveProgress = useLoadingProgress(isSaving);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    api
+      .get<any[]>("/documents", { params: { limit: 200 } })
+      .then((res) => {
+        if (!cancelled && Array.isArray(res.data)) {
+          const opts: CatalogOption[] = res.data.map((d: any) => ({
+            label: `${d.numero ? d.numero + " · " : ""}${d.titulo}`,
+            value: d.iddocumento,
+          }));
+          setDocOptions(opts);
+        }
+      })
+      .catch((err) =>
+        console.warn("No se pudieron cargar opciones de documentos:", err)
+      );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredDocOptions = useMemo(() => {
+    if (!selectedDocument) return docOptions;
+    return docOptions.filter(
+      (d) => String(d.value) !== String(selectedDocument.iddocumento)
+    );
+  }, [docOptions, selectedDocument]);
 
   useEffect(() => {
     let cancelled = false;
@@ -226,7 +258,11 @@ export const DocumentSearch = () => {
     setSaveSuccess(false);
 
     try {
-      await saveEditableDocument(draft.iddocumento, draft);
+      await saveEditableDocument(
+        draft.iddocumento,
+        draft,
+        selectedDocument?.relaciones
+      );
 
       saveProgress.finishProgress();
 
@@ -328,6 +364,7 @@ export const DocumentSearch = () => {
               key={selectedDocument.iddocumento}
               initial={selectedDocument}
               catalogs={catalogs!}
+              documentOptions={filteredDocOptions}
               onSave={handleSave}
               onCancel={handleCancel}
               onDirtyChange={setDirty}

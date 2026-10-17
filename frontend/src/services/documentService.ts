@@ -318,14 +318,19 @@ export const getAdminCatalogs = async (): Promise<any> => {
           item.nombreRespaldoLegal;
 
         const code =
+          item.code ??
           item.siglaMacro ??
           item.siglamacro ??
           item.sigla_macro ??
           item.numCategoria ??
           item.numcategoria ??
-          item.num_categoria;
+          item.num_categoria ??
+          item.codigocarrera ??
+          item.codigo_carrera;
 
         const parentId =
+          item.parent_id ??
+          item.parentId ??
           item.idMacroCategoria ??
           item.idmacrocategoria ??
           item.id_macro_categoria ??
@@ -383,13 +388,35 @@ export const getEditableDocument = async (
   id: string,
   catalogs: any
 ): Promise<any> => {
-  const [editableResponse, detailResponse] = await Promise.all([
+  const [editableResult, detailResult, lineageResult] = await Promise.allSettled([
     api.get(`/documents/${id}/editable`),
     api.get(`/documents/${id}`),
+    api.get(`/relaciones/${id}/lineage`),
   ]);
 
-  const editable = editableResponse.data;
-  const detail = detailResponse.data;
+  if (editableResult.status !== "fulfilled" || detailResult.status !== "fulfilled") {
+    throw new Error("No se pudo cargar el documento.");
+  }
+
+  const editable = editableResult.value.data;
+  const detail = detailResult.value.data;
+
+  let relaciones: any[] = [];
+  if (lineageResult.status === "fulfilled" && lineageResult.value.data?.relaciones_como_origen) {
+    relaciones = lineageResult.value.data.relaciones_como_origen.map((r: any) => ({
+      key: `rel-${r.idrelacion || crypto.randomUUID()}`,
+      idrelacion: r.idrelacion,
+      iddocumentodestino: r.iddocumentodestino,
+      idtiporelacion: r.idtiporelacion,
+      idrespaldolegal: r.idrespaldolegal ?? null,
+      idfuentedeteccion: r.idfuentedeteccion ?? null,
+      detallemodificacion: r.detalledemodificacion ?? r.detallemodificacion ?? "",
+      confianza: r.confianza ?? 1.0,
+      verificada: r.verificada ?? true,
+      textoevidencia: r.textoevidencia ?? "",
+      fechaefecto: r.fechaefecto ? String(r.fechaefecto).slice(0, 10) : "",
+    }));
+  }
 
   const normalizeDate = (value?: string | null): string => {
     if (!value) return "";
@@ -454,8 +481,7 @@ export const getEditableDocument = async (
     beneficios: editable.beneficiosids ?? [],
     nombramientos: editable.nombramientosids ?? [],
 
-    // Las relaciones no se editan desde este formulario.
-    relaciones: [],
+    relaciones,
   };
 };
 
@@ -465,7 +491,8 @@ export const getEditableDocument = async (
 
 export const saveEditableDocument = async (
   id: string,
-  data: any
+  data: any,
+  initialRelaciones?: any[]
 ): Promise<any> => {
   // Construir explícitamente el payload para no enviar propiedades
   // adicionales que el esquema de FastAPI podría rechazar.
@@ -498,6 +525,48 @@ export const saveEditableDocument = async (
 
   try {
     const response = await api.put(`/documents/${id}`, payload);
+
+    // Persistencia de relaciones si se incluyeron en el editor
+    if (Array.isArray(data.relaciones)) {
+      // 1. Eliminar relaciones que estaban en initialRelaciones pero ya no en draft
+      if (Array.isArray(initialRelaciones)) {
+        const currentRelIds = new Set(
+          data.relaciones
+            .map((r: any) => r.idrelacion)
+            .filter(Boolean)
+        );
+        for (const initR of initialRelaciones) {
+          if (initR.idrelacion && !currentRelIds.has(initR.idrelacion)) {
+            try {
+              await api.delete("/relaciones/", {
+                data: { idrelacion: initR.idrelacion },
+              });
+            } catch (delErr) {
+              console.warn("Error al eliminar relación:", delErr);
+            }
+          }
+        }
+      }
+
+      // 2. Guardar o modificar cada relación en data.relaciones
+      for (const r of data.relaciones) {
+        if (r.iddocumentodestino && r.idtiporelacion) {
+          await api.post("/relaciones/", {
+            iddocumentoorigen: id,
+            iddocumentodestino: r.iddocumentodestino,
+            idtiporelacion: r.idtiporelacion,
+            detallemodificacion: r.detallemodificacion || null,
+            fechaefecto: r.fechaefecto || null,
+            verificada: r.verificada ?? true,
+            confianza: r.confianza ?? 1.0,
+            textoevidencia: r.textoevidencia || null,
+            idfuentedeteccion: r.idfuentedeteccion ?? null,
+            idrespaldolegal: r.idrespaldolegal ?? null,
+            idrelacion: r.idrelacion ?? null,
+          });
+        }
+      }
+    }
 
     console.info("GIRU · Documento guardado correctamente:", {
       status: response.status,

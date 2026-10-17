@@ -19,70 +19,71 @@ export interface SearchFilters {
   numsesion?: number;
 
   // Vigencia
-  idestadovigencia?: number;
+  idestadovigencia?: number | number[];
 
   // Fechas
   creaciondesde?: string;
   creacionhasta?: string;
   derogaciondesde?: string;
   derogacionhasta?: string;
+  anios?: number[];
 
   // Booleanos
   aplicacioninmediata?: boolean;
   isactive?: boolean;
 
   // Tipo de documento
-  idtipodocumento?: number;
+  idtipodocumento?: number | number[];
 
   // Tipo de decisión
-  idtipodecision?: number;
+  idtipodecision?: number | number[];
 
   // Tipo de sesión
-  idtiposesion?: number;
+  idtiposesion?: number | number[];
 
   // Categoría
-  idcategoria?: number;
-  idmacrocategoria?: number;
+  idcategoria?: number | number[];
+  idmacrocategoria?: number | number[];
 
   // Área
-  idtipoarea?: number;
-  idsubarea?: number;
+  idtipoarea?: number | number[];
+  idsubarea?: number | number[];
 
   // Beneficios
-  idbeneficio?: number;
+  idbeneficio?: number | number[];
 
   // Sede / Campus
-  idrecintouniversitario?: number;
+  idrecintouniversitario?: number | number[];
 
   // Departamento
-  iddepartamento?: number;
+  iddepartamento?: number | number[];
 
   // Carrera
-  idcarrera?: number;
+  idcarrera?: number | number[];
 
   // Programa / nivel académico
-  idtipoprograma?: number;
-  idnivel?: number;
+  idtipoprograma?: number | number[];
+  idnivel?: number | number[];
 
   // Nombramiento
-  idtiponombramiento?: number;
+  idtiponombramiento?: number | number[];
 
   // Jornada
-  idjornada?: number;
+  idjornada?: number | number[];
 
   // Rol institucional
-  idrol?: number;
+  idrol?: number | number[];
 
   // Trazabilidad
-  idrespaldolegal?: number;
-  idtiporelacion?: number;
-  idfuente?: number;
+  idrespaldolegal?: number | number[];
+  idtiporelacion?: number | number[];
+  idfuente?: number | number[];
   verificada?: boolean;
   confianzamin?: number;
   confianzamax?: number;
 
   // Chunks
-  idtipopagina?: number;
+  idtipopagina?: number | number[];
 }
 
 export interface SearchResultItem {
@@ -126,6 +127,7 @@ export interface FilterOptions {
   roles_institucionales: FilterOption[];
   beneficios: FilterOption[];
   sedes_campus: FilterOption[];
+  sedes?: FilterOption[];
   tipos_nombramiento: FilterOption[];
   jornadas: FilterOption[];
   tipos_programa: FilterOption[];
@@ -327,70 +329,172 @@ export const useAutocomplete = (
 // =====================================================
 
 export const mapFrontendFiltersToAPI = (
-  frontendFilters: any
+  frontendFilters: any,
+  filterOptions?: FilterOptions
 ): SearchFilters => {
   const apiFilters: SearchFilters = {};
 
-  // Tipo de documento
+  if (!frontendFilters) return apiFilters;
+
+  // 1. Tipo de documento
   if (
     frontendFilters.tipoDocumento &&
     frontendFilters.tipoDocumento !== "Todos"
   ) {
-    const tipoDocumentoMap: Record<string, number> = {
-      Reglamento: 1,
-      Decreto: 2,
-      "Decreto Exento": 3,
-      Resolución: 4,
-      "Resolución Rectoría": 5,
-      Instructivo: 6,
-      Normativa: 7,
-      Acta: 8,
-      Documento: 9,
-    };
-
-    const tipoDocumentoId =
-      tipoDocumentoMap[frontendFilters.tipoDocumento];
-
-    if (tipoDocumentoId !== undefined) {
-      apiFilters.idtipodocumento = tipoDocumentoId;
+    const matched = filterOptions?.tipos_documento?.find(
+      (opt) => opt.nombre.toLowerCase().trim() === frontendFilters.tipoDocumento.toLowerCase().trim()
+    );
+    if (matched) {
+      apiFilters.idtipodocumento = matched.id;
+    } else {
+      const tipoDocumentoMap: Record<string, number> = {
+        Reglamento: 1,
+        Decreto: 2,
+        "Decreto Exento": 3,
+        Resolución: 4,
+        "Resolución Rectoría": 5,
+        Instructivo: 6,
+        Normativa: 7,
+        Acta: 8,
+        Documento: 9,
+      };
+      const tipoDocumentoId = tipoDocumentoMap[frontendFilters.tipoDocumento];
+      if (tipoDocumentoId !== undefined) {
+        apiFilters.idtipodocumento = tipoDocumentoId;
+      }
     }
   }
 
-  // Estado
+  // 2. Estado
   if (
     frontendFilters.estado &&
     frontendFilters.estado !== "Todos"
   ) {
-    const estadoMap: Record<string, number> = {
-      Vigente: 1,
-      Derogado: 2,
-      Modificado: 3,
-      "En Revisión": 4,
-      "No Vigente": 5,
-    };
-
-    const estadoId = estadoMap[frontendFilters.estado];
-
-    if (estadoId !== undefined) {
-      apiFilters.idestadovigencia = estadoId;
+    const matched = filterOptions?.estados_vigencia?.find(
+      (opt) => opt.nombre.toLowerCase().trim() === frontendFilters.estado.toLowerCase().trim()
+    );
+    if (matched) {
+      apiFilters.idestadovigencia = matched.id;
+    } else {
+      const estadoMap: Record<string, number> = {
+        Vigente: 1,
+        Derogado: 2,
+        Modificado: 3,
+        "En Revisión": 4,
+        "No Vigente": 5,
+      };
+      const estadoId = estadoMap[frontendFilters.estado];
+      if (estadoId !== undefined) {
+        apiFilters.idestadovigencia = estadoId;
+      }
     }
   }
 
-  // Año: rango entre el año menor y el mayor seleccionado.
+  // 3. Año
   if (
     frontendFilters.año &&
+    Array.isArray(frontendFilters.año) &&
     frontendFilters.año.length > 0
   ) {
-    const years = frontendFilters.año.map(Number);
-    const minYear = Math.min(...years);
-    const maxYear = Math.max(...years);
-
-    apiFilters.creaciondesde = `${minYear}-01-01`;
-    apiFilters.creacionhasta = `${maxYear}-12-31`;
+    const years = frontendFilters.año.map(Number).filter((n: number) => !isNaN(n));
+    if (years.length > 0) {
+      apiFilters.anios = years;
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+      apiFilters.creaciondesde = `${minYear}-01-01`;
+      apiFilters.creacionhasta = `${maxYear}-12-31`;
+    }
   }
 
-  // Área, sede, departamento y carrera mantienen
-  // el comportamiento del mapeo original.
+  // 4. Área (TipoArea)
+  if (
+    frontendFilters.area &&
+    Array.isArray(frontendFilters.area) &&
+    frontendFilters.area.length > 0
+  ) {
+    const areaIds: number[] = [];
+    const areaList = filterOptions?.tipos_area || [];
+    for (const name of frontendFilters.area) {
+      const clean = name.toLowerCase().trim();
+      const matched = areaList.find(
+        (a) => a.nombre.toLowerCase().trim() === clean
+      );
+      if (matched) {
+        areaIds.push(matched.id);
+      }
+    }
+    if (areaIds.length > 0) {
+      apiFilters.idtipoarea = areaIds.length === 1 ? areaIds[0] : areaIds;
+    }
+  }
+
+  // 5. Sede / Campus (SedeCampus)
+  if (
+    frontendFilters.sede &&
+    Array.isArray(frontendFilters.sede) &&
+    frontendFilters.sede.length > 0
+  ) {
+    const sedeIds: number[] = [];
+    const sedesList = filterOptions?.sedes_campus?.length
+      ? filterOptions.sedes_campus
+      : filterOptions?.sedes || [];
+    for (const name of frontendFilters.sede) {
+      const clean = name.toLowerCase().replace(/[\(\)]/g, "").trim();
+      const matched = sedesList.find(
+        (s: FilterOption) => s.nombre.toLowerCase().replace(/[\(\)]/g, "").trim() === clean
+      );
+      if (matched) {
+        sedeIds.push(matched.id);
+      }
+    }
+    if (sedeIds.length > 0) {
+      apiFilters.idrecintouniversitario = sedeIds.length === 1 ? sedeIds[0] : sedeIds;
+    }
+  }
+
+  // 6. Departamento (Departamento)
+  if (
+    frontendFilters.departamento &&
+    Array.isArray(frontendFilters.departamento) &&
+    frontendFilters.departamento.length > 0
+  ) {
+    const depIds: number[] = [];
+    const depList = filterOptions?.departamentos || [];
+    for (const name of frontendFilters.departamento) {
+      const clean = name.toLowerCase().replace(/^departamento de\s+/i, "").trim();
+      const matched = depList.find(
+        (d) => d.nombre.toLowerCase().replace(/^departamento de\s+/i, "").trim() === clean
+      );
+      if (matched) {
+        depIds.push(matched.id);
+      }
+    }
+    if (depIds.length > 0) {
+      apiFilters.iddepartamento = depIds.length === 1 ? depIds[0] : depIds;
+    }
+  }
+
+  // 7. Carrera (Carrera)
+  if (
+    frontendFilters.carrera &&
+    Array.isArray(frontendFilters.carrera) &&
+    frontendFilters.carrera.length > 0
+  ) {
+    const carrIds: number[] = [];
+    const carrList = filterOptions?.carreras || [];
+    for (const name of frontendFilters.carrera) {
+      const clean = name.toLowerCase().trim();
+      const matched = carrList.find(
+        (c) => c.nombre.toLowerCase().trim() === clean
+      );
+      if (matched) {
+        carrIds.push(matched.id);
+      }
+    }
+    if (carrIds.length > 0) {
+      apiFilters.idcarrera = carrIds.length === 1 ? carrIds[0] : carrIds;
+    }
+  }
 
   return apiFilters;
 };

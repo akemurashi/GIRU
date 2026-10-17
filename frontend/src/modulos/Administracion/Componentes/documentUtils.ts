@@ -61,7 +61,7 @@ export const isDeroga = (
 export function validateDocument(
   document: EditableDocument,
   _catalogs: Catalogs,
-  prefix: string
+  _prefix?: string
 ): FieldErrors {
   const errors: FieldErrors = {};
   const required = "Campo obligatorio.";
@@ -76,21 +76,7 @@ export function validateDocument(
     errors.idtipodocumento = required;
   }
 
-  // El título se muestra como identificación, pero no es editable.
-
-  if (!document.nommetadato.trim()) {
-    errors.nommetadato = required;
-  } else if (document.nommetadato.length > 255) {
-    errors.nommetadato = "Máximo 255 caracteres.";
-  } else if (prefix && !document.nommetadato.startsWith(prefix)) {
-    errors.nommetadato =
-      `Debe comenzar con «${prefix}» según la categoría elegida.`;
-  } else if (
-    prefix &&
-    document.nommetadato.length === prefix.length
-  ) {
-    errors.nommetadato = "Falta el número identificador.";
-  }
+  // El título y metadato identificador no son editables en este panel (los gestiona el backend/SP).
 
   if (
     document.descripcion.trim() &&
@@ -120,7 +106,18 @@ export function validateDocument(
       "No puede ser anterior a la fecha de creación.";
   }
 
-  // No se valida cant_paginas, la URL S3 ni las relaciones.
+  // Validación de relaciones normativas
+  if (Array.isArray(document.relaciones)) {
+    document.relaciones.forEach((r) => {
+      if (!r.iddocumentodestino) {
+        errors[`rel:${r.key}:destino`] = "Debe seleccionar el documento afectado.";
+      }
+      if (!r.idtiporelacion) {
+        errors[`rel:${r.key}:tipo`] = "Debe seleccionar el tipo de relación.";
+      }
+    });
+  }
+
   return errors;
 }
 
@@ -248,6 +245,26 @@ export function computeChanges(
         after: newValue,
       });
     }
+  }
+
+  // Comparación de relaciones normativas
+  const beforeRels = before.relaciones ?? [];
+  const afterRels = after.relaciones ?? [];
+
+  if (
+    beforeRels.length !== afterRels.length ||
+    JSON.stringify(beforeRels) !== JSON.stringify(afterRels)
+  ) {
+    const fmtRels = (rels: typeof beforeRels) =>
+      rels.length === 0
+        ? "Sin relaciones"
+        : `${rels.length} relación(es) configurada(s)`;
+
+    changes.push({
+      field: "Relaciones normativas",
+      before: fmtRels(beforeRels),
+      after: fmtRels(afterRels),
+    });
   }
 
   return changes;

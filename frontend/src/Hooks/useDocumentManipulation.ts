@@ -13,42 +13,42 @@ export const useDocumentManipulation = () => {
   /**
    * Update document metadata
    */
-  const updateDocument = useCallback((id: number, data: DocumentUpdateData) => {
-    return updateDocumentMutation.mutateAsync({ id, data });
+  const updateDocument = useCallback((id: string | number, data: DocumentUpdateData) => {
+    return updateDocumentMutation.mutateAsync({ id: String(id), data });
   }, [updateDocumentMutation]);
 
   /**
    * Toggle document active status
    */
-  const toggleActive = useCallback((id: number) => {
-    return toggleActiveMutation.mutateAsync(id);
+  const toggleActive = useCallback((id: string | number) => {
+    return toggleActiveMutation.mutateAsync(String(id));
   }, [toggleActiveMutation]);
 
   /**
    * Delete document
    */
-  const deleteDocument = useCallback((id: number) => {
-    return deleteDocumentMutation.mutateAsync(id);
+  const deleteDocument = useCallback((id: string | number) => {
+    return deleteDocumentMutation.mutateAsync(String(id));
   }, [deleteDocumentMutation]);
 
   /**
    * Quick status update helper
    */
-  const updateStatus = useCallback((id: number, statusId: number) => {
+  const updateStatus = useCallback((id: string | number, statusId: number) => {
     return updateDocument(id, { idestadovigencia: statusId });
   }, [updateDocument]);
 
   /**
    * Quick category update helper
    */
-  const updateCategory = useCallback((id: number, categoryId: number) => {
+  const updateCategory = useCallback((id: string | number, categoryId: number) => {
     return updateDocument(id, { idcategoria: categoryId });
   }, [updateDocument]);
 
   /**
    * Quick title update helper
    */
-  const updateTitle = useCallback((id: number, title: string) => {
+  const updateTitle = useCallback((id: string | number, title: string) => {
     return updateDocument(id, { titulo: title });
   }, [updateDocument]);
 

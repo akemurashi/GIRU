@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { authService, type User } from "../../../services/authService";
+import { RelacionesModal } from "./RelacionesModal";
 
 type DocumentCardProps = {
   id: string | number;
@@ -23,6 +24,7 @@ export const DocumentCard = ({
 }: DocumentCardProps) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [showRelaciones, setShowRelaciones] = useState(false);
 
   useEffect(() => {
     setUser(authService.getUser());
@@ -98,13 +100,22 @@ export const DocumentCard = ({
         )}
 
         <button
+          type="button"
+          onClick={() => setShowRelaciones(true)}
           className="
+            flex
+            items-center
             rounded-lg
             border
+            border-slate-300
             px-4
             py-2
+            text-slate-700
+            transition
+            hover:bg-slate-50
           "
         >
+          <i className="pi pi-share-alt mr-2 text-sidebar" />
           Ver relaciones
         </button>
 
@@ -119,6 +130,13 @@ export const DocumentCard = ({
           Consultar con Don Fede
         </button>
       </div>
+
+      {showRelaciones && (
+        <RelacionesModal
+          documentId={String(id)}
+          onClose={() => setShowRelaciones(false)}
+        />
+      )}
     </article>
   );
 };
