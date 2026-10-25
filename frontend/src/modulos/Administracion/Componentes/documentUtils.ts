@@ -58,22 +58,47 @@ export const isDeroga = (
 
 // ---------------------------------------------------------------- Validación
 
-export function validateDocument(
+export type ValidationIssue = {
+  key: string;
+  section: string;
+  field: string;
+  message: string;
+  targetId: string;
+};
+
+export function getValidationIssues(
   document: EditableDocument,
   _catalogs: Catalogs,
   _prefix?: string
-): FieldErrors {
-  const errors: FieldErrors = {};
-  const required = "Campo obligatorio.";
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
 
   if (!document.numero.trim()) {
-    errors.numero = required;
+    issues.push({
+      key: "numero",
+      section: "Datos generales",
+      field: "Número de documento",
+      message: "Debe ingresar el número del documento.",
+      targetId: "field-numero",
+    });
   } else if (document.numero.length > 50) {
-    errors.numero = "Máximo 50 caracteres.";
+    issues.push({
+      key: "numero",
+      section: "Datos generales",
+      field: "Número de documento",
+      message: "Máximo 50 caracteres.",
+      targetId: "field-numero",
+    });
   }
 
   if (document.idtipodocumento == null) {
-    errors.idtipodocumento = required;
+    issues.push({
+      key: "idtipodocumento",
+      section: "Datos generales",
+      field: "Tipo de documento",
+      message: "Debe seleccionar el tipo de documento.",
+      targetId: "field-idtipodocumento",
+    });
   }
 
   // El título y metadato identificador no son editables en este panel (los gestiona el backend/SP).
@@ -82,19 +107,44 @@ export function validateDocument(
     document.descripcion.trim() &&
     document.descripcion.length > 5000
   ) {
-    errors.descripcion = "Máximo 5000 caracteres.";
+    issues.push({
+      key: "descripcion",
+      section: "Datos generales",
+      field: "Descripción",
+      message: "Máximo 5000 caracteres.",
+      targetId: "field-descripcion",
+    });
   }
 
   if (document.idcategoria == null) {
-    errors.idcategoria = required;
+    issues.push({
+      key: "idcategoria",
+      section: "Categorización",
+      field: "Macrocategoría y Categoría",
+      message:
+        "Debe seleccionar una macrocategoría (Paso 1) y una categoría (Paso 2).",
+      targetId: "section-categorizacion",
+    });
   }
 
   if (document.idestadovigencia == null) {
-    errors.idestadovigencia = required;
+    issues.push({
+      key: "idestadovigencia",
+      section: "Vigencia y estado",
+      field: "Estado de vigencia",
+      message: "Debe seleccionar el estado de vigencia.",
+      targetId: "field-idestadovigencia",
+    });
   }
 
   if (!document.creacion) {
-    errors.creacion = required;
+    issues.push({
+      key: "creacion",
+      section: "Vigencia y estado",
+      field: "Fecha de creación",
+      message: "Debe seleccionar la fecha de creación.",
+      targetId: "field-creacion",
+    });
   }
 
   if (
@@ -102,20 +152,53 @@ export function validateDocument(
     document.creacion &&
     document.derogacion < document.creacion
   ) {
-    errors.derogacion =
-      "No puede ser anterior a la fecha de creación.";
+    issues.push({
+      key: "derogacion",
+      section: "Vigencia y estado",
+      field: "Fecha de derogación",
+      message: "No puede ser anterior a la fecha de creación.",
+      targetId: "field-derogacion",
+    });
   }
 
   // Validación de relaciones normativas
   if (Array.isArray(document.relaciones)) {
-    document.relaciones.forEach((r) => {
-      if (!r.iddocumentodestino) {
-        errors[`rel:${r.key}:destino`] = "Debe seleccionar el documento afectado.";
-      }
+    document.relaciones.forEach((r, index) => {
+      const num = index + 1;
       if (!r.idtiporelacion) {
-        errors[`rel:${r.key}:tipo`] = "Debe seleccionar el tipo de relación.";
+        issues.push({
+          key: `rel:${r.key}:idtiporelacion`,
+          section: "Relaciones con otros documentos",
+          field: `Relación #${num} · Tipo de relación`,
+          message: "Debe seleccionar el tipo de relación.",
+          targetId: `${r.key}-tipo`,
+        });
+      }
+      if (!r.iddocumentodestino) {
+        issues.push({
+          key: `rel:${r.key}:iddocumentodestino`,
+          section: "Relaciones con otros documentos",
+          field: `Relación #${num} · Documento afectado`,
+          message: "Debe seleccionar el documento afectado.",
+          targetId: `${r.key}-destino`,
+        });
       }
     });
+  }
+
+  return issues;
+}
+
+export function validateDocument(
+  document: EditableDocument,
+  catalogs: Catalogs,
+  prefix?: string
+): FieldErrors {
+  const issues = getValidationIssues(document, catalogs, prefix);
+  const errors: FieldErrors = {};
+
+  for (const issue of issues) {
+    errors[issue.key] = issue.message;
   }
 
   return errors;

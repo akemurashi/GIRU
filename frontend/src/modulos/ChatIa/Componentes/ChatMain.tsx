@@ -1,45 +1,13 @@
 
 import { useState, useRef, useEffect } from "react";
-import { externalAiService } from "../../../services/externalAiService";
+import { externalAiService, type AskResponse, type AskRequest } from "../../../services/externalAiService";
 import api from "../../../services/api";
 import { PdfModal } from "../../Documentos/Componentes/PdfModal";
 import { ChatHeader } from "./ChatHeader";
 import { ChatConversation } from "./ChatConversation";
 import { InfoPanel } from "./InfoPanel";
 import { ChatInput } from "./ChatInput";
-
-interface Message {
-  type: "user" | "assistant";
-  messageText?: string;
-  interpretationTitle?: string;
-  interpretationText?: string;
-  sourceTitle?: string;
-  sourceStatus?: string;
-  sourceDocumentTitle?: string;
-  sourceDocumentMeta?: string;
-  sourceDocumentUpdated?: string;
-  sourceQuote?: string;
-  sourceButtonText?: string;
-  sourceDocumentOriginalTitle?: string;
-  isStreaming?: boolean;
-}
-
-interface AskRequest {
-  user_id: string;
-  session_id: string;
-  pregunta: string;
-  modo?: string;
-  documento?: string;
-}
-
-interface AskResponse {
-  session_id: string;
-  respuesta: string;
-  fuentes: Array<{ documento: string; referencia?: string }>;
-  modo: string;
-  tiempo_s: number;
-  llamadas_llm: number;
-}
+import type { Message, SourceItem } from "../types";
 
 export const ChatMain = () => {
   const [showHeader, setShowHeader] = useState(true);
@@ -103,11 +71,14 @@ export const ChatMain = () => {
     return title.replace(/\.md$/i, "");
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || !sessionId || isLoading) return;
+  const handleSendMessage = async (customMessage?: string) => {
+    const textToSend = (customMessage ?? inputValue).trim();
+    if (!textToSend || !sessionId || isLoading) return;
 
-    const userMessage = inputValue.trim();
-    setInputValue("");
+    const userMessage = textToSend;
+    if (customMessage === undefined) {
+      setInputValue("");
+    }
     setIsLoading(true);
 
     // Añade el mensaje del usuario.
@@ -156,7 +127,7 @@ export const ChatMain = () => {
             setMessages((prev) =>
               prev.map((msg, idx) =>
                 idx === prev.length - 1 && msg.type === "assistant"
-                  ? { ...msg, interpretationText: chunk.status }
+                  ? { ...msg, streamingStatus: chunk.status }
                   : msg
               )
             );
@@ -175,20 +146,33 @@ export const ChatMain = () => {
         (complete) => {
           // La respuesta terminó: el SVG volverá a mostrarse.
           const response = complete as AskResponse;
-          const firstSource = response.fuentes?.[0];
+          const fuentesRaw = response.fuentes || [];
+          const topSources: SourceItem[] = fuentesRaw.slice(0, 3).map((f) => ({
+            documento: f.documento,
+            tituloLimpio: cleanDocumentTitle(f.documento),
+            fragmento: f.fragmento || null,
+            esOficial: Boolean(f.fragmento),
+          }));
+
+          const firstSource = topSources[0];
+          const hasVerifiedQuote = Boolean(firstSource?.fragmento);
 
           setMessages((prev) =>
             prev.map((msg, idx) =>
               idx === prev.length - 1 && msg.type === "assistant"
                 ? {
                     ...msg,
-                    interpretationText: response.respuesta,
+                    interpretationText: response.respuesta || fullResponse,
+                    sourceTitle: hasVerifiedQuote ? "Fuente oficial" : "Documento relacionado",
+                    sourceStatus: hasVerifiedQuote ? "Cita verificada" : "Sin cita textual",
                     sourceDocumentTitle: firstSource
-                      ? cleanDocumentTitle(firstSource.documento)
+                      ? firstSource.tituloLimpio
                       : "Documento no especificado",
-                    sourceDocumentMeta: firstSource?.referencia || "",
+                    sourceDocumentMeta: "", // Se descarta 'referencia' (UUID generado al azar)
                     sourceDocumentOriginalTitle: firstSource?.documento || "",
-                    sourceQuote: response.respuesta.slice(0, 200) + "...",
+                    sourceQuote: firstSource?.fragmento || undefined,
+                    sources: topSources,
+                    streamingStatus: undefined,
                     isStreaming: false,
                   }
                 : msg
@@ -205,6 +189,7 @@ export const ChatMain = () => {
                 ? {
                     ...msg,
                     interpretationText: `Error: ${error}`,
+                    streamingStatus: undefined,
                     isStreaming: false,
                   }
                 : msg
@@ -222,6 +207,7 @@ export const ChatMain = () => {
                 ...msg,
                 interpretationText:
                   "Error al obtener respuesta. Por favor, intenta nuevamente.",
+                streamingStatus: undefined,
                 isStreaming: false,
               }
             : msg
@@ -277,7 +263,7 @@ export const ChatMain = () => {
             bg-white
           "
         >
-          <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-10">
+          <div className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-6 sm:py-6 lg:px-10">
             <ChatConversation
               messages={messages}
               onViewDocument={handleViewDocument}
@@ -290,13 +276,16 @@ export const ChatMain = () => {
         <ChatInput
           value={inputValue}
           onChange={setInputValue}
-          onSend={handleSendMessage}
+          onSend={() => handleSendMessage()}
           disabled={isLoading || !sessionId}
         />
       </section>
 
       {/* PANEL DERECHO */}
-      <InfoPanel />
+      <InfoPanel
+        onSelectQuery={handleSendMessage}
+        disabled={isLoading || !sessionId}
+      />
 
       {/* PDF MODAL */}
       {showPdfModal && selectedDocumentId && (

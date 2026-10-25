@@ -1,21 +1,6 @@
 
 import { ChatMessage } from "./ChatMenssage";
-
-interface Message {
-  type: "user" | "assistant";
-  messageText?: string;
-  interpretationTitle?: string;
-  interpretationText?: string;
-  sourceTitle?: string;
-  sourceStatus?: string;
-  sourceDocumentTitle?: string;
-  sourceDocumentMeta?: string;
-  sourceDocumentUpdated?: string;
-  sourceQuote?: string;
-  sourceButtonText?: string;
-  sourceDocumentOriginalTitle?: string;
-  isStreaming?: boolean;
-}
+import type { Message } from "../types";
 
 interface ChatConversationProps {
   messages: Message[];
@@ -46,7 +31,7 @@ export const ChatConversation = ({
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-5 sm:gap-8">
       {messages.map((message, index) => (
         <ChatMessage
           key={index}
@@ -63,6 +48,8 @@ export const ChatConversation = ({
           sourceButtonText={message.sourceButtonText}
           sourceDocumentOriginalTitle={message.sourceDocumentOriginalTitle}
           isStreaming={message.isStreaming}
+          streamingStatus={message.streamingStatus}
+          sources={message.sources}
           onViewDocument={onViewDocument}
         />
       ))}
