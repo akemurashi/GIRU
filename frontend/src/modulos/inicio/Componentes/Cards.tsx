@@ -33,6 +33,7 @@ const categories = [
     title: "Actas",
     description:
       "Decisiones institucionales y registros oficiales.",
+    disabled: true,
   },
 
   {
@@ -42,6 +43,7 @@ const categories = [
     title: "Elecciones",
     description:
       "Guías de procedimiento y procesos electorales.",
+    disabled: true,
   },
 
   {
@@ -51,6 +53,7 @@ const categories = [
     title: "Convenios",
     description:
       "Convenios institucionales y acuerdos vigentes.",
+    disabled: true,
   },
 ];
 

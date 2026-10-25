@@ -10,15 +10,18 @@ import {
   AlcanceAcademicoSection,
   AudienciaSection,
 } from "./AlcanceSection";
+import { RelacionesSection } from "./RelacionesSection";
 import { ConfirmModal } from "./ConfirmModal";
 
 import {
   computeChanges,
   getMetadatoPrefix,
+  getValidationIssues,
   validateDocument,
 } from "./documentUtils";
 
 import type {
+  CatalogOption,
   Catalogs,
   EditableDocument,
   OnChange,
@@ -30,6 +33,7 @@ type DocumentEditorProps = {
   /** Documento tal como está guardado. El editor mantiene su propio borrador. */
   initial: EditableDocument;
   catalogs: Catalogs;
+  documentOptions?: CatalogOption[];
   onSave: (document: EditableDocument) => void;
   onCancel: () => void;
   onDirtyChange?: (dirty: boolean) => void;
@@ -38,6 +42,7 @@ type DocumentEditorProps = {
 export function DocumentEditor({
   initial,
   catalogs,
+  documentOptions = [],
   onSave,
   onCancel,
   onDirtyChange,
@@ -58,6 +63,11 @@ export function DocumentEditor({
 
   const isModified = changes.length > 0;
 
+  const validationIssues = useMemo(
+    () => getValidationIssues(draft, catalogs, metadatoPrefix),
+    [draft, catalogs, metadatoPrefix]
+  );
+
   const errors = useMemo(
     () =>
       showErrors
@@ -66,7 +76,18 @@ export function DocumentEditor({
     [showErrors, draft, catalogs, metadatoPrefix]
   );
 
-  const errorCount = Object.keys(errors).length;
+  const scrollToField = (targetId: string) => {
+    setShowErrors(true);
+    window.requestAnimationFrame(() => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (typeof element.focus === "function") {
+          element.focus({ preventScroll: true });
+        }
+      }
+    });
+  };
 
   useEffect(() => {
     onDirtyChange?.(isModified);
@@ -80,14 +101,9 @@ export function DocumentEditor({
   };
 
   const handleSaveClick = () => {
-    const validationErrors = validateDocument(
-      draft,
-      catalogs,
-      metadatoPrefix
-    );
-
-    if (Object.keys(validationErrors).length > 0) {
+    if (validationIssues.length > 0) {
       setShowErrors(true);
+      scrollToField(validationIssues[0].targetId);
       return;
     }
 
@@ -121,6 +137,106 @@ export function DocumentEditor({
           </div>
         </div>
       </div>
+
+      {/* Resumen de campos obligatorios pendientes */}
+      {validationIssues.length > 0 && (
+        <div
+          role="region"
+          aria-label="Campos obligatorios pendientes"
+          className={`mb-6 rounded-2xl border p-4 shadow-sm sm:p-5 ${
+            showErrors
+              ? "border-red-300 bg-red-50/90"
+              : "border-amber-300 bg-amber-50/90"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                showErrors
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              <i className="pi pi-exclamation-triangle text-base" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3
+                  className={`m-0 text-sm font-bold ${
+                    showErrors ? "text-red-900" : "text-amber-900"
+                  }`}
+                >
+                  {validationIssues.length === 1
+                    ? "Falta 1 campo obligatorio por completar o revisar"
+                    : `Faltan ${validationIssues.length} campos obligatorios por completar o revisar`}
+                </h3>
+
+                {!showErrors && (
+                  <button
+                    type="button"
+                    onClick={() => setShowErrors(true)}
+                    className="rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+                  >
+                    Resaltar en el formulario
+                  </button>
+                )}
+              </div>
+
+              <p
+                className={`m-0 mt-1 text-xs ${
+                  showErrors ? "text-red-800" : "text-amber-800"
+                }`}
+              >
+                Selecciona cualquiera de los siguientes elementos para ir directamente al campo que debes completar:
+              </p>
+
+              <ul className="m-0 mt-3 grid list-none grid-cols-1 gap-2 p-0 sm:grid-cols-2">
+                {validationIssues.map((issue) => (
+                  <li key={issue.key}>
+                    <button
+                      type="button"
+                      onClick={() => scrollToField(issue.targetId)}
+                      className={`flex w-full items-start justify-between gap-2 rounded-xl border bg-white px-3 py-2.5 text-left transition hover:shadow-sm ${
+                        showErrors
+                          ? "border-red-200 hover:border-red-400"
+                          : "border-amber-200 hover:border-amber-400"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          {issue.section}
+                        </span>
+                        <span className="block text-xs font-bold text-slate-800">
+                          {issue.field}
+                        </span>
+                        <span
+                          className={`mt-0.5 block text-xs ${
+                            showErrors ? "text-red-700" : "text-amber-800"
+                          }`}
+                        >
+                          {issue.message}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`mt-1 inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${
+                          showErrors
+                            ? "bg-red-50 text-red-700"
+                            : "bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        Ir
+                        <i className="pi pi-arrow-right text-[10px]" />
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Formulario */}
       <div className="flex flex-col gap-7">
@@ -172,6 +288,14 @@ export function DocumentEditor({
           catalogs={catalogs}
           onChange={onChange}
         />
+
+        <RelacionesSection
+          relaciones={draft.relaciones ?? []}
+          catalogs={catalogs}
+          documentOptions={documentOptions}
+          errors={errors}
+          onChange={(relaciones) => onChange("relaciones", relaciones)}
+        />
       </div>
 
       {/* Acciones y contador de cambios */}
@@ -199,16 +323,44 @@ export function DocumentEditor({
           )}
         </div>
 
-        {errorCount > 0 && (
-          <p
+        {validationIssues.length > 0 && (
+          <div
             role="alert"
-            className="m-0 mb-3 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+            className={`mb-3 rounded-xl border p-3 text-sm ${
+              showErrors
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
           >
-            <i className="pi pi-exclamation-circle" />
-            Hay {errorCount}{" "}
-            {errorCount === 1 ? "campo" : "campos"} por corregir antes de
-            guardar.
-          </p>
+            <div className="flex items-center gap-2 font-semibold">
+              <i className="pi pi-exclamation-circle" />
+              <span>
+                {validationIssues.length === 1
+                  ? "Falta 1 campo obligatorio antes de guardar:"
+                  : `Faltan ${validationIssues.length} campos obligatorios antes de guardar:`}
+              </span>
+            </div>
+
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {validationIssues.map((issue) => (
+                <button
+                  key={issue.key}
+                  type="button"
+                  onClick={() => scrollToField(issue.targetId)}
+                  title={issue.message}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium transition ${
+                    showErrors
+                      ? "border-red-200 text-red-800 hover:border-red-400 hover:bg-red-100/50"
+                      : "border-amber-300 text-amber-900 hover:border-amber-400 hover:bg-amber-100/50"
+                  }`}
+                >
+                  <span className="font-semibold">{issue.field}:</span>
+                  <span>{issue.message}</span>
+                  <i className="pi pi-arrow-up-right text-[10px]" />
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">

@@ -29,9 +29,6 @@ class AuthService {
       }
     );
 
-    // 🔍 Muestra en consola los tokens devueltos por /auth/callback
-    console.log("=== RESPUESTA DE /auth/callback ===", response.data);
-
     return response.data;
   }
 
@@ -41,9 +38,6 @@ class AuthService {
         Authorization: `Bearer ${token}`,
       },
     });
-
-    // 🔍 Muestra en consola la información entregada por /auth/me
-    console.log("=== RESPUESTA DE /auth/me ===", response.data);
 
     const data = response.data;
 

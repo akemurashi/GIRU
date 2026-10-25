@@ -1,3 +1,10 @@
+export interface SourceItem {
+  documento: string;
+  tituloLimpio: string;
+  fragmento?: string | null;
+  esOficial: boolean;
+}
+
 export interface Message {
   type: "user" | "assistant";
   messageText?: string;
@@ -10,5 +17,8 @@ export interface Message {
   sourceDocumentUpdated?: string;
   sourceQuote?: string;
   sourceButtonText?: string;
+  sourceDocumentOriginalTitle?: string;
   isStreaming?: boolean;
+  streamingStatus?: string;
+  sources?: SourceItem[];
 }

@@ -1,7 +1,15 @@
 import { SuggestionList } from "./SuggestionList";
 import { FeaturedDocuments } from "./FeaturedDocuments";
 
-export const InfoPanel = () => {
+interface InfoPanelProps {
+  onSelectQuery: (query: string) => void;
+  disabled?: boolean;
+}
+
+export const InfoPanel = ({
+  onSelectQuery,
+  disabled = false,
+}: InfoPanelProps) => {
   return (
     <aside className="hidden w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 xl:block">
       <div className="space-y-8 px-6 py-6">
@@ -16,9 +24,15 @@ export const InfoPanel = () => {
           </p>
         </section>
 
-        <SuggestionList />
+        <SuggestionList
+          onSelectSuggestion={onSelectQuery}
+          disabled={disabled}
+        />
 
-        <FeaturedDocuments />
+        <FeaturedDocuments
+          onSelectDocument={onSelectQuery}
+          disabled={disabled}
+        />
       </div>
     </aside>
   );

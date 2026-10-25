@@ -1,18 +1,17 @@
 import { useDocumentManipulation } from './useDocumentManipulation';
-import { useDocument } from '../services/documentService';
+import { useDocument, useUpdateDocument, useToggleDocumentActive } from '../services/documentService';
 
 /**
  * Example usage of document manipulation hooks
  * This shows how to use the axios/tanstack document manipulation in a component
  */
-export const DocumentManipulationExample = ({ documentId }: { documentId: number }) => {
+export const DocumentManipulationExample = ({ documentId }: { documentId: string }) => {
   const { data: document } = useDocument(documentId);
   const {
     updateDocument,
     toggleActive,
     deleteDocument,
     updateStatus,
-    updateCategory,
     updateTitle,
     isUpdating,
     isToggling,
@@ -59,14 +58,14 @@ export const DocumentManipulationExample = ({ documentId }: { documentId: number
         sedesids: [1, 2],
         carrerasids: [1],
       });
-      console.log('Document fully updated');
+      console.log('Full update completed');
     } catch (error) {
       console.error('Failed to update document:', error);
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este documento?')) {
+    if (window.confirm('¿Está seguro de eliminar este documento?')) {
       try {
         await deleteDocument(documentId);
         console.log('Document deleted successfully');
@@ -98,7 +97,7 @@ export const DocumentManipulationExample = ({ documentId }: { documentId: number
           disabled={isToggling}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
         >
-          {isToggling ? 'Cambiando estado...' : `Cambiar a ${document.isactive ? 'Inactivo' : 'Activo'}`}
+          {isToggling ? 'Cambiando estado...' : `Cambiar estado`}
         </button>
 
         <button
@@ -138,7 +137,7 @@ export const DocumentManipulationExample = ({ documentId }: { documentId: number
 /**
  * Example of using the raw hooks directly in a component
  */
-export const DirectHooksExample = ({ documentId }: { documentId: number }) => {
+export const DirectHooksExample = ({ documentId }: { documentId: string }) => {
   const updateDocument = useUpdateDocument();
   const toggleActive = useToggleDocumentActive();
 
@@ -148,9 +147,8 @@ export const DirectHooksExample = ({ documentId }: { documentId: number }) => {
       {
         onSuccess: () => {
           console.log('Document updated successfully');
-          // The query invalidation happens automatically
         },
-        onError: (error) => {
+        onError: (error: any) => {
           console.error('Update failed:', error);
         }
       }
@@ -162,7 +160,7 @@ export const DirectHooksExample = ({ documentId }: { documentId: number }) => {
       onSuccess: () => {
         console.log('Active status toggled');
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error('Toggle failed:', error);
       }
     });

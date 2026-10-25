@@ -25,7 +25,8 @@ export interface AskRequest {
 
 export interface Fuente {
   documento: string;
-  referencia?: string;
+  referencia?: string | null;
+  fragmento?: string | null;
 }
 
 export interface AskResponse {
@@ -122,7 +123,7 @@ export class ExternalAiService {
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
+        buffer += chunk.replace(/\r\n/g, "\n");
 
         // Split by double newline to get SSE blocks
         const blocks = buffer.split("\n\n");
@@ -134,10 +135,11 @@ export class ExternalAiService {
           let dataLine = "";
 
           for (const line of lines) {
-            if (line.startsWith("event: ")) {
-              eventType = line.slice(7);
-            } else if (line.startsWith("data: ")) {
-              dataLine = line.slice(6);
+            const trimmedLine = line.trimEnd();
+            if (trimmedLine.startsWith("event:")) {
+              eventType = trimmedLine.slice(6).trim();
+            } else if (trimmedLine.startsWith("data:")) {
+              dataLine = trimmedLine.slice(5).trim();
             }
           }
 

@@ -89,6 +89,7 @@ export function VigenciaSection({
                   </div>
 
                   <FormField
+                    id="field-idestadovigencia"
                     label="Estado de vigencia"
                     type="select"
                     required
@@ -121,6 +122,7 @@ export function VigenciaSection({
                   </div>
 
                   <FormField
+                    id="field-creacion"
                     label="Fecha de creación"
                     type="date"
                     required
@@ -154,6 +156,7 @@ export function VigenciaSection({
                   </div>
 
                   <FormField
+                    id="field-derogacion"
                     label="Fecha de derogación"
                     type="date"
                     value={document.derogacion}

@@ -76,6 +76,7 @@ export function IdentificacionSection({
                 </div>
 
                 <FormField
+                  id="field-numero"
                   label="Número de documento"
                   type="text"
                   required
@@ -105,6 +106,7 @@ export function IdentificacionSection({
                 </div>
 
                 <FormField
+                  id="field-idtipodocumento"
                   label="Tipo de documento"
                   type="select"
                   required
@@ -136,9 +138,11 @@ export function IdentificacionSection({
                 </div>
 
                 <FormField
+                  id="field-descripcion"
                   label="Descripción"
                   type="textarea"
                   value={document.descripcion}
+                  error={errors.descripcion}
                   helperText="Resume el propósito, alcance o contenido principal del documento."
                   onChange={(v) => onChange("descripcion", v)}
                 />
