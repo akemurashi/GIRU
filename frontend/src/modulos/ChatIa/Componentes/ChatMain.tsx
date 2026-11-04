@@ -24,7 +24,7 @@ export const ChatMain = () => {
 
   // Inicializa la sesión real, igual que antes.
   useEffect(() => {
-    initializeSession();
+    void initializeSession();
   }, []);
 
   // Mantiene la conversación desplazada hacia el último mensaje.

@@ -7,7 +7,7 @@ interface PantallaCargaVideoProps {
 export default function PantallaCargaVideo({
   mensaje,
   subtitulo = "Esto puede tardar unos segundos.",
-}: PantallaCargaVideoProps) {
+}: Readonly<PantallaCargaVideoProps>) {
   return (
     <main
       className="flex min-h-screen flex-col items-center justify-center px-5 text-center"
@@ -22,7 +22,6 @@ export default function PantallaCargaVideo({
         loop
         playsInline
         preload="auto"
-        aria-hidden="true"
       >
         <source src="/giruLupa.webm" type="video/webm" />
       </video>

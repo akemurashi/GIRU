@@ -1,4 +1,3 @@
-
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { InputNumber } from "primereact/inputnumber";
@@ -57,9 +56,8 @@ export type FormFieldProps = {
 
 // Convierte "2025-01-31" a una fecha local para evitar desfases de zona horaria.
 const parseISODate = (value: unknown): Date | null => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(
-    String(value ?? "")
-  );
+  const strValue = typeof value === "string" ? value : "";
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(strValue);
 
   if (!match) return null;
 
@@ -88,6 +86,190 @@ const SELECT =
 const PANEL_CLASS =
   "giru-dropdown-panel !z-[9999] !border !border-slate-200 !bg-white !opacity-100 !shadow-xl !rounded-xl overflow-hidden text-sm";
 
+const getPortalTarget = () =>
+  typeof document !== "undefined" ? document.body : undefined;
+
+const dropdownItemTemplate = (option: FormFieldOption) => (
+  <div className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2">
+    <span>{option.label}</span>
+  </div>
+);
+
+type InternalInputProps = Readonly<{
+  fieldId: string;
+  type: FormFieldType;
+  value: FormFieldValue;
+  options: FormFieldOption[];
+  groups?: FormFieldGroup[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onChange: (value: any) => void;
+  readOnly: boolean;
+  required: boolean;
+  placeholder?: string;
+  invalid: string;
+  inputCls: string;
+  min?: number;
+  max?: number;
+  fractionDigits: number;
+}>;
+
+const renderMultiSelectInput = (props: InternalInputProps) => (
+  <MultiSelect
+    inputId={props.fieldId}
+    value={Array.isArray(props.value) ? props.value : []}
+    options={props.groups ?? props.options}
+    optionGroupLabel={props.groups ? "label" : undefined}
+    optionGroupChildren={props.groups ? "items" : undefined}
+    optionLabel="label"
+    optionValue="value"
+    onChange={(event) => props.onChange(event.value)}
+    disabled={props.readOnly}
+    display="chip"
+    filter
+    showClear={!props.readOnly}
+    placeholder={props.placeholder ?? "Seleccione una o más opciones"}
+    emptyFilterMessage="Sin resultados"
+    emptyMessage="Sin opciones disponibles"
+    className={`${SELECT}${props.invalid}`}
+    panelClassName={PANEL_CLASS}
+    appendTo={getPortalTarget()}
+  />
+);
+
+const renderSelectInput = (props: InternalInputProps) => {
+  const normalizedVal =
+    typeof props.value === "number" || typeof props.value === "string"
+      ? props.value
+      : null;
+
+  return (
+    <Dropdown
+      inputId={props.fieldId}
+      value={normalizedVal}
+      options={props.options}
+      optionLabel="label"
+      optionValue="value"
+      onChange={(event) => props.onChange(event.value ?? null)}
+      disabled={props.readOnly}
+      filter={props.options.length > 8}
+      showClear={!props.required && !props.readOnly}
+      placeholder={props.placeholder ?? "Seleccione una opción"}
+      emptyMessage="Sin opciones disponibles"
+      emptyFilterMessage="Sin resultados"
+      className={`${SELECT}${props.invalid}`}
+      panelClassName={PANEL_CLASS}
+      appendTo={getPortalTarget()}
+      itemTemplate={dropdownItemTemplate}
+    />
+  );
+};
+
+const renderDateInput = (props: InternalInputProps) => (
+  <Calendar
+    inputId={props.fieldId}
+    value={parseISODate(props.value)}
+    onChange={(event) =>
+      props.onChange(
+        event.value instanceof Date ? toISODate(event.value) : ""
+      )
+    }
+    disabled={props.readOnly}
+    dateFormat="dd/mm/yy"
+    showIcon
+    placeholder={props.placeholder ?? "dd/mm/aaaa"}
+    className={`w-full giru-calendar${props.invalid}`}
+    inputClassName={props.inputCls}
+    panelClassName="giru-calendar-panel"
+    appendTo={getPortalTarget()}
+    showButtonBar
+  />
+);
+
+const renderControlByType = (props: InternalInputProps) => {
+  const stringVal = typeof props.value === "string" ? props.value : "";
+
+  switch (props.type) {
+    case "textarea":
+      return (
+        <InputTextarea
+          id={props.fieldId}
+          value={stringVal}
+          onChange={(event) => props.onChange(event.target.value)}
+          disabled={props.readOnly}
+          placeholder={props.placeholder}
+          rows={4}
+          autoResize
+          className={props.inputCls}
+        />
+      );
+
+    case "url":
+      return (
+        <InputText
+          id={props.fieldId}
+          type="url"
+          value={stringVal}
+          onChange={(event) => props.onChange(event.target.value)}
+          disabled={props.readOnly}
+          placeholder={props.placeholder}
+          className={props.inputCls}
+        />
+      );
+
+    case "number":
+      return (
+        <InputNumber
+          inputId={props.fieldId}
+          value={typeof props.value === "number" ? props.value : null}
+          onValueChange={(event) => props.onChange(event.value ?? null)}
+          disabled={props.readOnly}
+          placeholder={props.placeholder}
+          useGrouping={false}
+          min={props.min}
+          max={props.max}
+          minFractionDigits={props.fractionDigits}
+          maxFractionDigits={props.fractionDigits}
+          className={`w-full${props.invalid}`}
+          inputClassName={props.inputCls}
+        />
+      );
+
+    case "date":
+      return renderDateInput(props);
+
+    case "boolean":
+      return (
+        <div className="flex min-h-11 items-center">
+          <InputSwitch
+            inputId={props.fieldId}
+            checked={Boolean(props.value)}
+            onChange={(event) => props.onChange(Boolean(event.value))}
+            disabled={props.readOnly}
+          />
+        </div>
+      );
+
+    case "multiselect":
+      return renderMultiSelectInput(props);
+
+    case "select":
+      return renderSelectInput(props);
+
+    case "text":
+    default:
+      return (
+        <InputText
+          id={props.fieldId}
+          value={stringVal}
+          onChange={(event) => props.onChange(event.target.value)}
+          disabled={props.readOnly}
+          placeholder={props.placeholder}
+          className={props.inputCls}
+        />
+      );
+  }
+};
+
 export function FormField({
   label,
   type,
@@ -105,172 +287,29 @@ export function FormField({
   min,
   max,
   fractionDigits = 0,
-}: FormFieldProps) {
+}: Readonly<FormFieldProps>) {
   const fieldId =
     id ?? `form-field-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
   const invalid = error ? " p-invalid border-red-400!" : "";
   const inputCls = `${BASE} ${FOCUS}${invalid}`;
 
-  const renderField = () => {
-    switch (type) {
-      case "textarea":
-        return (
-          <InputTextarea
-            id={fieldId}
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => onChange(event.target.value)}
-            disabled={readOnly}
-            placeholder={placeholder}
-            rows={4}
-            autoResize
-            className={inputCls}
-          />
-        );
-
-      case "url":
-        return (
-          <InputText
-            id={fieldId}
-            type="url"
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => onChange(event.target.value)}
-            disabled={readOnly}
-            placeholder={placeholder}
-            className={inputCls}
-          />
-        );
-
-      case "number":
-        return (
-          <InputNumber
-            inputId={fieldId}
-            value={typeof value === "number" ? value : null}
-            onValueChange={(event) => onChange(event.value ?? null)}
-            disabled={readOnly}
-            placeholder={placeholder}
-            useGrouping={false}
-            min={min}
-            max={max}
-            minFractionDigits={fractionDigits}
-            maxFractionDigits={fractionDigits}
-            className={`w-full${invalid}`}
-            inputClassName={inputCls}
-          />
-        );
-
-      case "date":
-        return (
-          <Calendar
-            inputId={fieldId}
-            value={parseISODate(value)}
-            onChange={(event) =>
-              onChange(
-                event.value instanceof Date
-                  ? toISODate(event.value)
-                  : ""
-              )
-            }
-            disabled={readOnly}
-            dateFormat="dd/mm/yy"
-            showIcon
-            placeholder={placeholder ?? "dd/mm/aaaa"}
-            className={`w-full giru-calendar${invalid}`}
-            inputClassName={inputCls}
-            panelClassName="giru-calendar-panel"
-            appendTo={
-              typeof document !== "undefined" ? document.body : undefined
-            }
-            showButtonBar
-          />
-        );
-
-      case "boolean":
-        return (
-          <div className="flex min-h-11 items-center">
-            <InputSwitch
-              inputId={fieldId}
-              checked={Boolean(value)}
-              onChange={(event) => onChange(Boolean(event.value))}
-              disabled={readOnly}
-            />
-          </div>
-        );
-
-      case "multiselect":
-        return (
-          <MultiSelect
-            inputId={fieldId}
-            value={Array.isArray(value) ? value : []}
-            options={groups ?? options}
-            optionGroupLabel={groups ? "label" : undefined}
-            optionGroupChildren={groups ? "items" : undefined}
-            optionLabel="label"
-            optionValue="value"
-            onChange={(event) => onChange(event.value)}
-            disabled={readOnly}
-            display="chip"
-            filter
-            showClear={!readOnly}
-            placeholder={
-              placeholder ?? "Seleccione una o más opciones"
-            }
-            emptyFilterMessage="Sin resultados"
-            emptyMessage="Sin opciones disponibles"
-            className={`${SELECT}${invalid}`}
-            panelClassName={PANEL_CLASS}
-            appendTo={
-              typeof document !== "undefined" ? document.body : undefined
-            }
-          />
-        );
-
-      case "select":
-        return (
-          <Dropdown
-            inputId={fieldId}
-            value={
-              typeof value === "number" || typeof value === "string"
-                ? value
-                : null
-            }
-            options={options}
-            optionLabel="label"
-            optionValue="value"
-            onChange={(event) => onChange(event.value ?? null)}
-            disabled={readOnly}
-            filter={options.length > 8}
-            showClear={!required && !readOnly}
-            placeholder={placeholder ?? "Seleccione una opción"}
-            emptyMessage="Sin opciones disponibles"
-            emptyFilterMessage="Sin resultados"
-            className={`${SELECT}${invalid}`}
-            panelClassName={PANEL_CLASS}
-            appendTo={
-              typeof document !== "undefined" ? document.body : undefined
-            }
-            itemTemplate={(option) => (
-              <div className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2">
-                <span>{option.label}</span>
-              </div>
-            )}
-          />
-        );
-
-      case "text":
-      default:
-        return (
-          <InputText
-            id={fieldId}
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => onChange(event.target.value)}
-            disabled={readOnly}
-            placeholder={placeholder}
-            className={inputCls}
-          />
-        );
-    }
-  };
+  const control = renderControlByType({
+    fieldId,
+    type,
+    value,
+    options,
+    groups,
+    onChange,
+    readOnly,
+    required,
+    placeholder,
+    invalid,
+    inputCls,
+    min,
+    max,
+    fractionDigits,
+  });
 
   if (type === "boolean") {
     return (
@@ -292,7 +331,7 @@ export function FormField({
           )}
         </div>
 
-        {renderField()}
+        {control}
       </div>
     );
   }
@@ -311,7 +350,7 @@ export function FormField({
         )}
       </label>
 
-      {renderField()}
+      {control}
 
       {error ? (
         <small
@@ -319,7 +358,7 @@ export function FormField({
           role="alert"
         >
           <i className="pi pi-exclamation-circle text-xs" />
-          {error}
+          <span>{error}</span>
         </small>
       ) : (
         helperText && (

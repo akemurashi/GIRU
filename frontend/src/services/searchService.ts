@@ -328,6 +328,79 @@ export const useAutocomplete = (
 // HELPER FUNCTIONS
 // =====================================================
 
+const TIPO_DOCUMENTO_FALLBACK_MAP: Record<string, number> = {
+  Reglamento: 1,
+  Decreto: 2,
+  "Decreto Exento": 3,
+  Resolución: 4,
+  "Resolución Rectoría": 5,
+  Instructivo: 6,
+  Normativa: 7,
+  Acta: 8,
+  Documento: 9,
+};
+
+const ESTADO_VIGENCIA_FALLBACK_MAP: Record<string, number> = {
+  Vigente: 1,
+  Derogado: 2,
+  Modificado: 3,
+  "En Revisión": 4,
+  "No Vigente": 5,
+};
+
+function resolveSingleCatalogId(
+  selectedName: string | undefined,
+  options: FilterOption[] | undefined,
+  fallbackMap: Record<string, number>
+): number | undefined {
+  if (!selectedName || selectedName === "Todos") return undefined;
+  const clean = selectedName.toLowerCase().trim();
+  const matched = options?.find(
+    (opt) => opt.nombre.toLowerCase().trim() === clean
+  );
+  if (matched) return matched.id;
+  return fallbackMap[selectedName];
+}
+
+function resolveMultiCatalogIds(
+  selectedNames: unknown,
+  options: FilterOption[] | undefined,
+  normalize: (str: string) => string = (str) => str.toLowerCase().trim()
+): number | number[] | undefined {
+  if (!Array.isArray(selectedNames) || selectedNames.length === 0 || !options?.length) {
+    return undefined;
+  }
+
+  const matchedIds: number[] = [];
+  for (const name of selectedNames) {
+    if (typeof name !== "string") continue;
+    const clean = normalize(name);
+    const matched = options.find((opt) => normalize(opt.nombre) === clean);
+    if (matched) {
+      matchedIds.push(matched.id);
+    }
+  }
+
+  if (matchedIds.length === 0) return undefined;
+  return matchedIds.length === 1 ? matchedIds[0] : matchedIds;
+}
+
+function applyYearFilters(rawYears: unknown, apiFilters: SearchFilters): void {
+  if (!Array.isArray(rawYears) || rawYears.length === 0) return;
+
+  const years = rawYears
+    .map(Number)
+    .filter((n: number) => !Number.isNaN(n));
+
+  if (years.length > 0) {
+    apiFilters.anios = years;
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    apiFilters.creaciondesde = `${minYear}-01-01`;
+    apiFilters.creacionhasta = `${maxYear}-12-31`;
+  }
+}
+
 export const mapFrontendFiltersToAPI = (
   frontendFilters: any,
   filterOptions?: FilterOptions
@@ -337,163 +410,67 @@ export const mapFrontendFiltersToAPI = (
   if (!frontendFilters) return apiFilters;
 
   // 1. Tipo de documento
-  if (
-    frontendFilters.tipoDocumento &&
-    frontendFilters.tipoDocumento !== "Todos"
-  ) {
-    const matched = filterOptions?.tipos_documento?.find(
-      (opt) => opt.nombre.toLowerCase().trim() === frontendFilters.tipoDocumento.toLowerCase().trim()
-    );
-    if (matched) {
-      apiFilters.idtipodocumento = matched.id;
-    } else {
-      const tipoDocumentoMap: Record<string, number> = {
-        Reglamento: 1,
-        Decreto: 2,
-        "Decreto Exento": 3,
-        Resolución: 4,
-        "Resolución Rectoría": 5,
-        Instructivo: 6,
-        Normativa: 7,
-        Acta: 8,
-        Documento: 9,
-      };
-      const tipoDocumentoId = tipoDocumentoMap[frontendFilters.tipoDocumento];
-      if (tipoDocumentoId !== undefined) {
-        apiFilters.idtipodocumento = tipoDocumentoId;
-      }
-    }
+  const idTipoDoc = resolveSingleCatalogId(
+    frontendFilters.tipoDocumento,
+    filterOptions?.tipos_documento,
+    TIPO_DOCUMENTO_FALLBACK_MAP
+  );
+  if (idTipoDoc !== undefined) {
+    apiFilters.idtipodocumento = idTipoDoc;
   }
 
   // 2. Estado
-  if (
-    frontendFilters.estado &&
-    frontendFilters.estado !== "Todos"
-  ) {
-    const matched = filterOptions?.estados_vigencia?.find(
-      (opt) => opt.nombre.toLowerCase().trim() === frontendFilters.estado.toLowerCase().trim()
-    );
-    if (matched) {
-      apiFilters.idestadovigencia = matched.id;
-    } else {
-      const estadoMap: Record<string, number> = {
-        Vigente: 1,
-        Derogado: 2,
-        Modificado: 3,
-        "En Revisión": 4,
-        "No Vigente": 5,
-      };
-      const estadoId = estadoMap[frontendFilters.estado];
-      if (estadoId !== undefined) {
-        apiFilters.idestadovigencia = estadoId;
-      }
-    }
+  const idEstado = resolveSingleCatalogId(
+    frontendFilters.estado,
+    filterOptions?.estados_vigencia,
+    ESTADO_VIGENCIA_FALLBACK_MAP
+  );
+  if (idEstado !== undefined) {
+    apiFilters.idestadovigencia = idEstado;
   }
 
   // 3. Año
-  if (
-    frontendFilters.año &&
-    Array.isArray(frontendFilters.año) &&
-    frontendFilters.año.length > 0
-  ) {
-    const years = frontendFilters.año.map(Number).filter((n: number) => !isNaN(n));
-    if (years.length > 0) {
-      apiFilters.anios = years;
-      const minYear = Math.min(...years);
-      const maxYear = Math.max(...years);
-      apiFilters.creaciondesde = `${minYear}-01-01`;
-      apiFilters.creacionhasta = `${maxYear}-12-31`;
-    }
-  }
+  applyYearFilters(frontendFilters.año, apiFilters);
 
   // 4. Área (TipoArea)
-  if (
-    frontendFilters.area &&
-    Array.isArray(frontendFilters.area) &&
-    frontendFilters.area.length > 0
-  ) {
-    const areaIds: number[] = [];
-    const areaList = filterOptions?.tipos_area || [];
-    for (const name of frontendFilters.area) {
-      const clean = name.toLowerCase().trim();
-      const matched = areaList.find(
-        (a) => a.nombre.toLowerCase().trim() === clean
-      );
-      if (matched) {
-        areaIds.push(matched.id);
-      }
-    }
-    if (areaIds.length > 0) {
-      apiFilters.idtipoarea = areaIds.length === 1 ? areaIds[0] : areaIds;
-    }
+  const idArea = resolveMultiCatalogIds(
+    frontendFilters.area,
+    filterOptions?.tipos_area
+  );
+  if (idArea !== undefined) {
+    apiFilters.idtipoarea = idArea;
   }
 
   // 5. Sede / Campus (SedeCampus)
-  if (
-    frontendFilters.sede &&
-    Array.isArray(frontendFilters.sede) &&
-    frontendFilters.sede.length > 0
-  ) {
-    const sedeIds: number[] = [];
-    const sedesList = filterOptions?.sedes_campus?.length
-      ? filterOptions.sedes_campus
-      : filterOptions?.sedes || [];
-    for (const name of frontendFilters.sede) {
-      const clean = name.toLowerCase().replace(/[\(\)]/g, "").trim();
-      const matched = sedesList.find(
-        (s: FilterOption) => s.nombre.toLowerCase().replace(/[\(\)]/g, "").trim() === clean
-      );
-      if (matched) {
-        sedeIds.push(matched.id);
-      }
-    }
-    if (sedeIds.length > 0) {
-      apiFilters.idrecintouniversitario = sedeIds.length === 1 ? sedeIds[0] : sedeIds;
-    }
+  const sedesCatalog = filterOptions?.sedes_campus?.length
+    ? filterOptions.sedes_campus
+    : filterOptions?.sedes;
+  const idSede = resolveMultiCatalogIds(
+    frontendFilters.sede,
+    sedesCatalog,
+    (str) => str.toLowerCase().replace(/[()]/g, "").trim()
+  );
+  if (idSede !== undefined) {
+    apiFilters.idrecintouniversitario = idSede;
   }
 
   // 6. Departamento (Departamento)
-  if (
-    frontendFilters.departamento &&
-    Array.isArray(frontendFilters.departamento) &&
-    frontendFilters.departamento.length > 0
-  ) {
-    const depIds: number[] = [];
-    const depList = filterOptions?.departamentos || [];
-    for (const name of frontendFilters.departamento) {
-      const clean = name.toLowerCase().replace(/^departamento de\s+/i, "").trim();
-      const matched = depList.find(
-        (d) => d.nombre.toLowerCase().replace(/^departamento de\s+/i, "").trim() === clean
-      );
-      if (matched) {
-        depIds.push(matched.id);
-      }
-    }
-    if (depIds.length > 0) {
-      apiFilters.iddepartamento = depIds.length === 1 ? depIds[0] : depIds;
-    }
+  const idDep = resolveMultiCatalogIds(
+    frontendFilters.departamento,
+    filterOptions?.departamentos,
+    (str) => str.toLowerCase().replace(/^departamento de\s+/i, "").trim()
+  );
+  if (idDep !== undefined) {
+    apiFilters.iddepartamento = idDep;
   }
 
   // 7. Carrera (Carrera)
-  if (
-    frontendFilters.carrera &&
-    Array.isArray(frontendFilters.carrera) &&
-    frontendFilters.carrera.length > 0
-  ) {
-    const carrIds: number[] = [];
-    const carrList = filterOptions?.carreras || [];
-    for (const name of frontendFilters.carrera) {
-      const clean = name.toLowerCase().trim();
-      const matched = carrList.find(
-        (c) => c.nombre.toLowerCase().trim() === clean
-      );
-      if (matched) {
-        carrIds.push(matched.id);
-      }
-    }
-    if (carrIds.length > 0) {
-      apiFilters.idcarrera = carrIds.length === 1 ? carrIds[0] : carrIds;
-    }
+  const idCarrera = resolveMultiCatalogIds(
+    frontendFilters.carrera,
+    filterOptions?.carreras
+  );
+  if (idCarrera !== undefined) {
+    apiFilters.idcarrera = idCarrera;
   }
 
   return apiFilters;

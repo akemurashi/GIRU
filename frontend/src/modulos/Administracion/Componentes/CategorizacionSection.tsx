@@ -19,7 +19,7 @@ export function CategorizacionSection({
   categorias,
   error,
   onChange,
-}: Props) {
+}: Readonly<Props>) {
   const [macro, setMacro] = useState<number | null>(() => {
     if (idcategoria == null) return null;
     const found = categorias.find((c) => String(c.value) === String(idcategoria));

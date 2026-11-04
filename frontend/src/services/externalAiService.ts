@@ -83,6 +83,53 @@ export class ExternalAiService {
     return response.data;
   }
 
+  private parseSseBlock(block: string): { eventType: string; dataLine: string } {
+    const lines = block.split("\n");
+    let eventType = "";
+    let dataLine = "";
+
+    for (const line of lines) {
+      const trimmedLine = line.trimEnd();
+      if (trimmedLine.startsWith("event:")) {
+        eventType = trimmedLine.slice(6).trim();
+      } else if (trimmedLine.startsWith("data:")) {
+        dataLine = trimmedLine.slice(5).trim();
+      }
+    }
+
+    return { eventType, dataLine };
+  }
+
+  private processSseBlock(
+    block: string,
+    onChunk: (chunk: { status?: string; chunk?: string }) => void,
+    onComplete: (response: AskResponse) => void,
+    onError: (error: string) => void
+  ): boolean {
+    const { eventType, dataLine } = this.parseSseBlock(block);
+    if (!eventType || !dataLine) return false;
+
+    try {
+      const data = JSON.parse(dataLine);
+
+      if (eventType === "fase") {
+        onChunk({ status: data.detalle });
+      } else if (eventType === "token") {
+        onChunk({ chunk: data.t });
+      } else if (eventType === "fin") {
+        onComplete(data);
+        return true;
+      } else if (eventType === "error") {
+        onError(data.mensaje);
+        return true;
+      }
+    } catch {
+      // Ignore parse errors for incomplete chunks
+    }
+
+    return false;
+  }
+
   async askStream(
     request: AskRequest,
     onChunk: (chunk: { status?: string; chunk?: string }) => void,
@@ -123,44 +170,15 @@ export class ExternalAiService {
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk.replace(/\r\n/g, "\n");
+        buffer += chunk.replaceAll("\r\n", "\n");
 
         // Split by double newline to get SSE blocks
         const blocks = buffer.split("\n\n");
         buffer = blocks.pop() || ""; // Keep incomplete block
 
         for (const block of blocks) {
-          const lines = block.split("\n");
-          let eventType = "";
-          let dataLine = "";
-
-          for (const line of lines) {
-            const trimmedLine = line.trimEnd();
-            if (trimmedLine.startsWith("event:")) {
-              eventType = trimmedLine.slice(6).trim();
-            } else if (trimmedLine.startsWith("data:")) {
-              dataLine = trimmedLine.slice(5).trim();
-            }
-          }
-
-          if (!eventType || !dataLine) continue;
-
-          try {
-            const data = JSON.parse(dataLine);
-
-            if (eventType === "fase") {
-              onChunk({ status: data.detalle });
-            } else if (eventType === "token") {
-              onChunk({ chunk: data.t });
-            } else if (eventType === "fin") {
-              onComplete(data);
-              return;
-            } else if (eventType === "error") {
-              onError(data.mensaje);
-              return;
-            }
-          } catch (e) {
-            // Ignore parse errors for incomplete chunks
+          if (this.processSseBlock(block, onChunk, onComplete, onError)) {
+            return;
           }
         }
       }

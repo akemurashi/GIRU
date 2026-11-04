@@ -1,10 +1,10 @@
 import { CategoryCard } from "./CategoriaCard";
 
-import reglamentosImg from "/assets/Imagenes/Inicio/Reglamentos.jpg";
-import eleccionesImg from "/assets/Imagenes/Inicio/Elecciones.jpg";
-import actasImg from "/assets/Imagenes/Inicio/Actas.jpeg";
-import decretosImg from "/assets/Imagenes/Inicio/Decretos.jpg";
-import conveniosImg from "/assets/Imagenes/Inicio/Convenios.jpg";
+const reglamentosImg = "/assets/Imagenes/Inicio/Reglamentos.jpg";
+const eleccionesImg = "/assets/Imagenes/Inicio/Elecciones.jpg";
+const actasImg = "/assets/Imagenes/Inicio/Actas.jpeg";
+const decretosImg = "/assets/Imagenes/Inicio/Decretos.jpg";
+const conveniosImg = "/assets/Imagenes/Inicio/Convenios.jpg";
 
 
 const categories = [

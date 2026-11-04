@@ -10,7 +10,7 @@ interface ChatConversationProps {
 export const ChatConversation = ({
   messages,
   onViewDocument,
-}: ChatConversationProps) => {
+}: Readonly<ChatConversationProps>) => {
   if (messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -32,27 +32,30 @@ export const ChatConversation = ({
 
   return (
     <div className="flex flex-col gap-5 sm:gap-8">
-      {messages.map((message, index) => (
-        <ChatMessage
-          key={index}
-          type={message.type}
-          messageText={message.messageText}
-          interpretationTitle={message.interpretationTitle}
-          interpretationText={message.interpretationText}
-          sourceTitle={message.sourceTitle}
-          sourceStatus={message.sourceStatus}
-          sourceDocumentTitle={message.sourceDocumentTitle}
-          sourceDocumentMeta={message.sourceDocumentMeta}
-          sourceDocumentUpdated={message.sourceDocumentUpdated}
-          sourceQuote={message.sourceQuote}
-          sourceButtonText={message.sourceButtonText}
-          sourceDocumentOriginalTitle={message.sourceDocumentOriginalTitle}
-          isStreaming={message.isStreaming}
-          streamingStatus={message.streamingStatus}
-          sources={message.sources}
-          onViewDocument={onViewDocument}
-        />
-      ))}
+      {messages.map((message, index) => {
+        const messageKey = `${message.type}-${message.messageText ?? message.sourceDocumentTitle ?? "msg"}-${String(index).slice(0, 8)}`;
+        return (
+          <ChatMessage
+            key={messageKey}
+            type={message.type}
+            messageText={message.messageText}
+            interpretationTitle={message.interpretationTitle}
+            interpretationText={message.interpretationText}
+            sourceTitle={message.sourceTitle}
+            sourceStatus={message.sourceStatus}
+            sourceDocumentTitle={message.sourceDocumentTitle}
+            sourceDocumentMeta={message.sourceDocumentMeta}
+            sourceDocumentUpdated={message.sourceDocumentUpdated}
+            sourceQuote={message.sourceQuote}
+            sourceButtonText={message.sourceButtonText}
+            sourceDocumentOriginalTitle={message.sourceDocumentOriginalTitle}
+            isStreaming={message.isStreaming}
+            streamingStatus={message.streamingStatus}
+            sources={message.sources}
+            onViewDocument={onViewDocument}
+          />
+        );
+      })}
     </div>
   );
 };

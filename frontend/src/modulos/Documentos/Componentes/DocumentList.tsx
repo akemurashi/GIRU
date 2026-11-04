@@ -97,7 +97,7 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
                     className="mt-3 flex w-full items-center justify-center rounded-lg border border-slate-300 py-2 text-sm text-slate-700 transition hover:bg-slate-50 md:w-auto md:px-4"
                   >
                     <i className="pi pi-share-alt mr-2 text-sidebar" />
-                    Ver relaciones
+                    <span>Ver relaciones</span>
                   </button>
 
                   {user?.role === "admin" && (
@@ -106,7 +106,8 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
                       onClick={() => navigate(`/administracion?docId=${encodeURIComponent(String(doc.id))}`)}
                       className="mt-3 flex w-full items-center justify-center rounded-lg border border-amber-400 py-2 text-sm text-amber-500 transition hover:bg-amber-50 md:w-auto md:px-4"
                     >
-                      <i className="pi pi-pencil mr-2" />Editar
+                      <i className="pi pi-pencil mr-2" />
+                      <span>Editar</span>
                     </button>
                   )}
                 </div>
@@ -115,18 +116,17 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
           })}
         </div>
       </div>
-      {pdfSeleccionado !== null && (
-        <PdfModal documentId={pdfSeleccionado} onClose={() => setPdfSeleccionado(null)} />
-      )}
       {relacionesDocId !== null && (
         <RelacionesModal
           documentId={relacionesDocId}
           onClose={() => setRelacionesDocId(null)}
           onVerDocumento={(targetId) => {
-            setRelacionesDocId(null);
             setPdfSeleccionado(targetId);
           }}
         />
+      )}
+      {pdfSeleccionado !== null && (
+        <PdfModal documentId={pdfSeleccionado} onClose={() => setPdfSeleccionado(null)} />
       )}
     </>
   );

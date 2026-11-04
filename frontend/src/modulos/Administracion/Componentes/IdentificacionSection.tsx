@@ -10,7 +10,6 @@ import type {
 interface Props {
   document: EditableDocument;
   tiposDocumento: CatalogOption[];
-  metadatoPrefix: string;
   errors: FieldErrors;
   onChange: OnChange;
 }
@@ -20,7 +19,7 @@ export function IdentificacionSection({
   tiposDocumento,
   errors,
   onChange,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className="col-span-full w-full min-w-0">
       <EditorSection

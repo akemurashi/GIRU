@@ -1,17 +1,16 @@
-
 import { useState } from "react";
 import { useIsMobile } from "../../../Hooks/useIsMobile";
 import { PdfMobile } from "./PdfMobile";
 import { useDocumentUrl } from "../../../services/documentService";
 
-type PdfModalProps = {
+type PdfModalProps = Readonly<{
   documentId: string;
   onClose: () => void;
-};
+}>;
 
-type PdfDesktopViewerProps = {
+type PdfDesktopViewerProps = Readonly<{
   url: string;
-};
+}>;
 
 const PdfLoadingPlayer = () => {
   return (
@@ -25,14 +24,8 @@ const PdfLoadingPlayer = () => {
         aria-label="Animación de carga del documento"
         className="h-56 w-56 object-contain drop-shadow-[0_0_3px_rgba(0,61,122,0.65)] sm:h-72 sm:w-72"
       >
-        <source
-          src="/giruLupa.webm"
-          type="video/webm"
-        />
-        <source
-          src="/videos/giru-loading.mp4"
-          type="video/mp4"
-        />
+        <source src="/giruLupa.webm" type="video/webm" />
+        <source src="/videos/giru-loading.mp4" type="video/mp4" />
       </video>
 
       <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
@@ -61,36 +54,56 @@ const PdfDesktopViewer = ({ url }: PdfDesktopViewerProps) => {
   );
 };
 
-export const PdfModal = ({
-  documentId,
-  onClose,
-}: PdfModalProps) => {
+export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
   const isMobile = useIsMobile();
 
-  const {
-    data: url,
-    isLoading,
-    error,
-  } = useDocumentUrl(documentId);
+  const { data: url, isLoading, error } = useDocumentUrl(documentId);
+
+  let viewerContent: React.ReactNode;
+  if (isLoading) {
+    viewerContent = (
+      <div className="relative h-full w-full">
+        <PdfLoadingPlayer />
+      </div>
+    );
+  } else if (error || !url) {
+    viewerContent = (
+      <div className="flex h-full items-center justify-center p-4">
+        <div className="rounded-lg bg-red-100 p-4 text-center">
+          <p className="mb-2 font-semibold text-red-800">
+            Error al cargar el documento
+          </p>
+
+          <p className="text-sm text-red-700">
+            No se pudo obtener la URL de origen.
+          </p>
+        </div>
+      </div>
+    );
+  } else if (isMobile) {
+    viewerContent = <PdfMobile archivo={url} />;
+  } else {
+    viewerContent = <PdfDesktopViewer url={url} />;
+  }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-5"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+      <button
+        type="button"
+        aria-label="Cerrar visualizador de fondo"
+        onClick={onClose}
+        className="fixed inset-0 h-full w-full cursor-default border-0 bg-black/60 backdrop-blur-sm"
+      />
+
+      <dialog
+        open
         aria-modal="true"
         aria-labelledby="pdf-modal-title"
-        className="flex h-[90%] w-full flex-col overflow-hidden rounded-xl bg-sidebar shadow-2xl sm:w-[90%]"
-        onClick={(event) => event.stopPropagation()}
+        className="relative z-10 m-0 flex h-[90%] w-full flex-col overflow-hidden rounded-xl border-0 bg-sidebar p-0 text-left shadow-2xl sm:w-[90%]"
       >
         {/* HEADER */}
         <div className="flex shrink-0 items-center justify-between border-b border-white/15 px-4 py-3 sm:px-5">
-          <h2
-            id="pdf-modal-title"
-            className="font-semibold text-white"
-          >
+          <h2 id="pdf-modal-title" className="font-semibold text-white">
             Visualizador de documento
           </h2>
 
@@ -106,30 +119,8 @@ export const PdfModal = ({
         </div>
 
         {/* CONTENT */}
-        <div className="min-h-0 flex-1 bg-gray-200">
-          {isLoading ? (
-            <div className="relative h-full w-full">
-              <PdfLoadingPlayer />
-            </div>
-          ) : error || !url ? (
-            <div className="flex h-full items-center justify-center p-4">
-              <div className="rounded-lg bg-red-100 p-4 text-center">
-                <p className="mb-2 font-semibold text-red-800">
-                  Error al cargar el documento
-                </p>
-
-                <p className="text-sm text-red-700">
-                  No se pudo obtener la URL de origen.
-                </p>
-              </div>
-            </div>
-          ) : isMobile ? (
-            <PdfMobile archivo={url} />
-          ) : (
-            <PdfDesktopViewer url={url} />
-          )}
-        </div>
-      </div>
+        <div className="min-h-0 flex-1 bg-gray-200">{viewerContent}</div>
+      </dialog>
     </div>
   );
 };

@@ -17,8 +17,8 @@ export interface User {
 }
 
 class AuthService {
-  private tokenKey = "auth_token";
-  private userKey = "auth_user";
+  private readonly tokenKey = "auth_token";
+  private readonly userKey = "auth_user";
 
   async exchangeCode(code: string, redirectUri: string): Promise<TokenResponse> {
     const response = await axios.post<TokenResponse>(

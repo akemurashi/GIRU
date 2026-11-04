@@ -12,7 +12,7 @@ export function EditorSection({
   description,
   icon,
   children,
-}: EditorSectionProps) {
+}: Readonly<EditorSectionProps>) {
   return (
     <section className="col-span-full w-full min-w-0 overflow-clip rounded-2xl border border-slate-200 bg-white shadow-sm">
       {(title || description) && (

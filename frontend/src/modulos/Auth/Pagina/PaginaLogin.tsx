@@ -46,7 +46,7 @@ export default function PaginaLogin() {
       }
     };
 
-    handleLogin();
+    void handleLogin();
 
     return () => {
       cancelled = true;

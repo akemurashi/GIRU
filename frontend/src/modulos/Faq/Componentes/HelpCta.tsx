@@ -42,7 +42,7 @@ export const HelpCta = () => {
             "
           >
             <i className="pi pi-comments" />
-            Consultar con Don Fede
+            <span>Consultar con Don Fede</span>
           </Link>
 
           <Link
@@ -66,7 +66,7 @@ export const HelpCta = () => {
             "
           >
             <i className="pi pi-book" />
-            Ver guía de uso
+            <span>Ver guía de uso</span>
           </Link>
         </div>
       </section>

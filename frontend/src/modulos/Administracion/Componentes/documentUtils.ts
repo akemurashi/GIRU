@@ -161,30 +161,63 @@ export function getValidationIssues(
     });
   }
 
-  // Validación de relaciones normativas
-  if (Array.isArray(document.relaciones)) {
-    document.relaciones.forEach((r, index) => {
+  // Validación de trazabilidad normativa (antes y después)
+  const validateHitos = (
+    hitos: EditableDocument["trazabilidadAntes"],
+    etapa: "antes" | "despues",
+    etapaLabel: string
+  ) => {
+    if (!Array.isArray(hitos)) return;
+    hitos.forEach((hito, index) => {
       const num = index + 1;
-      if (!r.idtiporelacion) {
+      if (!hito.decreto.trim()) {
         issues.push({
-          key: `rel:${r.key}:idtiporelacion`,
-          section: "Relaciones con otros documentos",
-          field: `Relación #${num} · Tipo de relación`,
-          message: "Debe seleccionar el tipo de relación.",
-          targetId: `${r.key}-tipo`,
+          key: `hito:${etapa}:${hito.key}:decreto`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Decreto`,
+          message: "Debe ingresar el código oficial del decreto o resolución.",
+          targetId: `${etapa}-${hito.key}-decreto`,
         });
       }
-      if (!r.iddocumentodestino) {
+
+      if (hito.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(hito.fecha.trim())) {
         issues.push({
-          key: `rel:${r.key}:iddocumentodestino`,
-          section: "Relaciones con otros documentos",
-          field: `Relación #${num} · Documento afectado`,
-          message: "Debe seleccionar el documento afectado.",
-          targetId: `${r.key}-destino`,
+          key: `hito:${etapa}:${hito.key}:fecha`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Fecha`,
+          message: "La fecha debe tener formato válido YYYY-MM-DD.",
+          targetId: `${etapa}-${hito.key}-fecha`,
+        });
+      }
+
+      if (
+        hito.anio != null &&
+        (!Number.isInteger(hito.anio) || hito.anio < 1800 || hito.anio > 2200)
+      ) {
+        issues.push({
+          key: `hito:${etapa}:${hito.key}:anio`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Año`,
+          message: "El año debe ser un entero entre 1800 y 2200.",
+          targetId: `${etapa}-${hito.key}-anio`,
+        });
+      }
+
+      if (hito.digitalizado && !hito.nombre_archivo?.trim()) {
+        issues.push({
+          key: `hito:${etapa}:${hito.key}:nombre_archivo`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Nombre de archivo`,
+          message:
+            "Debe indicar el nombre del archivo o desactivar «Norma digitalizada».",
+          targetId: `${etapa}-${hito.key}-nombre_archivo`,
         });
       }
     });
-  }
+  };
+
+  validateHitos(document.trazabilidadAntes, "antes", "Hito Anterior");
+  validateHitos(document.trazabilidadDespues, "despues", "Hito Posterior");
 
   return issues;
 }
@@ -330,23 +363,59 @@ export function computeChanges(
     }
   }
 
-  // Comparación de relaciones normativas
-  const beforeRels = before.relaciones ?? [];
-  const afterRels = after.relaciones ?? [];
+  // Comparación de trazabilidad normativa (antes y después)
+  const normalizeHitos = (hitos: EditableDocument["trazabilidadAntes"] = []) =>
+    hitos.map((h) => ({
+      decreto: h.decreto.trim(),
+      fecha: h.fecha || null,
+      anio: h.anio ?? null,
+      nombre_archivo:
+        h.digitalizado && h.nombre_archivo?.trim()
+          ? h.nombre_archivo.trim()
+          : null,
+    }));
 
-  if (
-    beforeRels.length !== afterRels.length ||
-    JSON.stringify(beforeRels) !== JSON.stringify(afterRels)
-  ) {
-    const fmtRels = (rels: typeof beforeRels) =>
-      rels.length === 0
-        ? "Sin relaciones"
-        : `${rels.length} relación(es) configurada(s)`;
+  const fmtHitos = (hitos: ReturnType<typeof normalizeHitos>) => {
+    if (hitos.length === 0) {
+      return "Sin hitos registrados";
+    }
 
+    return hitos
+      .map((h, i) => {
+        const decretoTexto = h.decreto || "(Sin decreto)";
+        let fechaTexto = "";
+        if (h.fecha) {
+          fechaTexto = " (" + h.fecha + ")";
+        } else if (h.anio) {
+          fechaTexto = " (" + String(h.anio) + ")";
+        }
+        const archivoTexto = h.nombre_archivo
+          ? " [" + h.nombre_archivo + "]"
+          : " [No digitalizado]";
+        return String(i + 1) + ". " + decretoTexto + fechaTexto + archivoTexto;
+      })
+      .join("\n");
+  };
+
+  const beforeAntes = normalizeHitos(before.trazabilidadAntes);
+  const afterAntes = normalizeHitos(after.trazabilidadAntes);
+
+  if (JSON.stringify(beforeAntes) !== JSON.stringify(afterAntes)) {
     changes.push({
-      field: "Relaciones normativas",
-      before: fmtRels(beforeRels),
-      after: fmtRels(afterRels),
+      field: "Trazabilidad · Hitos Anteriores (Antes)",
+      before: fmtHitos(beforeAntes),
+      after: fmtHitos(afterAntes),
+    });
+  }
+
+  const beforeDespues = normalizeHitos(before.trazabilidadDespues);
+  const afterDespues = normalizeHitos(after.trazabilidadDespues);
+
+  if (JSON.stringify(beforeDespues) !== JSON.stringify(afterDespues)) {
+    changes.push({
+      field: "Trazabilidad · Hitos Posteriores (Después)",
+      before: fmtHitos(beforeDespues),
+      after: fmtHitos(afterDespues),
     });
   }
 

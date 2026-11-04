@@ -31,6 +31,15 @@ export type Catalogs = {
   respaldosLegales: CatalogOption[];
 };
 
+export type HitoEditable = {
+  key: string;
+  decreto: string;
+  fecha: string;
+  anio: number | null;
+  nombre_archivo: string | null;
+  digitalizado: boolean;
+};
+
 export type RelacionEditable = {
   key: string;
   idrelacion?: number;
@@ -85,8 +94,12 @@ export type EditableDocument = {
   beneficios: number[];
   nombramientos: number[];
 
-  // Se conserva el tipo, pero las relaciones no se editan en esta pantalla.
-  relaciones: RelacionEditable[];
+  // Trazabilidad normativa (Antes y Después)
+  trazabilidadAntes: HitoEditable[];
+  trazabilidadDespues: HitoEditable[];
+
+  // Compatibilidad opcional
+  relaciones?: RelacionEditable[];
 };
 
 export type FieldErrors = Record<string, string>;
@@ -123,13 +136,24 @@ export const emptyDocument = (id: string): EditableDocument => ({
   roles: [],
   beneficios: [],
   nombramientos: [],
+  trazabilidadAntes: [],
+  trazabilidadDespues: [],
   relaciones: [],
+});
+
+export const emptyHito = (): HitoEditable => ({
+  key: `hito-new-${crypto.randomUUID()}`,
+  decreto: "",
+  fecha: "",
+  anio: null,
+  nombre_archivo: "",
+  digitalizado: true,
 });
 
 export const emptyRelacion = (
   idfuentedeteccion: number | null
 ): RelacionEditable => ({
-  key: `rel-new-${Math.random().toString(36).slice(2)}`,
+  key: `rel-new-${crypto.randomUUID()}`,
   iddocumentodestino: null,
   idtiporelacion: null,
   idrespaldolegal: null,

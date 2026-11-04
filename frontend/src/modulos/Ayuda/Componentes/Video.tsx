@@ -6,7 +6,7 @@ type VideoTutorialProps = {
 
 export const VideoTutorial = ({
   videoRef,
-}: VideoTutorialProps) => {
+}: Readonly<VideoTutorialProps>) => {
   return (
     <section id="video-tutorial" className="w-full">
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-black shadow-sm">
@@ -20,6 +20,7 @@ export const VideoTutorial = ({
             src="/Documentos digitales.mp4"
             type="video/mp4"
           />
+          <track kind="captions" srcLang="es" label="Español" />
 
           Tu navegador no permite reproducir este video.
         </video>

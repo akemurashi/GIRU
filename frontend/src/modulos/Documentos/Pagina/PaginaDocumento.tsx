@@ -193,6 +193,252 @@ const generarNumerosPagina = (
   ];
 };
 
+const calcularTotalDocumentos = (
+  documentoSeleccionadoId: string | null,
+  detalleDocumento: DocumentoDetalle | undefined,
+  totalBusqueda: number | undefined
+): number => {
+  if (documentoSeleccionadoId) {
+    return detalleDocumento ? 1 : 0;
+  }
+  return totalBusqueda ?? 0;
+};
+
+type DocumentosResultadosSectionProps = Readonly<{
+  isLoading: boolean;
+  error: unknown;
+  refetch: () => void;
+  documentosActivos: Documento[];
+  documentoSeleccionadoId: string | null;
+  primerDocumento: number;
+  ultimoDocumento: number;
+  totalDocumentos: number;
+  paginaActual: number;
+  totalPaginas: number;
+  hayPaginaAnterior: boolean;
+  hayPaginaSiguiente: boolean;
+  paginasVisibles: ElementoPaginacion[];
+  cambiarPagina: (nuevaPagina: number) => void;
+}>;
+
+function DocumentosResultadosSection({
+  isLoading,
+  error,
+  refetch,
+  documentosActivos,
+  documentoSeleccionadoId,
+  primerDocumento,
+  ultimoDocumento,
+  totalDocumentos,
+  paginaActual,
+  totalPaginas,
+  hayPaginaAnterior,
+  hayPaginaSiguiente,
+  paginasVisibles,
+  cambiarPagina,
+}: DocumentosResultadosSectionProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-sidebar" />
+
+          <p className="text-sm text-slate-600">
+            Cargando documentos...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <p className="text-sm text-red-800">
+          {error instanceof Error
+            ? error.message
+            : "Error al cargar los documentos. Por favor, intenta nuevamente."}
+        </p>
+
+        <button
+          type="button"
+          onClick={refetch}
+          className="
+            mt-4
+            rounded-lg
+            bg-red-600
+            px-4
+            py-2
+            text-sm
+            font-semibold
+            text-white
+            hover:bg-red-700
+          "
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
+  if (documentosActivos.length === 0) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
+        <p className="font-medium text-slate-800">
+          No se encontraron documentos
+        </p>
+
+        <p className="mt-1 text-sm text-slate-500">
+          Prueba modificando la búsqueda o los filtros.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* CONTADOR */}
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-slate-600">
+          Mostrando{" "}
+          <span className="font-semibold text-slate-900">
+            {primerDocumento}–{ultimoDocumento}
+          </span>{" "}
+          de{" "}
+          <span className="font-semibold text-slate-900">
+            {totalDocumentos}
+          </span>{" "}
+          documentos encontrados
+        </p>
+
+        <p className="text-xs text-slate-500">
+          {DOCUMENTOS_POR_PAGINA} por página
+        </p>
+      </div>
+
+      {/* LISTA DE DOCUMENTOS */}
+
+      <DocumentList
+        documentos={documentosActivos}
+        documentoSeleccionadoId={documentoSeleccionadoId}
+      />
+
+      {/* CONTROLES DE PAGINACIÓN */}
+
+      {!documentoSeleccionadoId && (
+        <nav
+          aria-label="Paginación de documentos"
+          className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 pt-5"
+        >
+          <button
+            type="button"
+            onClick={() => cambiarPagina(paginaActual - 1)}
+            disabled={!hayPaginaAnterior || isLoading}
+            className="
+              rounded-lg
+              border
+              border-slate-300
+              bg-white
+              px-4
+              py-2
+              text-sm
+              font-medium
+              text-slate-700
+              transition
+              hover:bg-slate-100
+              disabled:cursor-not-allowed
+              disabled:opacity-40
+            "
+          >
+            Anterior
+          </button>
+
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {paginasVisibles.map((pagina, indice) => {
+              if (pagina === "...") {
+                const prevPage = paginasVisibles[indice - 1] ?? "start";
+                const nextPage = paginasVisibles[indice + 1] ?? "end";
+                return (
+                  <span
+                    key={`ellipsis-${prevPage}-${nextPage}`}
+                    aria-hidden="true"
+                    className="px-1.5 py-2 text-sm text-slate-500"
+                  >
+                    …
+                  </span>
+                );
+              }
+
+              const esPaginaActual = pagina === paginaActual;
+
+              return (
+                <button
+                  key={pagina}
+                  type="button"
+                  onClick={() => cambiarPagina(pagina)}
+                  disabled={isLoading || esPaginaActual}
+                  aria-label={`Ir a la página ${pagina}`}
+                  aria-current={esPaginaActual ? "page" : undefined}
+                  className={`
+                    flex
+                    h-9
+                    min-w-9
+                    items-center
+                    justify-center
+                    rounded-lg
+                    border
+                    px-2.5
+                    text-sm
+                    font-medium
+                    transition
+                    disabled:cursor-default
+                    ${
+                      esPaginaActual
+                        ? "border-sidebar bg-sidebar text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                    }
+                    disabled:opacity-100
+                  `}
+                >
+                  {pagina}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => cambiarPagina(paginaActual + 1)}
+            disabled={!hayPaginaSiguiente || isLoading}
+            className="
+              rounded-lg
+              border
+              border-sidebar
+              bg-sidebar
+              px-4
+              py-2
+              text-sm
+              font-semibold
+              text-white
+              transition
+              hover:opacity-90
+              disabled:cursor-not-allowed
+              disabled:opacity-40
+            "
+          >
+            Siguiente
+          </button>
+
+          <span className="w-full text-center text-xs text-slate-500">
+            Página {paginaActual} de {totalPaginas}
+          </span>
+        </nav>
+      )}
+    </>
+  );
+}
+
 // =====================================================
 // PÁGINA
 // =====================================================
@@ -297,9 +543,9 @@ export default function PaginaDocumentos() {
 
   const refetch = () => {
     if (documentoSeleccionadoId) {
-      refetchDetalle();
+      void refetchDetalle();
     } else {
-      refetchBusqueda();
+      void refetchBusqueda();
     }
   };
 
@@ -337,11 +583,11 @@ export default function PaginaDocumentos() {
   // TOTAL DE DOCUMENTOS Y PÁGINAS
   // ===================================================
 
-  const totalDocumentos = documentoSeleccionadoId
-    ? detalleDocumento
-      ? 1
-      : 0
-    : searchResults?.total ?? 0;
+  const totalDocumentos = calcularTotalDocumentos(
+    documentoSeleccionadoId,
+    detalleDocumento,
+    searchResults?.total
+  );
 
   const totalPaginas = Math.max(
     1,
@@ -740,205 +986,22 @@ export default function PaginaDocumentos() {
                   </div>
                 )}
 
-                {isLoading ? (
-                  /* ESTADO DE CARGA */
-
-                  <div className="flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-sidebar" />
-
-                      <p className="text-sm text-slate-600">
-                        Cargando documentos...
-                      </p>
-                    </div>
-                  </div>
-                ) : error ? (
-                  /* ERROR */
-
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-                    <p className="text-sm text-red-800">
-                      {error instanceof Error
-                        ? error.message
-                        : "Error al cargar los documentos. Por favor, intenta nuevamente."}
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={refetch}
-                      className="
-                        mt-4
-                        rounded-lg
-                        bg-red-600
-                        px-4
-                        py-2
-                        text-sm
-                        font-semibold
-                        text-white
-                        hover:bg-red-700
-                      "
-                    >
-                      Reintentar
-                    </button>
-                  </div>
-                ) : documentosActivos.length === 0 ? (
-                  /* SIN RESULTADOS */
-
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
-                    <p className="font-medium text-slate-800">
-                      No se encontraron documentos
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Prueba modificando la búsqueda o los filtros.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* CONTADOR */}
-
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm text-slate-600">
-                        Mostrando{" "}
-                        <span className="font-semibold text-slate-900">
-                          {primerDocumento}–{ultimoDocumento}
-                        </span>{" "}
-                        de{" "}
-                        <span className="font-semibold text-slate-900">
-                          {totalDocumentos}
-                        </span>{" "}
-                        documentos encontrados
-                      </p>
-
-                      <p className="text-xs text-slate-500">
-                        {DOCUMENTOS_POR_PAGINA} por página
-                      </p>
-                    </div>
-
-                    {/* LISTA DE DOCUMENTOS */}
-
-                    <DocumentList
-                      documentos={documentosActivos}
-                      documentoSeleccionadoId={documentoSeleccionadoId}
-                    />
-
-                    {/* CONTROLES DE PAGINACIÓN */}
-
-                    {!documentoSeleccionadoId && (
-                      <nav
-                        aria-label="Paginación de documentos"
-                        className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 pt-5"
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            cambiarPagina(paginaActual - 1)
-                          }
-                          disabled={!hayPaginaAnterior || isLoading}
-                          className="
-                            rounded-lg
-                            border
-                            border-slate-300
-                            bg-white
-                            px-4
-                            py-2
-                            text-sm
-                            font-medium
-                            text-slate-700
-                            transition
-                            hover:bg-slate-100
-                            disabled:cursor-not-allowed
-                            disabled:opacity-40
-                          "
-                        >
-                          Anterior
-                        </button>
-
-                        <div className="flex flex-wrap items-center justify-center gap-1.5">
-                          {paginasVisibles.map((pagina, indice) => {
-                            if (pagina === "...") {
-                              return (
-                                <span
-                                  key={`ellipsis-${indice}`}
-                                  aria-hidden="true"
-                                  className="px-1.5 py-2 text-sm text-slate-500"
-                                >
-                                  …
-                                </span>
-                              );
-                            }
-
-                            const esPaginaActual =
-                              pagina === paginaActual;
-
-                            return (
-                              <button
-                                key={pagina}
-                                type="button"
-                                onClick={() => cambiarPagina(pagina)}
-                                disabled={isLoading || esPaginaActual}
-                                aria-label={`Ir a la página ${pagina}`}
-                                aria-current={
-                                  esPaginaActual ? "page" : undefined
-                                }
-                                className={`
-                                  flex
-                                  h-9
-                                  min-w-9
-                                  items-center
-                                  justify-center
-                                  rounded-lg
-                                  border
-                                  px-2.5
-                                  text-sm
-                                  font-medium
-                                  transition
-                                  disabled:cursor-default
-                                  ${
-                                    esPaginaActual
-                                      ? "border-sidebar bg-sidebar text-white"
-                                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-                                  }
-                                  disabled:opacity-100
-                                `}
-                              >
-                                {pagina}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            cambiarPagina(paginaActual + 1)
-                          }
-                          disabled={!hayPaginaSiguiente || isLoading}
-                          className="
-                            rounded-lg
-                            border
-                            border-sidebar
-                            bg-sidebar
-                            px-4
-                            py-2
-                            text-sm
-                            font-semibold
-                            text-white
-                            transition
-                            hover:opacity-90
-                            disabled:cursor-not-allowed
-                            disabled:opacity-40
-                          "
-                        >
-                          Siguiente
-                        </button>
-
-                        <span className="w-full text-center text-xs text-slate-500">
-                          Página {paginaActual} de {totalPaginas}
-                        </span>
-                      </nav>
-                    )}
-                  </>
-                )}
+                <DocumentosResultadosSection
+                  isLoading={isLoading}
+                  error={error}
+                  refetch={refetch}
+                  documentosActivos={documentosActivos}
+                  documentoSeleccionadoId={documentoSeleccionadoId}
+                  primerDocumento={primerDocumento}
+                  ultimoDocumento={ultimoDocumento}
+                  totalDocumentos={totalDocumentos}
+                  paginaActual={paginaActual}
+                  totalPaginas={totalPaginas}
+                  hayPaginaAnterior={hayPaginaAnterior}
+                  hayPaginaSiguiente={hayPaginaSiguiente}
+                  paginasVisibles={paginasVisibles}
+                  cambiarPagina={cambiarPagina}
+                />
               </div>
             </section>
           </div>

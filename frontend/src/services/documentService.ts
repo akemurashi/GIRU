@@ -206,9 +206,9 @@ export const useUpdateDocument = () => {
     }) => updateDocument(id, data),
 
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({
         queryKey: ["document", variables.id],
       });
     },
@@ -222,9 +222,9 @@ export const useToggleDocumentActive = () => {
     mutationFn: (id: string) => toggleDocumentActive(id),
 
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
-      queryClient.invalidateQueries({ queryKey: ["document", id] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({ queryKey: ["document", id] });
     },
   });
 };
@@ -236,8 +236,8 @@ export const useDeleteDocument = () => {
     mutationFn: (id: string) => deleteDocument(id),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
     },
   });
 };
@@ -388,10 +388,10 @@ export const getEditableDocument = async (
   id: string,
   catalogs: any
 ): Promise<any> => {
-  const [editableResult, detailResult, lineageResult] = await Promise.allSettled([
+  const [editableResult, detailResult, trazabilidadResult] = await Promise.allSettled([
     api.get(`/documents/${id}/editable`),
     api.get(`/documents/${id}`),
-    api.get(`/relaciones/${id}/lineage`),
+    api.get(`/documents/${id}/trazabilidad`),
   ]);
 
   if (editableResult.status !== "fulfilled" || detailResult.status !== "fulfilled") {
@@ -401,22 +401,46 @@ export const getEditableDocument = async (
   const editable = editableResult.value.data;
   const detail = detailResult.value.data;
 
-  let relaciones: any[] = [];
-  if (lineageResult.status === "fulfilled" && lineageResult.value.data?.relaciones_como_origen) {
-    relaciones = lineageResult.value.data.relaciones_como_origen.map((r: any) => ({
-      key: `rel-${r.idrelacion || crypto.randomUUID()}`,
-      idrelacion: r.idrelacion,
-      iddocumentodestino: r.iddocumentodestino,
-      idtiporelacion: r.idtiporelacion,
-      idrespaldolegal: r.idrespaldolegal ?? null,
-      idfuentedeteccion: r.idfuentedeteccion ?? null,
-      detallemodificacion: r.detalledemodificacion ?? r.detallemodificacion ?? "",
-      confianza: r.confianza ?? 1.0,
-      verificada: r.verificada ?? true,
-      textoevidencia: r.textoevidencia ?? "",
-      fechaefecto: r.fechaefecto ? String(r.fechaefecto).slice(0, 10) : "",
-    }));
-  }
+  const rawTrazabilidad =
+    (trazabilidadResult.status === "fulfilled"
+      ? trazabilidadResult.value.data?.trazabilidad
+      : null) ??
+    detail?.trazabilidad ??
+    editable?.trazabilidad ??
+    null;
+
+  const parseHitoAnio = (rawAnio: unknown): number | null => {
+    if (typeof rawAnio === "number" && !Number.isNaN(rawAnio)) {
+      return rawAnio;
+    }
+    if (rawAnio != null && !Number.isNaN(Number(rawAnio))) {
+      return Number(rawAnio);
+    }
+    return null;
+  };
+
+  const mapHitoToEditable = (h: any, idx: number, prefix: string) => ({
+    key: `${prefix}-${idx}-${crypto.randomUUID()}`,
+    decreto: h?.decreto ?? "",
+    fecha: h?.fecha ? String(h.fecha).slice(0, 10) : "",
+    anio: parseHitoAnio(h?.anio),
+    nombre_archivo: h?.nombre_archivo ?? null,
+    digitalizado: Boolean(
+      h?.nombre_archivo && String(h.nombre_archivo).trim() !== ""
+    ),
+  });
+
+  const trazabilidadAntes = Array.isArray(rawTrazabilidad?.antes)
+    ? rawTrazabilidad.antes.map((h: any, i: number) =>
+        mapHitoToEditable(h, i, "antes")
+      )
+    : [];
+
+  const trazabilidadDespues = Array.isArray(rawTrazabilidad?.despues)
+    ? rawTrazabilidad.despues.map((h: any, i: number) =>
+        mapHitoToEditable(h, i, "despues")
+      )
+    : [];
 
   const normalizeDate = (value?: string | null): string => {
     if (!value) return "";
@@ -481,7 +505,9 @@ export const getEditableDocument = async (
     beneficios: editable.beneficiosids ?? [],
     nombramientos: editable.nombramientosids ?? [],
 
-    relaciones,
+    trazabilidadAntes,
+    trazabilidadDespues,
+    relaciones: [],
   };
 };
 
@@ -492,7 +518,7 @@ export const getEditableDocument = async (
 export const saveEditableDocument = async (
   id: string,
   data: any,
-  initialRelaciones?: any[]
+  initialDoc?: any
 ): Promise<any> => {
   // Construir explícitamente el payload para no enviar propiedades
   // adicionales que el esquema de FastAPI podría rechazar.
@@ -526,45 +552,67 @@ export const saveEditableDocument = async (
   try {
     const response = await api.put(`/documents/${id}`, payload);
 
-    // Persistencia de relaciones si se incluyeron en el editor
-    if (Array.isArray(data.relaciones)) {
-      // 1. Eliminar relaciones que estaban en initialRelaciones pero ya no en draft
-      if (Array.isArray(initialRelaciones)) {
-        const currentRelIds = new Set(
-          data.relaciones
-            .map((r: any) => r.idrelacion)
-            .filter(Boolean)
-        );
-        for (const initR of initialRelaciones) {
-          if (initR.idrelacion && !currentRelIds.has(initR.idrelacion)) {
-            try {
-              await api.delete("/relaciones/", {
-                data: { idrelacion: initR.idrelacion },
-              });
-            } catch (delErr) {
-              console.warn("Error al eliminar relación:", delErr);
-            }
-          }
+    // Persistencia de trazabilidad normativa (antes y después)
+    if (
+      Array.isArray(data.trazabilidadAntes) ||
+      Array.isArray(data.trazabilidadDespues)
+    ) {
+      const resolvePayloadAnio = (h: any): number | null => {
+        if (typeof h.anio === "number" && !Number.isNaN(h.anio)) {
+          return h.anio;
         }
-      }
+        if (h.fecha && /^\d{4}/.test(String(h.fecha))) {
+          return Number(String(h.fecha).slice(0, 4));
+        }
+        return null;
+      };
 
-      // 2. Guardar o modificar cada relación en data.relaciones
-      for (const r of data.relaciones) {
-        if (r.iddocumentodestino && r.idtiporelacion) {
-          await api.post("/relaciones/", {
-            iddocumentoorigen: id,
-            iddocumentodestino: r.iddocumentodestino,
-            idtiporelacion: r.idtiporelacion,
-            detallemodificacion: r.detallemodificacion || null,
-            fechaefecto: r.fechaefecto || null,
-            verificada: r.verificada ?? true,
-            confianza: r.confianza ?? 1.0,
-            textoevidencia: r.textoevidencia || null,
-            idfuentedeteccion: r.idfuentedeteccion ?? null,
-            idrespaldolegal: r.idrespaldolegal ?? null,
-            idrelacion: r.idrelacion ?? null,
-          });
-        }
+      const formatHitoPayload = (h: any) => ({
+        decreto: String(h.decreto ?? "").trim(),
+        fecha:
+          h.fecha && String(h.fecha).trim() !== ""
+            ? String(h.fecha).trim().slice(0, 10)
+            : null,
+        anio: resolvePayloadAnio(h),
+        nombre_archivo:
+          h.digitalizado &&
+          h.nombre_archivo &&
+          String(h.nombre_archivo).trim() !== ""
+            ? String(h.nombre_archivo).trim()
+            : null,
+      });
+
+      const antesPayload = (data.trazabilidadAntes ?? [])
+        .map(formatHitoPayload)
+        .filter((h: { decreto: string }) => h.decreto !== "");
+
+      const despuesPayload = (data.trazabilidadDespues ?? [])
+        .map(formatHitoPayload)
+        .filter((h: { decreto: string }) => h.decreto !== "");
+
+      const hadInitialTrazabilidad =
+        (initialDoc?.trazabilidadAntes?.length ?? 0) > 0 ||
+        (initialDoc?.trazabilidadDespues?.length ?? 0) > 0;
+
+      if (
+        antesPayload.length === 0 &&
+        despuesPayload.length === 0 &&
+        hadInitialTrazabilidad
+      ) {
+        await api.delete(
+          `/documents/${encodeURIComponent(id)}/trazabilidad`
+        );
+      } else if (
+        antesPayload.length > 0 ||
+        despuesPayload.length > 0
+      ) {
+        await api.put(
+          `/documents/${encodeURIComponent(id)}/trazabilidad`,
+          {
+            antes: antesPayload,
+            despues: despuesPayload,
+          }
+        );
       }
     }
 
