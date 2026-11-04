@@ -10,7 +10,7 @@ type SidebarProps = {
 
 export default function Sidebar({
   onDesktopToggle,
-}: SidebarProps) {
+}: Readonly<SidebarProps>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
 

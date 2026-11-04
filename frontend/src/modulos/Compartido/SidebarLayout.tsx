@@ -7,7 +7,7 @@ type SidebarLayoutProps = {
 
 export default function SidebarLayout({
   children,
-}: SidebarLayoutProps) {
+}: Readonly<SidebarLayoutProps>) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (

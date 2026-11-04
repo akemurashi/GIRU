@@ -46,7 +46,7 @@ export function DocumentEditor({
   onSave,
   onCancel,
   onDirtyChange,
-}: DocumentEditorProps) {
+}: Readonly<DocumentEditorProps>) {
   const [draft, setDraft] = useState<EditableDocument>(initial);
   const [showErrors, setShowErrors] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -140,8 +140,7 @@ export function DocumentEditor({
 
       {/* Resumen de campos obligatorios pendientes */}
       {validationIssues.length > 0 && (
-        <div
-          role="region"
+        <section
           aria-label="Campos obligatorios pendientes"
           className={`mb-6 rounded-2xl border p-4 shadow-sm sm:p-5 ${
             showErrors
@@ -226,7 +225,7 @@ export function DocumentEditor({
                             : "bg-amber-50 text-amber-800"
                         }`}
                       >
-                        Ir
+                        <span>Ir</span>
                         <i className="pi pi-arrow-right text-[10px]" />
                       </span>
                     </button>
@@ -235,7 +234,7 @@ export function DocumentEditor({
               </ul>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
       {/* Formulario */}
@@ -243,7 +242,6 @@ export function DocumentEditor({
         <IdentificacionSection
           document={draft}
           tiposDocumento={catalogs.tiposDocumento}
-          metadatoPrefix={metadatoPrefix}
           errors={errors}
           onChange={onChange}
         />
@@ -308,13 +306,9 @@ export function DocumentEditor({
             <i className="pi pi-file-edit text-sidebar" />
 
             <span>
-              {changes.length === 0
-                ? "Sin cambios pendientes"
-                : `${changes.length} ${
-                    changes.length === 1
-                      ? "cambio detectado"
-                      : "cambios detectados"
-                  }`}
+              {changes.length === 0 && "Sin cambios pendientes"}
+              {changes.length === 1 && "1 cambio detectado"}
+              {changes.length > 1 && `${changes.length} cambios detectados`}
             </span>
           </div>
 
@@ -373,7 +367,7 @@ export function DocumentEditor({
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
           >
             <i className="pi pi-times" />
-            Cancelar
+            <span>Cancelar</span>
           </button>
 
           <button
@@ -382,7 +376,7 @@ export function DocumentEditor({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-sidebar px-5 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
           >
             <i className="pi pi-check" />
-            Guardar cambios
+            <span>Guardar cambios</span>
           </button>
         </div>
       </div>

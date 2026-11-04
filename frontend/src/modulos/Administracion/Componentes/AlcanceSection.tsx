@@ -18,7 +18,7 @@ export function AlcanceAcademicoSection({
   document,
   catalogs,
   onChange,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className="col-span-full w-full min-w-0">
       <EditorSection
@@ -191,7 +191,7 @@ export function AudienciaSection({
   document,
   catalogs,
   onChange,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className="col-span-full w-full min-w-0">
       <EditorSection

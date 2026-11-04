@@ -142,7 +142,7 @@ export const emptyDocument = (id: string): EditableDocument => ({
 });
 
 export const emptyHito = (): HitoEditable => ({
-  key: `hito-new-${Math.random().toString(36).slice(2)}`,
+  key: `hito-new-${crypto.randomUUID()}`,
   decreto: "",
   fecha: "",
   anio: null,
@@ -153,7 +153,7 @@ export const emptyHito = (): HitoEditable => ({
 export const emptyRelacion = (
   idfuentedeteccion: number | null
 ): RelacionEditable => ({
-  key: `rel-new-${Math.random().toString(36).slice(2)}`,
+  key: `rel-new-${crypto.randomUUID()}`,
   iddocumentodestino: null,
   idtiporelacion: null,
   idrespaldolegal: null,

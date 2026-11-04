@@ -39,6 +39,45 @@ type FilterFormProps = {
 };
 
 // =====================================================
+// HOOK PARA CERRAR AL INTERACTUAR FUERA O CON ESCAPE
+// =====================================================
+
+function useCloseOnOutsideInteraction(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  abierto: boolean,
+  onClose: () => void
+) {
+  useEffect(() => {
+    if (!abierto) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [abierto, containerRef, onClose]);
+}
+
+// =====================================================
 // SELECT
 // =====================================================
 
@@ -57,43 +96,21 @@ const SelectFilter = ({
 }: SelectFilterProps) => {
   const [abierto, setAbierto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlId = `select-filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
-  useEffect(() => {
-    if (!abierto) return;
-
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setAbierto(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setAbierto(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [abierto]);
+  useCloseOnOutsideInteraction(containerRef, abierto, () => setAbierto(false));
 
   return (
     <div ref={containerRef} className="relative mb-4 sm:mb-5">
-      <label className="mb-2 block text-sm font-semibold text-slate-700">
+      <label
+        htmlFor={controlId}
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
         {label}
       </label>
 
       <button
+        id={controlId}
         type="button"
         onClick={(e) => {
           if (abierto) {
@@ -238,7 +255,10 @@ const YearFilter = ({
   return (
     <div className="mb-5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <label className="block text-sm font-semibold text-slate-700">
+        <label
+          htmlFor="year-filter-search-input"
+          className="block text-sm font-semibold text-slate-700"
+        >
           Año
         </label>
 
@@ -260,6 +280,7 @@ const YearFilter = ({
       </div>
 
       <input
+        id="year-filter-search-input"
         type="text"
         inputMode="numeric"
         placeholder="Buscar año..."
@@ -371,35 +392,9 @@ const MultiSelectFilter = ({
     useState("");
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlId = `multiselect-filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
-  useEffect(() => {
-    if (!abierto) return;
-
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setAbierto(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setAbierto(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [abierto]);
+  useCloseOnOutsideInteraction(containerRef, abierto, () => setAbierto(false));
 
   const opcionesFiltradas = useMemo(() => {
     if (!busqueda.trim()) {
@@ -434,10 +429,20 @@ const MultiSelectFilter = ({
     }
   };
 
+  let textoResumenSeleccion = `Seleccionar ${label.toLowerCase()}`;
+  if (selected.length === 1) {
+    textoResumenSeleccion = "1 seleccionado";
+  } else if (selected.length > 1) {
+    textoResumenSeleccion = `${selected.length} seleccionados`;
+  }
+
   return (
     <div ref={containerRef} className="relative mb-4 sm:mb-5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <label className="block min-w-0 text-sm font-semibold text-slate-700">
+        <label
+          htmlFor={controlId}
+          className="block min-w-0 text-sm font-semibold text-slate-700"
+        >
           {label}
         </label>
 
@@ -459,6 +464,7 @@ const MultiSelectFilter = ({
       </div>
 
       <button
+        id={controlId}
         type="button"
         onClick={(e) => {
           if (abierto) {
@@ -491,13 +497,7 @@ const MultiSelectFilter = ({
         `}
       >
         <span className="min-w-0 truncate">
-          {selected.length === 0
-            ? `Seleccionar ${label.toLowerCase()}`
-            : `${selected.length} seleccionado${
-                selected.length !== 1
-                  ? "s"
-                  : ""
-              }`}
+          {textoResumenSeleccion}
         </span>
 
         <span

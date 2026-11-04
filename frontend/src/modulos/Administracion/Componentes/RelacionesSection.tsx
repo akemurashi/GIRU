@@ -38,7 +38,7 @@ function HitoListEditor({
   documentOptions,
   errors,
   onChange,
-}: HitoListEditorProps) {
+}: Readonly<HitoListEditorProps>) {
   const updateItem = (key: string, patch: Partial<HitoEditable>) => {
     onChange(
       items.map((item) =>
@@ -336,7 +336,7 @@ export function RelacionesSection({
   errors,
   onChangeAntes,
   onChangeDespues,
-}: Props) {
+}: Readonly<Props>) {
   const totalHitos = antes.length + despues.length;
 
   return (
@@ -363,7 +363,7 @@ export function RelacionesSection({
               className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
             >
               <i className="pi pi-trash text-[11px]" />
-              Limpiar toda la trazabilidad
+              <span>Limpiar toda la trazabilidad</span>
             </button>
           </div>
         )}

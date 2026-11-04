@@ -1,5 +1,6 @@
-import robotLogo from "/assets/Imagenes/giru.jpg";
 import { Link } from "react-router-dom";
+
+const robotLogo = "/assets/Imagenes/giru.jpg";
 
 export const SidebarHeaderMenu = () => {
   return (

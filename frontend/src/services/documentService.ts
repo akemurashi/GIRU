@@ -206,9 +206,9 @@ export const useUpdateDocument = () => {
     }) => updateDocument(id, data),
 
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({
         queryKey: ["document", variables.id],
       });
     },
@@ -222,9 +222,9 @@ export const useToggleDocumentActive = () => {
     mutationFn: (id: string) => toggleDocumentActive(id),
 
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
-      queryClient.invalidateQueries({ queryKey: ["document", id] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({ queryKey: ["document", id] });
     },
   });
 };
@@ -236,8 +236,8 @@ export const useDeleteDocument = () => {
     mutationFn: (id: string) => deleteDocument(id),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
     },
   });
 };
@@ -409,16 +409,21 @@ export const getEditableDocument = async (
     editable?.trazabilidad ??
     null;
 
+  const parseHitoAnio = (rawAnio: unknown): number | null => {
+    if (typeof rawAnio === "number" && !Number.isNaN(rawAnio)) {
+      return rawAnio;
+    }
+    if (rawAnio != null && !Number.isNaN(Number(rawAnio))) {
+      return Number(rawAnio);
+    }
+    return null;
+  };
+
   const mapHitoToEditable = (h: any, idx: number, prefix: string) => ({
-    key: `${prefix}-${idx}-${Math.random().toString(36).slice(2)}`,
+    key: `${prefix}-${idx}-${crypto.randomUUID()}`,
     decreto: h?.decreto ?? "",
     fecha: h?.fecha ? String(h.fecha).slice(0, 10) : "",
-    anio:
-      typeof h?.anio === "number"
-        ? h.anio
-        : h?.anio != null && !Number.isNaN(Number(h.anio))
-          ? Number(h.anio)
-          : null,
+    anio: parseHitoAnio(h?.anio),
     nombre_archivo: h?.nombre_archivo ?? null,
     digitalizado: Boolean(
       h?.nombre_archivo && String(h.nombre_archivo).trim() !== ""
@@ -552,18 +557,23 @@ export const saveEditableDocument = async (
       Array.isArray(data.trazabilidadAntes) ||
       Array.isArray(data.trazabilidadDespues)
     ) {
+      const resolvePayloadAnio = (h: any): number | null => {
+        if (typeof h.anio === "number" && !Number.isNaN(h.anio)) {
+          return h.anio;
+        }
+        if (h.fecha && /^\d{4}/.test(String(h.fecha))) {
+          return Number(String(h.fecha).slice(0, 4));
+        }
+        return null;
+      };
+
       const formatHitoPayload = (h: any) => ({
         decreto: String(h.decreto ?? "").trim(),
         fecha:
           h.fecha && String(h.fecha).trim() !== ""
             ? String(h.fecha).trim().slice(0, 10)
             : null,
-        anio:
-          typeof h.anio === "number" && !Number.isNaN(h.anio)
-            ? h.anio
-            : h.fecha && /^\d{4}/.test(String(h.fecha))
-              ? Number(String(h.fecha).slice(0, 4))
-              : null,
+        anio: resolvePayloadAnio(h),
         nombre_archivo:
           h.digitalizado &&
           h.nombre_archivo &&

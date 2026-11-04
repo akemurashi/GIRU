@@ -46,7 +46,7 @@ export default function PaginaCallback() {
       }
     };
 
-    handleCallback();
+    void handleCallback();
   }, [searchParams, navigate]);
 
   if (error) {

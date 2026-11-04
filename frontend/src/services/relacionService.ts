@@ -177,19 +177,19 @@ export const useUpdateTrazabilidad = () => {
       payload: TrazabilidadUpsertPayload;
     }) => updateTrazabilidad(documentId, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-trazabilidad", variables.documentId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-canonical-detail", variables.documentId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-detail", variables.documentId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document", variables.documentId],
       });
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
 };
@@ -199,19 +199,19 @@ export const useDeleteTrazabilidad = () => {
   return useMutation({
     mutationFn: (documentId: string) => deleteTrazabilidad(documentId),
     onSuccess: (_, documentId) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-trazabilidad", documentId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-canonical-detail", documentId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-detail", documentId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document", documentId],
       });
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
 };

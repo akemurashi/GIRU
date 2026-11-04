@@ -375,17 +375,27 @@ export function computeChanges(
           : null,
     }));
 
-  const fmtHitos = (hitos: ReturnType<typeof normalizeHitos>) =>
-    hitos.length === 0
-      ? "Sin hitos registrados"
-      : hitos
-          .map(
-            (h, i) =>
-              `${i + 1}. ${h.decreto || "(Sin decreto)"}${
-                h.fecha ? ` (${h.fecha})` : h.anio ? ` (${h.anio})` : ""
-              }${h.nombre_archivo ? ` [${h.nombre_archivo}]` : " [No digitalizado]"}`
-          )
-          .join("\n");
+  const fmtHitos = (hitos: ReturnType<typeof normalizeHitos>) => {
+    if (hitos.length === 0) {
+      return "Sin hitos registrados";
+    }
+
+    return hitos
+      .map((h, i) => {
+        const decretoTexto = h.decreto || "(Sin decreto)";
+        let fechaTexto = "";
+        if (h.fecha) {
+          fechaTexto = " (" + h.fecha + ")";
+        } else if (h.anio) {
+          fechaTexto = " (" + String(h.anio) + ")";
+        }
+        const archivoTexto = h.nombre_archivo
+          ? " [" + h.nombre_archivo + "]"
+          : " [No digitalizado]";
+        return String(i + 1) + ". " + decretoTexto + fechaTexto + archivoTexto;
+      })
+      .join("\n");
+  };
 
   const beforeAntes = normalizeHitos(before.trazabilidadAntes);
   const afterAntes = normalizeHitos(after.trazabilidadAntes);

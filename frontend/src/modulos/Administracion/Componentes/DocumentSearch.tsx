@@ -86,19 +86,12 @@ const LoadingIndicator = ({
         Por favor, espera un momento.
       </p>
 
-      <div
-        className="mt-5 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-100"
-        role="progressbar"
+      <progress
+        value={Math.round(progress)}
+        max={100}
         aria-label="Progreso de carga"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress)}
-      >
-        <div
-          className="h-full rounded-full bg-[#F7AE00] transition-[width] duration-300 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+        className="mt-5 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-100 [&::-moz-progress-bar]:bg-[#F7AE00] [&::-webkit-progress-bar]:bg-slate-100 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[#F7AE00]"
+      />
 
       <span className="mt-2 text-xs font-semibold tabular-nums text-[#003D7A]">
         {Math.round(progress)}%
@@ -266,10 +259,10 @@ export const DocumentSearch = () => {
         selectedDocument
       );
 
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-trazabilidad", draft.iddocumento],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["document-detail", draft.iddocumento],
       });
 
@@ -397,12 +390,12 @@ export const DocumentSearch = () => {
       {/* Modal de confirmación */}
       {saveSuccess && !isSaving && (
         <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 p-4">
-          <div
-            role="dialog"
+          <dialog
+            open
             aria-modal="true"
             aria-labelledby="save-success-title"
             aria-describedby="save-success-description"
-            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-8"
+            className="m-0 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
@@ -435,7 +428,7 @@ export const DocumentSearch = () => {
                 Aceptar
               </button>
             </div>
-          </div>
+          </dialog>
         </div>
       )}
     </div>

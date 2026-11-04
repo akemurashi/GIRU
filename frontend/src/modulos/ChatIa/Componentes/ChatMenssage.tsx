@@ -67,6 +67,39 @@ export const ChatMessage = ({
 
   const isVerifiedQuote = Boolean(sourceQuote);
 
+  let interpretationBody: React.ReactNode;
+  if (isStreaming) {
+    if (interpretationText) {
+      interpretationBody = (
+        <>
+          {interpretationText}
+          <span
+            className="ml-1 inline-block h-4 w-1.5 animate-pulse bg-sky-900 align-middle"
+            aria-hidden="true"
+          />
+        </>
+      );
+    } else {
+      interpretationBody = (
+        <span
+          className="inline-flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="animate-pulse">
+            {streamingStatus ||
+              "Analizando documentos y generando respuesta..."}
+          </span>
+          <i className="pi pi-spinner pi-spin shrink-0" />
+        </span>
+      );
+    }
+  } else {
+    interpretationBody = interpretationText || (
+      <span className="italic text-gray-400">Esperando respuesta...</span>
+    );
+  }
+
   return (
     <div className="flex w-full justify-start">
       <div className="flex w-full max-w-4xl flex-col items-start gap-2.5 sm:flex-row sm:gap-4">
@@ -113,35 +146,7 @@ export const ChatMessage = ({
             </h3>
 
             <p className="whitespace-pre-line break-words text-sm leading-6 text-gray-700 sm:leading-7">
-              {isStreaming ? (
-                interpretationText ? (
-                  <>
-                    {interpretationText}
-                    <span
-                      className="ml-1 inline-block h-4 w-1.5 animate-pulse bg-sky-900 align-middle"
-                      aria-hidden="true"
-                    />
-                  </>
-                ) : (
-                  <span
-                    className="inline-flex items-center gap-2"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <span className="animate-pulse">
-                      {streamingStatus ||
-                        "Analizando documentos y generando respuesta..."}
-                    </span>
-                    <i className="pi pi-spinner pi-spin shrink-0" />
-                  </span>
-                )
-              ) : (
-                interpretationText || (
-                  <span className="italic text-gray-400">
-                    Esperando respuesta...
-                  </span>
-                )
-              )}
+              {interpretationBody}
             </p>
           </div>
 
@@ -217,9 +222,9 @@ export const ChatMessage = ({
                     Otras fuentes consultadas:
                   </p>
                   <div className="space-y-2">
-                    {sources.slice(1, 3).map((s, idx) => (
+                    {sources.slice(1, 3).map((s) => (
                       <div
-                        key={idx}
+                        key={s.documento}
                         className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs text-gray-700 transition hover:border-gray-200 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-3.5"
                       >
                         <div className="flex min-w-0 items-start gap-2 sm:items-center">

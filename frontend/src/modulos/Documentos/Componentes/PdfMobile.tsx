@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Document, Page } from "react-pdf";
 import "./pdfConfig";
 
-type Props = {
+type Props = Readonly<{
   archivo: string;
-};
+}>;
 
 export function PdfMobile({ archivo }: Props) {
   const [numPages, setNumPages] = useState<number>(0);

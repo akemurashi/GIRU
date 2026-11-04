@@ -70,13 +70,9 @@ export const ConfirmModal = ({
 
             <div className="min-w-0 flex-1">
               <p className="m-0 text-sm font-semibold text-[#234565]">
-                {changes.length === 0
-                  ? "Sin modificaciones"
-                  : `${changes.length} ${
-                      changes.length === 1
-                        ? "campo modificado"
-                        : "campos modificados"
-                    }`}
+                {changes.length === 0 && "Sin modificaciones"}
+                {changes.length === 1 && "1 campo modificado"}
+                {changes.length > 1 && `${changes.length} campos modificados`}
               </p>
               <p className="m-0 mt-0.5 text-xs leading-5 text-slate-600">
                 {changes.length === 0

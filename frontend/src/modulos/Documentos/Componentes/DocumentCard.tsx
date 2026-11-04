@@ -97,7 +97,8 @@ export const DocumentCard = ({
               py-2
             "
           >
-            <i className="pi pi-pencil mr-2"></i> Editar
+            <i className="pi pi-pencil mr-2" />
+            <span>Editar</span>
           </button>
         )}
 
@@ -118,7 +119,7 @@ export const DocumentCard = ({
           "
         >
           <i className="pi pi-share-alt mr-2 text-sidebar" />
-          Ver relaciones
+          <span>Ver relaciones</span>
         </button>
 
         <button

@@ -32,7 +32,7 @@ export const SearchBox = ({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Soporta modo controlado y no controlado
-  const busqueda = controlledValue !== undefined ? controlledValue : internalValue;
+  const busqueda = controlledValue ?? internalValue;
   const setBusqueda = onChange || setInternalValue;
 
   // Debounce para optimizar las peticiones de autocompletado en PostgreSQL
@@ -161,9 +161,10 @@ export const SearchBox = ({
 
       {/* Botón de limpiar o indicador de carga */}
       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-        {isSearching ? (
+        {isSearching && (
           <i className="pi pi-spin pi-spinner text-blue-500 text-sm md:text-base" />
-        ) : busqueda.length > 0 ? (
+        )}
+        {!isSearching && busqueda.length > 0 && (
           <button
             type="button"
             onClick={() => {
@@ -175,7 +176,7 @@ export const SearchBox = ({
           >
             <i className="pi pi-times text-xs" />
           </button>
-        ) : null}
+        )}
       </div>
 
       {/* Panel de sugerencias exclusivo para búsqueda léxica (#) */}
@@ -185,7 +186,7 @@ export const SearchBox = ({
           <div className="px-4 py-2.5 bg-slate-50 text-[11px] font-semibold text-slate-600 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <i className="pi pi-hashtag text-blue-600 text-xs" />
-              Sugerencias léxicas
+              <span>Sugerencias léxicas</span>
             </span>
             <span className="text-[10px] text-slate-400 font-normal">
               Usa ↑ ↓ y Enter
@@ -197,7 +198,7 @@ export const SearchBox = ({
             <div className="px-4 py-3 text-xs md:text-sm text-slate-500 flex items-center gap-2.5">
               <i className="pi pi-info-circle text-blue-500 text-sm shrink-0" />
               <span>
-                Escribe al menos <strong>2 caracteres</strong> después de <code className="bg-slate-100 text-blue-700 px-1 py-0.5 rounded font-mono text-xs">#</code> para sugerir títulos o metadatos.
+                Escribe al menos <strong>3 caracteres</strong> después de <code className="bg-slate-100 text-blue-700 px-1 py-0.5 rounded font-mono text-xs">#</code> para sugerir títulos o metadatos.
               </span>
             </div>
           )}

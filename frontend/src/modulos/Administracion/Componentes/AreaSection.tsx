@@ -10,7 +10,7 @@ interface Props {
 }
 
 /** AreaEmisora: una o varias SubArea que emitieron el documento, agrupadas por TipoArea. */
-export function AreaSection({ areasemisoras, tiposArea, subAreas, onChange }: Props) {
+export function AreaSection({ areasemisoras, tiposArea, subAreas, onChange }: Readonly<Props>) {
   return (
     <EditorSection
       title="Área emisora"
