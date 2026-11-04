@@ -115,18 +115,17 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
           })}
         </div>
       </div>
-      {pdfSeleccionado !== null && (
-        <PdfModal documentId={pdfSeleccionado} onClose={() => setPdfSeleccionado(null)} />
-      )}
       {relacionesDocId !== null && (
         <RelacionesModal
           documentId={relacionesDocId}
           onClose={() => setRelacionesDocId(null)}
           onVerDocumento={(targetId) => {
-            setRelacionesDocId(null);
             setPdfSeleccionado(targetId);
           }}
         />
+      )}
+      {pdfSeleccionado !== null && (
+        <PdfModal documentId={pdfSeleccionado} onClose={() => setPdfSeleccionado(null)} />
       )}
     </>
   );

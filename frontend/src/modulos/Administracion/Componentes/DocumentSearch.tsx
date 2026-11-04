@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Toast } from "primereact/toast";
 
 import { DocumentEditor } from "./DocumentEditor";
@@ -108,6 +109,7 @@ const LoadingIndicator = ({
 
 export const DocumentSearch = () => {
   const toast = useRef<Toast>(null);
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const docIdParam = searchParams.get("docId");
@@ -261,8 +263,15 @@ export const DocumentSearch = () => {
       await saveEditableDocument(
         draft.iddocumento,
         draft,
-        selectedDocument?.relaciones
+        selectedDocument
       );
+
+      queryClient.invalidateQueries({
+        queryKey: ["document-trazabilidad", draft.iddocumento],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["document-detail", draft.iddocumento],
+      });
 
       saveProgress.finishProgress();
 

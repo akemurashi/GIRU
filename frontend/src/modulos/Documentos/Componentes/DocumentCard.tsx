@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { authService, type User } from "../../../services/authService";
 import { RelacionesModal } from "./RelacionesModal";
+import { PdfModal } from "./PdfModal";
 
 type DocumentCardProps = {
   id: string | number;
@@ -25,6 +26,7 @@ export const DocumentCard = ({
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [showRelaciones, setShowRelaciones] = useState(false);
+  const [pdfDocId, setPdfDocId] = useState<string | null>(null);
 
   useEffect(() => {
     setUser(authService.getUser());
@@ -135,6 +137,14 @@ export const DocumentCard = ({
         <RelacionesModal
           documentId={String(id)}
           onClose={() => setShowRelaciones(false)}
+          onVerDocumento={(targetId) => setPdfDocId(targetId)}
+        />
+      )}
+
+      {pdfDocId !== null && (
+        <PdfModal
+          documentId={pdfDocId}
+          onClose={() => setPdfDocId(null)}
         />
       )}
     </article>

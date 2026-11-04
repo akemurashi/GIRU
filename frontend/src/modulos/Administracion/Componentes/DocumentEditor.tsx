@@ -290,11 +290,14 @@ export function DocumentEditor({
         />
 
         <RelacionesSection
-          relaciones={draft.relaciones ?? []}
-          catalogs={catalogs}
+          antes={draft.trazabilidadAntes ?? []}
+          despues={draft.trazabilidadDespues ?? []}
           documentOptions={documentOptions}
           errors={errors}
-          onChange={(relaciones) => onChange("relaciones", relaciones)}
+          onChangeAntes={(antes) => onChange("trazabilidadAntes", antes)}
+          onChangeDespues={(despues) =>
+            onChange("trazabilidadDespues", despues)
+          }
         />
       </div>
 
