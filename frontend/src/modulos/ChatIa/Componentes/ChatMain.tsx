@@ -116,15 +116,9 @@ export const ChatMain = () => {
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
-  const cerrarSesionPorTiempo = (idParaCerrar: string) => {
-    const stored = leerSesionActivaLocal();
-    const userId =
-      stored?.userId || localStorage.getItem("user_id") || "default-user";
+  const cerrarSesionPorTiempo = () => {
     limpiarSesionActivaLocal();
     setSessionId("");
-    if (idParaCerrar) {
-      void externalAiService.deleteSession(idParaCerrar, userId).catch(() => {});
-    }
   };
 
   // Inicializa la sesión real y sincroniza el nombre del usuario autenticado si es necesario.
@@ -171,13 +165,13 @@ export const ChatMain = () => {
     const elapsed = Date.now() - startedAt;
 
     if (elapsed >= SESSION_MAX_DURATION_MS) {
-      cerrarSesionPorTiempo(sessionId);
+      cerrarSesionPorTiempo();
       return;
     }
 
     const remainingMs = SESSION_MAX_DURATION_MS - elapsed;
     const timerId = window.setTimeout(() => {
-      cerrarSesionPorTiempo(sessionId);
+      cerrarSesionPorTiempo();
     }, remainingMs);
 
     return () => {
@@ -196,13 +190,10 @@ export const ChatMain = () => {
     try {
       const userId = localStorage.getItem("user_id") || "default-user";
 
-      // Si había una sesión local con 7 minutos o más desde su inicio, se cierra.
+      // Si había una sesión local con 7 minutos o más desde su inicio, se cierra localmente.
       const previa = leerSesionActivaLocal();
       if (previa && Date.now() - previa.startedAt >= SESSION_MAX_DURATION_MS) {
         limpiarSesionActivaLocal();
-        void externalAiService
-          .deleteSession(previa.id, previa.userId || userId)
-          .catch(() => {});
       }
 
       const response = await externalAiService.createSession({
@@ -255,7 +246,7 @@ export const ChatMain = () => {
       sesionActual.id === sessionId &&
       Date.now() - sesionActual.startedAt >= SESSION_MAX_DURATION_MS
     ) {
-      cerrarSesionPorTiempo(sessionId);
+      cerrarSesionPorTiempo();
       return;
     }
 
