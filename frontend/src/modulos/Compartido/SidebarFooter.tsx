@@ -54,6 +54,12 @@ export const SidebarFooter = () => {
           Universidad Técnica Federico Santa María
         </p>
       )}
+
+      <div className="mt-3 rounded-lg bg-white/10 px-3 py-2 text-center">
+        <p className="text-xs font-medium text-white/90">
+          Agradecimientos a la CChIA
+        </p>
+      </div>
     </footer>
   );
 };

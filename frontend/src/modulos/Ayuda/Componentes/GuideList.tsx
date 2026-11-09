@@ -3,47 +3,69 @@ import { GuideStep } from "./GuideStep";
 const steps = [
   {
     step: 1,
-    icon: "pi pi-search",
-    title: "Buscar un documento",
+    icon: "pi pi-home",
+    title: "Explorar desde el Inicio",
     description:
-      "Utiliza el buscador para encontrar reglamentos, decretos, actas, convenios y otros documentos institucionales.",
+      "Desde la página de Inicio, utiliza la barra de búsqueda central o selecciona una tarjeta de Acceso rápido por categoría (Reglamentos, Decretos) para explorar el catálogo institucional.",
     tips: [
-      "Busca usando palabras clave.",
-      "Puedes escribir el nombre del documento.",
-      "No es necesario escribir el nombre completo.",
+      "Usa el menú lateral para cambiar rápidamente entre Inicio, Chat IA, Buscar documentos, Preguntas frecuentes y Ayuda.",
+      "Las tarjetas de categoría abren directamente el buscador con el filtro de tipo de documento preseleccionado.",
     ],
   },
   {
     step: 2,
-    icon: "pi pi-filter",
-    title: "Filtrar resultados",
+    icon: "pi pi-search",
+    title: "Buscar un documento: Búsqueda híbrida y con #",
     description:
-      "Reduce los resultados utilizando filtros por tipo, estado, fecha u organismo.",
+      "El buscador combina búsqueda inteligente (semántica y léxica) cuando escribes un tema o concepto y presionas Enter, y búsqueda léxica directa con autocompletado cuando antepones el símbolo #.",
     tips: [
-      "Puedes combinar varios filtros.",
-      "Restablece los filtros cuando quieras.",
+      "Escribe conceptos o temas (ej. «rebaja académica», «convalidación») y presiona Enter para buscar en el contenido y títulos.",
+      "Escribe # seguido de al menos 3 caracteres (ej. #reglamento, #053) para desplegar sugerencias instantáneas por Título o Metadato y saltar directo al documento.",
     ],
   },
   {
     step: 3,
-    icon: "pi pi-eye",
-    title: "Visualizar el documento",
+    icon: "pi pi-filter",
+    title: "Refinar resultados con filtros principales y avanzados",
     description:
-      "Abre la vista previa para revisar el documento antes de descargarlo.",
+      "En la vista de documentos, utiliza el panel lateral para acotar los resultados según criterios normativos y organizacionales.",
     tips: [
-      "Puedes navegar por todas las páginas.",
-      "También puedes descargar el PDF.",
+      "Filtra rápidamente por Tipo de documento, Estado (Vigente, Modificado, Derogado) y Año (con buscador numérico desde 1972).",
+      "Haz clic en «Mostrar más filtros» para habilitar los filtros avanzados de selección múltiple: Área, Sede, Departamento y Carrera.",
+      "Usa «Limpiar filtros» para restablecer la búsqueda en cualquier momento.",
     ],
   },
   {
     step: 4,
-    icon: "pi pi-comments",
-    title: "Consultar con Don Fede",
+    icon: "pi pi-eye",
+    title: "Visualizar y descargar el documento oficial",
     description:
-      "Pregunta sobre reglamentos, artículos o procedimientos y obtén una respuesta basada en la documentación institucional.",
+      "En cada tarjeta de resultado, presiona «Ver documento» para abrir el visor de PDF integrado sin abandonar la plataforma.",
     tips: [
-      "Haz preguntas claras.",
-      "Revisa siempre la fuente oficial citada.",
+      "En computador puedes navegar por páginas, buscar texto dentro del PDF, imprimir o descargar el archivo original.",
+      "En dispositivos móviles cuentas con controles dedicados de zoom (- y +) para facilitar la lectura.",
+    ],
+  },
+  {
+    step: 5,
+    icon: "pi pi-share-alt",
+    title: "Revisar las relaciones y trazabilidad normativa",
+    description:
+      "Presiona «Ver relaciones» en cualquier documento para abrir el panel lateral de Relaciones y Trazabilidad, que muestra su línea de tiempo normativa (Antes → Actual → Después).",
+    tips: [
+      "Revisa los Hitos Anteriores (antecedentes y normas de origen) y los Hitos Posteriores (reformas, modificaciones o derogaciones).",
+      "Si el hito indica «Documento digitalizado», haz clic en «Ver documento» dentro de la línea de tiempo para abrir directamente ese decreto o reglamento.",
+    ],
+  },
+  {
+    step: 6,
+    icon: "pi pi-comments",
+    title: "Consultar con Don Fede, el asistente de IA",
+    description:
+      "Ingresa a Chat IA para hacer preguntas en lenguaje natural sobre reglamentos, artículos y trámites universitarios, obteniendo respuestas en tiempo real respaldadas por el corpus oficial.",
+    tips: [
+      "En pantallas grandes, aprovecha el panel derecho con Sugerencias de consulta y Documentos destacados para iniciar consultas frecuentes con un clic.",
+      "Revisa siempre la tarjeta de Fuente oficial bajo la respuesta de Don Fede: verifica la Cita verificada (fragmento textual) y pulsa «Ver documento completo» o «Ver PDF» en las fuentes adicionales.",
     ],
   },
 ];
