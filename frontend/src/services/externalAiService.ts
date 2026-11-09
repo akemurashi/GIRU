@@ -61,12 +61,6 @@ export interface SessionDetail {
   mensajes: ChatMessage[];
 }
 
-const DIRECT_IA_BASE_URL = "http://100.74.195.99:8000";
-const DIRECT_IA_HEADERS: Record<string, string> = {
-  "X-API-Key": "GIRU",
-  "Content-Type": "application/json",
-};
-
 export class ExternalAiService {
   private static instance: ExternalAiService;
 
@@ -80,41 +74,13 @@ export class ExternalAiService {
   }
 
   async createSession(request: CreateSessionRequest): Promise<CreateSessionResponse> {
-    try {
-      const response = await api.post<CreateSessionResponse>("/ai/sessions", request);
-      return response.data;
-    } catch {
-      const fallback = await fetch(`${DIRECT_IA_BASE_URL}/sesiones`, {
-        method: "POST",
-        headers: DIRECT_IA_HEADERS,
-        body: JSON.stringify({
-          user_id: request.user_id,
-          titulo: request.titulo ?? "Nueva consulta",
-          modo: request.modo ?? "cascade",
-        }),
-      });
-      if (!fallback.ok) {
-        throw new Error(`Error creating session: ${fallback.status}`);
-      }
-      return (await fallback.json()) as CreateSessionResponse;
-    }
+    const response = await api.post<CreateSessionResponse>("/ai/sessions", request);
+    return response.data;
   }
 
   async ask(request: AskRequest): Promise<AskResponse> {
-    try {
-      const response = await api.post<AskResponse>("/ai/ask", request);
-      return response.data;
-    } catch {
-      const fallback = await fetch(`${DIRECT_IA_BASE_URL}/preguntar`, {
-        method: "POST",
-        headers: DIRECT_IA_HEADERS,
-        body: JSON.stringify(request),
-      });
-      if (!fallback.ok) {
-        throw new Error(`Error asking AI: ${fallback.status}`);
-      }
-      return (await fallback.json()) as AskResponse;
-    }
+    const response = await api.post<AskResponse>("/ai/ask", request);
+    return response.data;
   }
 
   private parseSseBlock(block: string): { eventType: string; dataLine: string } {
@@ -174,28 +140,17 @@ export class ExternalAiService {
     const url = `${api.defaults.baseURL}/ai/ask-stream`;
 
     try {
-      let response: Response;
-      try {
-        response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(request),
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-      } catch {
-        response = await fetch(`${DIRECT_IA_BASE_URL}/preguntar/stream`, {
-          method: "POST",
-          headers: DIRECT_IA_HEADERS,
-          body: JSON.stringify(request),
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
@@ -233,53 +188,23 @@ export class ExternalAiService {
   }
 
   async listSessions(userId: string): Promise<SessionListItem[]> {
-    try {
-      const response = await api.get<SessionListItem[]>("/ai/sessions", {
-        params: { user_id: userId },
-      });
-      return response.data;
-    } catch {
-      const fallback = await fetch(
-        `${DIRECT_IA_BASE_URL}/sesiones?user_id=${encodeURIComponent(userId)}`,
-        {
-          method: "GET",
-          headers: DIRECT_IA_HEADERS,
-        }
-      );
-      if (!fallback.ok) return [];
-      return (await fallback.json()) as SessionListItem[];
-    }
+    const response = await api.get<SessionListItem[]>("/ai/sessions", {
+      params: { user_id: userId },
+    });
+    return response.data;
   }
 
   async getSession(sessionId: string, userId: string): Promise<SessionDetail> {
-    try {
-      const response = await api.get<SessionDetail>(`/ai/sessions/${sessionId}`, {
-        params: { user_id: userId },
-      });
-      return response.data;
-    } catch {
-      const fallback = await fetch(
-        `${DIRECT_IA_BASE_URL}/sesiones/${encodeURIComponent(sessionId)}?user_id=${encodeURIComponent(userId)}`,
-        {
-          method: "GET",
-          headers: DIRECT_IA_HEADERS,
-        }
-      );
-      if (!fallback.ok) {
-        throw new Error(`Error getting session: ${fallback.status}`);
-      }
-      return (await fallback.json()) as SessionDetail;
-    }
+    const response = await api.get<SessionDetail>(`/ai/sessions/${sessionId}`, {
+      params: { user_id: userId },
+    });
+    return response.data;
   }
 
   async deleteSession(sessionId: string, userId: string): Promise<void> {
-    await fetch(
-      `${DIRECT_IA_BASE_URL}/sesiones/${encodeURIComponent(sessionId)}?user_id=${encodeURIComponent(userId)}`,
-      {
-        method: "DELETE",
-        headers: DIRECT_IA_HEADERS,
-      }
-    );
+    await api.delete(`/ai/sessions/${sessionId}`, {
+      params: { user_id: userId },
+    });
   }
 }
 
