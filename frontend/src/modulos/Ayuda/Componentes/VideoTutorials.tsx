@@ -7,9 +7,9 @@ export type VideoTutorialsProps = {
 const videos = [
   {
     icon: "pi pi-home",
-    title: "Introducción al sistema",
+    title: "Inicio de la web",
     description:
-      "Conoce las principales funcionalidades disponibles en GIRU.",
+      "Conoce cómo usar la pantalla de inicio, el buscador principal y el acceso rápido por categorías.",
     duration: "00:00",
     seconds: 0,
   },
@@ -17,41 +17,41 @@ const videos = [
     icon: "pi pi-search",
     title: "Buscar documentos",
     description:
-      "Aprende a encontrar reglamentos, decretos y documentos institucionales.",
-    duration: "01:15",
-    seconds: 75,
+      "Aprende a buscar normativa por tema o mediante búsqueda léxica directa con # y autocompletado.",
+    duration: "00:35",
+    seconds: 35,
   },
   {
     icon: "pi pi-filter",
     title: "Aplicar filtros",
     description:
-      "Descubre cómo utilizar filtros para obtener mejores resultados.",
-    duration: "02:40",
-    seconds: 160,
+      "Descubre cómo acotar resultados por tipo, estado de vigencia, año, área, sede, departamento o carrera.",
+    duration: "01:20",
+    seconds: 80,
   },
   {
-    icon: "pi pi-file",
-    title: "Visualizar documentos",
+    icon: "pi pi-eye",
+    title: "Ver documentos",
     description:
-      "Revisa el visor de documentos y sus principales herramientas.",
-    duration: "03:30",
-    seconds: 210,
+      "Revisa cómo abrir, recorrer y descargar los PDFs oficiales en el visor integrado.",
+    duration: "01:54",
+    seconds: 114,
+  },
+  {
+    icon: "pi pi-share-alt",
+    title: "Relaciones de documentos",
+    description:
+      "Explora la línea de tiempo normativa (hitos anteriores, documento actual y modificaciones posteriores).",
+    duration: "02:13",
+    seconds: 133,
   },
   {
     icon: "pi pi-comments",
-    title: "Consultar con Don Fede",
+    title: "Don Fede (Chatbot IA)",
     description:
-      "Aprende a realizar preguntas sobre reglamentos y normativas.",
-    duration: "04:30",
-    seconds: 270,
-  },
-  {
-    icon: "pi pi-question-circle",
-    title: "Preguntas frecuentes",
-    description:
-      "Resuelve las dudas más comunes sobre el funcionamiento de GIRU.",
-    duration: "06:00",
-    seconds: 360,
+      "Aprende a realizar consultas en lenguaje natural, usar sugerencias y verificar las fuentes citadas.",
+    duration: "02:33",
+    seconds: 153,
   },
 ];
 

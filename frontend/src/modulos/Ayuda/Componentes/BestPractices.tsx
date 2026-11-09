@@ -3,30 +3,30 @@ import { PracticeCard } from "./PracticeCard";
 const practices = [
   {
     icon: "pi pi-check-circle",
-    title: "Verificar siempre el estado del documento",
+    title: "Verificar la insignia de estado y la trazabilidad",
     description:
-      "Asegúrate de que el documento esté vigente. Los documentos derogados o reemplazados se mantienen únicamente como referencia histórica.",
+      "Comprueba siempre la etiqueta de estado en cada documento (Vigente en verde, Modificado en amarillo o Derogado en rojo) y abre «Ver relaciones» para confirmar si existen decretos posteriores que lo modifiquen.",
+  },
+
+  {
+    icon: "pi pi-hashtag",
+    title: "Usar # para búsquedas exactas y texto libre para temas",
+    description:
+      "Si conoces el número de decreto, código o título del reglamento, antepón # (más al menos 3 caracteres) para usar el autocompletado léxico directo; si buscas por situación o concepto, escribe sin # para activar la búsqueda híbrida con IA.",
   },
 
   {
     icon: "pi pi-book",
-    title: "Revisar el artículo citado",
+    title: "Validar la «Cita verificada» y abrir el PDF oficial",
     description:
-      "Lee siempre el artículo completo del documento oficial para comprender el contexto y evitar interpretaciones incompletas.",
-  },
-
-  {
-    icon: "pi pi-history",
-    title: "Confirmar la versión vigente",
-    description:
-      "Antes de tomar una decisión, verifica que estás consultando la versión más reciente del reglamento o normativa.",
+      "Cuando consultes a Don Fede, revisa el fragmento textual en el recuadro de Fuente oficial (Cita verificada) y utiliza el botón «Ver documento completo» para leer el artículo íntegro en su contexto original.",
   },
 
   {
     icon: "pi pi-comments",
-    title: "Usar Don Fede como apoyo",
+    title: "Usar a Don Fede como apoyo orientativo",
     description:
-      "Las respuestas ayudan a comprender la normativa, pero la fuente oficial siempre será el documento institucional vigente.",
+      "Las interpretaciones de Don Fede facilitan la comprensión de trámites y reglamentos, pero para solicitudes formales o resoluciones académicas la fuente vinculante siempre es el documento institucional vigente.",
   },
 ];
 

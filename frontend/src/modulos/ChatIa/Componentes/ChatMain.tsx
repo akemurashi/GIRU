@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { externalAiService, type AskResponse, type AskRequest } from "../../../services/externalAiService";
+import { authService, type User } from "../../../services/authService";
 import api from "../../../services/api";
 import { PdfModal } from "../../Documentos/Componentes/PdfModal";
 import { ChatHeader } from "./ChatHeader";
@@ -9,9 +10,101 @@ import { InfoPanel } from "./InfoPanel";
 import { ChatInput } from "./ChatInput";
 import type { Message, SourceItem } from "../types";
 
+const formatearNombrePropio = (rawName: string): string => {
+  return rawName
+    .trim()
+    .replace(/[._-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const obtenerNombreSaludo = (user: User | null): string | null => {
+  if (!user) return null;
+
+  const rawName = (user.name || "").trim();
+  if (rawName && rawName.toLowerCase() !== "usuario") {
+    return formatearNombrePropio(rawName);
+  }
+
+  if (user.email && user.email.includes("@")) {
+    const emailPrefix = user.email.split("@")[0].trim();
+    if (emailPrefix && emailPrefix.toLowerCase() !== "unknown") {
+      return formatearNombrePropio(emailPrefix);
+    }
+  }
+
+  return null;
+};
+
+const crearMensajeBienvenida = (user: User | null): Message => {
+  const nombre = obtenerNombreSaludo(user);
+  const saludoInicial = nombre
+    ? `¡Hola, ${nombre}! Te doy la bienvenida a GIRU.`
+    : "¡Hola! Te doy la bienvenida a GIRU.";
+
+  return {
+    type: "assistant",
+    interpretationTitle: "Mensaje de bienvenida",
+    interpretationText: `${saludoInicial} Soy Don Fede, tu asistente virtual de reglamentos, decretos y normativas de la UTFSM.\n\n¿En qué te puedo ayudar hoy? Escribe tu consulta abajo o selecciona una de las preguntas sugeridas para comenzar.`,
+  };
+};
+
+// Duración máxima de una sesión desde su inicio: 7 minutos (420.000 ms)
+const SESSION_MAX_DURATION_MS = 7 * 60 * 1000;
+const ACTIVE_SESSION_STORAGE_KEY = "giru_active_chat_session";
+
+interface StoredActiveSession {
+  id: string;
+  userId: string;
+  startedAt: number;
+}
+
+const leerSesionActivaLocal = (): StoredActiveSession | null => {
+  try {
+    const raw = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredActiveSession>;
+    if (
+      parsed &&
+      typeof parsed.id === "string" &&
+      typeof parsed.userId === "string" &&
+      typeof parsed.startedAt === "number"
+    ) {
+      return {
+        id: parsed.id,
+        userId: parsed.userId,
+        startedAt: parsed.startedAt,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const guardarSesionActivaLocal = (session: StoredActiveSession): void => {
+  try {
+    localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Ignorar si localStorage no está disponible
+  }
+};
+
+const limpiarSesionActivaLocal = (): void => {
+  try {
+    localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+  } catch {
+    // Ignorar si localStorage no está disponible
+  }
+};
+
 export const ChatMain = () => {
   const [showHeader, setShowHeader] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => [
+    crearMensajeBienvenida(authService.getUser()),
+  ]);
   const [sessionId, setSessionId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -21,20 +114,96 @@ export const ChatMain = () => {
   );
 
   const conversationEndRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
-  // Inicializa la sesión real, igual que antes.
+  const cerrarSesionPorTiempo = (idParaCerrar: string) => {
+    const stored = leerSesionActivaLocal();
+    const userId =
+      stored?.userId || localStorage.getItem("user_id") || "default-user";
+    limpiarSesionActivaLocal();
+    setSessionId("");
+    if (idParaCerrar) {
+      void externalAiService.deleteSession(idParaCerrar, userId).catch(() => {});
+    }
+  };
+
+  // Inicializa la sesión real y sincroniza el nombre del usuario autenticado si es necesario.
   useEffect(() => {
-    void initializeSession();
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      void initializeSession();
+    }
+
+    const storedUser = authService.getUser();
+    const token = authService.getToken();
+
+    if (token && (!storedUser || !obtenerNombreSaludo(storedUser))) {
+      authService
+        .getCurrentUser(token)
+        .then((freshUser) => {
+          authService.setUser(freshUser);
+          setMessages((prev) => {
+            if (
+              prev.length > 0 &&
+              prev[0].type === "assistant" &&
+              prev[0].interpretationTitle === "Mensaje de bienvenida"
+            ) {
+              const updated = [...prev];
+              updated[0] = crearMensajeBienvenida(freshUser);
+              return updated;
+            }
+            return prev;
+          });
+        })
+        .catch(() => {
+          // Si falla la consulta de perfil, se conserva el saludo por defecto.
+        });
+    }
   }, []);
 
-  // Mantiene la conversación desplazada hacia el último mensaje.
+  // Cierra automáticamente la sesión en el frontend cuando cumple 7 minutos desde su inicio.
   useEffect(() => {
-    conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!sessionId) return;
+
+    const stored = leerSesionActivaLocal();
+    const startedAt =
+      stored && stored.id === sessionId ? stored.startedAt : Date.now();
+    const elapsed = Date.now() - startedAt;
+
+    if (elapsed >= SESSION_MAX_DURATION_MS) {
+      cerrarSesionPorTiempo(sessionId);
+      return;
+    }
+
+    const remainingMs = SESSION_MAX_DURATION_MS - elapsed;
+    const timerId = window.setTimeout(() => {
+      cerrarSesionPorTiempo(sessionId);
+    }, remainingMs);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [sessionId]);
+
+  // Mantiene la conversación desplazada hacia el último mensaje cuando hay interacción.
+  useEffect(() => {
+    if (messages.length > 1) {
+      conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const initializeSession = async () => {
     try {
       const userId = localStorage.getItem("user_id") || "default-user";
+
+      // Si había una sesión local con 7 minutos o más desde su inicio, se cierra.
+      const previa = leerSesionActivaLocal();
+      if (previa && Date.now() - previa.startedAt >= SESSION_MAX_DURATION_MS) {
+        limpiarSesionActivaLocal();
+        void externalAiService
+          .deleteSession(previa.id, previa.userId || userId)
+          .catch(() => {});
+      }
 
       const response = await externalAiService.createSession({
         user_id: userId,
@@ -42,6 +211,11 @@ export const ChatMain = () => {
         modo: "cascade",
       });
 
+      guardarSesionActivaLocal({
+        id: response.id,
+        userId,
+        startedAt: Date.now(),
+      });
       setSessionId(response.id);
     } catch (error) {
       console.error("Error creating session:", error);
@@ -74,6 +248,16 @@ export const ChatMain = () => {
   const handleSendMessage = async (customMessage?: string) => {
     const textToSend = (customMessage ?? inputValue).trim();
     if (!textToSend || !sessionId || isLoading) return;
+
+    const sesionActual = leerSesionActivaLocal();
+    if (
+      sesionActual &&
+      sesionActual.id === sessionId &&
+      Date.now() - sesionActual.startedAt >= SESSION_MAX_DURATION_MS
+    ) {
+      cerrarSesionPorTiempo(sessionId);
+      return;
+    }
 
     const userMessage = textToSend;
     if (customMessage === undefined) {

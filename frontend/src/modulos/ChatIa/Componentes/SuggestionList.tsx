@@ -8,12 +8,12 @@ export const SuggestionList = ({
   disabled = false,
 }: SuggestionListProps) => {
   const sugerencias = [
-    "¿Cuántos créditos SCT puedo inscribir por semestre y cómo solicito más de 35 créditos?",
+    "¿Qué es el VTR y qué significa tener dos VTR 3?",
     "¿Qué significa tener una asignatura con candado y cómo puedo desinscribirla?",
     "¿Qué es la Rebaja Académica Voluntaria (botón de pánico) y cuáles son sus restricciones?",
-    "¿Cómo puedo convalidar asignaturas o ramos cursados en una carrera anterior?",
+    "¿Qué es el SIGA y cuándo se ocupa?",
     "¿Cuántos créditos debo tener para pedir rebaja de arancel por baja carga académica?",
-    "¿Qué debo hacer para solicitar un retiro temporal, reincorporación o matrícula sin ramos?",
+    "¿Cuáles son las causas para la eliminación?",
   ];
 
   return (
