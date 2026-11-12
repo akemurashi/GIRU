@@ -321,6 +321,10 @@ const YearFilter = ({
             grid-cols-3
             gap-2
             sm:grid-cols-4
+            md:grid-cols-6
+            lg:grid-cols-8
+            xl:grid-cols-3
+            2xl:grid-cols-4
           "
         >
           {añosFiltrados.map(
@@ -849,29 +853,31 @@ export const FilterForm = ({
           FILTROS PRINCIPALES
       ================================================= */}
 
-      <SelectFilter
-        label="Tipo de documento"
-        value={filtros.tipoDocumento}
-        options={tiposDocumento}
-        onChange={(value: string) =>
-          onFiltroChange(
-            "tipoDocumento",
-            value
-          )
-        }
-      />
+      <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2 xl:grid-cols-1">
+        <SelectFilter
+          label="Tipo de documento"
+          value={filtros.tipoDocumento}
+          options={tiposDocumento}
+          onChange={(value: string) =>
+            onFiltroChange(
+              "tipoDocumento",
+              value
+            )
+          }
+        />
 
-      <SelectFilter
-        label="Estado"
-        value={filtros.estado}
-        options={estados}
-        onChange={(value: string) =>
-          onFiltroChange(
-            "estado",
-            value
-          )
-        }
-      />
+        <SelectFilter
+          label="Estado"
+          value={filtros.estado}
+          options={estados}
+          onChange={(value: string) =>
+            onFiltroChange(
+              "estado",
+              value
+            )
+          }
+        />
+      </div>
 
       <YearFilter
         selected={filtros.año}
@@ -890,9 +896,14 @@ export const FilterForm = ({
       {mostrarTodos && (
         <div
           className="
+            grid
+            grid-cols-1
+            gap-x-4
             border-t
             border-slate-200
             pt-5
+            md:grid-cols-2
+            xl:grid-cols-1
           "
         >
           <MultiSelectFilter

@@ -61,21 +61,21 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
               <article
                 id={`documento-${doc.id}`}
                 key={doc.id}
-                className={`rounded-xl border bg-white p-3 shadow-sm md:p-6 ${seleccionado ? "border-blue-500 ring-2 ring-blue-100" : "border-slate-200"}`}
+                className={`rounded-xl border bg-white p-3.5 shadow-sm sm:p-4 md:p-5 lg:p-6 ${seleccionado ? "border-blue-500 ring-2 ring-blue-100" : "border-slate-200"}`}
               >
-                <div className="flex flex-col gap-2 md:flex-row md:items-start">
-                  <h3 className="min-w-0 flex-1 wrap-break-word text-base font-semibold text-slate-900 md:text-lg">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <h3 className="min-w-0 flex-1 wrap-break-word text-base font-semibold text-slate-900 sm:text-[17px] md:text-lg">
                     {doc.titulo}
                   </h3>
-                  <span className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${estiloEstado.clase}`}>
+                  <span className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${estiloEstado.clase}`}>
                     {doc.estado}
                   </span>
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400 md:text-sm">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 sm:text-sm">
                   <span>{doc.tipo}</span><span>{doc.fecha}</span><span>{doc.organismo}</span>
                 </div>
-                <p className="mt-2 wrap-break-word text-sm text-slate-600">{doc.descripcion}</p>
-                <div className="flex flex-wrap gap-2">
+                <p className="mt-2 wrap-break-word text-sm leading-relaxed text-slate-600">{doc.descripcion}</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:gap-2.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -86,7 +86,7 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
                       }
                       setPdfSeleccionado(documentId);
                     }}
-                    className="mt-3 w-full rounded-lg bg-sidebar py-2 text-sm text-white transition hover:opacity-90 md:w-auto md:px-4"
+                    className="w-full rounded-lg bg-sidebar px-4 py-2 text-sm text-white transition hover:opacity-90 sm:w-auto md:px-4 lg:px-5"
                   >
                     Ver documento
                   </button>
@@ -94,7 +94,7 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
                   <button
                     type="button"
                     onClick={() => setRelacionesDocId(String(doc.id))}
-                    className="mt-3 flex w-full items-center justify-center rounded-lg border border-slate-300 py-2 text-sm text-slate-700 transition hover:bg-slate-50 md:w-auto md:px-4"
+                    className="flex w-full items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50 sm:w-auto md:px-4 lg:px-5"
                   >
                     <i className="pi pi-share-alt mr-2 text-sidebar" />
                     <span>Ver relaciones</span>
@@ -104,7 +104,7 @@ export const DocumentList = ({ documentos, documentoSeleccionadoId = null }: Doc
                     <button
                       type="button"
                       onClick={() => navigate(`/administracion?docId=${encodeURIComponent(String(doc.id))}`)}
-                      className="mt-3 flex w-full items-center justify-center rounded-lg border border-amber-400 py-2 text-sm text-amber-500 transition hover:bg-amber-50 md:w-auto md:px-4"
+                      className="flex w-full items-center justify-center rounded-lg border border-amber-400 px-4 py-2 text-sm text-amber-500 transition hover:bg-amber-50 sm:w-auto md:px-4 lg:px-5"
                     >
                       <i className="pi pi-pencil mr-2" />
                       <span>Editar</span>
