@@ -48,9 +48,10 @@ export const FilterSidebar = ({
         bg-white
         border
         border-slate-200
-        lg:w-72
-        lg:border-y-0
-        lg:border-l-0
+        xl:w-72
+        2xl:w-80
+        xl:border-y-0
+        xl:border-l-0
         ${scrollable ? "h-full min-h-0" : ""}
       `}
     >

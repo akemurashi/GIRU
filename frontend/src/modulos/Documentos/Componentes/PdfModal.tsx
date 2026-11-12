@@ -87,7 +87,7 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6">
       <button
         type="button"
         aria-label="Cerrar visualizador de fondo"
@@ -99,11 +99,14 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
         open
         aria-modal="true"
         aria-labelledby="pdf-modal-title"
-        className="relative z-10 m-0 flex h-[90%] w-full flex-col overflow-hidden rounded-xl border-0 bg-sidebar p-0 text-left shadow-2xl sm:w-[90%]"
+        className="relative z-10 m-0 flex h-[94dvh] w-full flex-col overflow-hidden rounded-xl border-0 bg-sidebar p-0 text-left shadow-2xl sm:h-[92dvh] sm:w-[95%] md:h-[90dvh] md:w-[92%] lg:w-[88%] xl:w-[85%] 2xl:max-w-7xl"
       >
         {/* HEADER */}
-        <div className="flex shrink-0 items-center justify-between border-b border-white/15 px-4 py-3 sm:px-5">
-          <h2 id="pdf-modal-title" className="font-semibold text-white">
+        <div className="flex shrink-0 items-center justify-between border-b border-white/15 px-3 py-2.5 sm:px-4 sm:py-3 md:px-5">
+          <h2
+            id="pdf-modal-title"
+            className="truncate text-sm font-semibold text-white sm:text-base md:text-lg"
+          >
             Visualizador de documento
           </h2>
 
@@ -112,7 +115,7 @@ export const PdfModal = ({ documentId, onClose }: PdfModalProps) => {
             onClick={onClose}
             aria-label="Cerrar visualizador"
             title="Cerrar"
-            className="group flex h-9 w-9 items-center justify-center rounded-lg text-white/80 transition-all duration-200 hover:bg-red-500 hover:text-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar active:scale-95"
+            className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 transition-all duration-200 hover:bg-red-500 hover:text-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar active:scale-95"
           >
             <i className="pi pi-times text-lg transition-transform duration-200 group-hover:rotate-90" />
           </button>

@@ -876,17 +876,22 @@ export default function PaginaDocumentos() {
                   py-3
                   transition-[max-height,opacity]
                   duration-300
-                  md:p-6
+                  sm:px-4
+                  sm:py-3.5
+                  md:px-5
+                  md:py-4
                   md:max-h-none
                   md:opacity-100
+                  lg:px-6
+                  lg:py-5
                   ${
                     headerVisible
-                      ? "max-h-55 opacity-100 overflow-visible"
+                      ? "max-h-60 opacity-100 overflow-visible"
                       : "max-h-0 border-b-0! py-0! opacity-0 overflow-hidden pointer-events-none"
                   }
                 `}
               >
-                <h1 className="mb-3 text-xl font-bold text-slate-900 md:text-3xl">
+                <h1 className="mb-2.5 text-xl font-bold text-slate-900 sm:text-2xl md:mb-3 md:text-2xl lg:text-3xl">
                   Buscar documentos
                 </h1>
 
@@ -897,7 +902,7 @@ export default function PaginaDocumentos() {
                   onSelectSuggestion={handleSelectSuggestion}
                 />
 
-                {/* BOTÓN DE FILTROS - MÓVIL */}
+                {/* BOTÓN DE FILTROS - MÓVIL Y TABLET */}
 
                 <button
                   type="button"
@@ -927,7 +932,9 @@ export default function PaginaDocumentos() {
                     shadow-sm
                     transition
                     hover:bg-slate-900
-                    md:hidden
+                    md:w-auto
+                    md:px-5
+                    xl:hidden
                   "
                 >
                   <span>
@@ -946,18 +953,7 @@ export default function PaginaDocumentos() {
                 </button>
               </header>
 
-              {/* FILTROS - TABLET */}
-
-              <div className="hidden min-h-0 shrink-0 border-b border-slate-200 bg-slate-50 md:block xl:hidden">
-                <FilterSidebar
-                  filtros={filtros}
-                  onFiltrosChange={setFiltros}
-                  onLimpiarFiltros={limpiarFiltros}
-                  scrollable={false}
-                />
-              </div>
-
-              {/* DOCUMENTOS Y FILTROS MÓVILES */}
+              {/* DOCUMENTOS Y FILTROS MÓVILES / TABLET */}
 
               <div
                 ref={scrollContainerRef}
@@ -969,13 +965,18 @@ export default function PaginaDocumentos() {
                   px-3
                   py-3
                   pb-8
-                  md:p-6
+                  sm:px-4
+                  sm:py-4
+                  md:px-5
+                  md:py-5
+                  lg:px-6
+                  lg:py-6
                 "
               >
-                {/* PANEL DE FILTROS MÓVIL */}
+                {/* PANEL DE FILTROS MÓVIL Y TABLET */}
 
                 {mostrarFiltros && (
-                  <div className="mb-4 h-[65dvh] max-h-[65dvh] min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:hidden">
+                  <div className="mb-4 h-[65dvh] max-h-[65dvh] min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:h-[62dvh] sm:max-h-[62dvh] md:h-[58dvh] md:max-h-[58dvh] lg:h-[60dvh] lg:max-h-[60dvh] xl:hidden">
                     <FilterSidebar
                       filtros={filtrosPendientes}
                       onFiltrosChange={actualizarFiltrosPendientes}
