@@ -103,13 +103,13 @@ export const ChatMessage = ({
   return (
     <div className="flex w-full justify-start">
       <div className="flex w-full max-w-4xl flex-col items-start gap-2.5 sm:flex-row sm:gap-4">
-        {/* Avatar: compacto y apilado en móvil; lateral en pantallas mayores */}
+        {/* Avatar: compacto y apilado en móvil; lateral escalonado en tablets y escritorio */}
         <div className="flex items-center gap-2.5 sm:block">
           <div
             className={`shrink-0 overflow-hidden rounded-full bg-white ${
               isStreaming
-                ? "h-20 w-20 sm:h-42 sm:w-42"
-                : "h-12 w-12 sm:h-24 sm:w-24"
+                ? "h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-40 lg:w-40"
+                : "h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24"
             }`}
           >
             {isStreaming ? (
@@ -197,6 +197,7 @@ export const ChatMessage = ({
               )}
 
               <button
+                type="button"
                 onClick={() =>
                   sourceDocumentOriginalTitle &&
                   onViewDocument?.(sourceDocumentOriginalTitle)
@@ -211,8 +212,7 @@ export const ChatMessage = ({
                 "
               >
                 <i className="pi pi-file-pdf" />
-                {sourceButtonText || "Ver documento completo"}
-                <i className="pi pi-external-link text-xs" />
+                <span>{sourceButtonText || "Ver documento completo"}</span>
               </button>
 
               {/* Fuentes adicionales (hasta las 3 mejores fuentes) */}
@@ -246,11 +246,12 @@ export const ChatMessage = ({
                             <span className="sm:hidden" />
                           )}
                           <button
+                            type="button"
                             onClick={() => onViewDocument?.(s.documento)}
-                            className="inline-flex shrink-0 items-center gap-1.5 font-medium text-sky-900 hover:text-sky-700 hover:underline"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-sky-900/10 px-2.5 py-1 font-medium text-sky-900 transition hover:bg-sky-900 hover:text-white"
                           >
-                            <span>Ver PDF</span>
-                            <i className="pi pi-external-link text-[10px]" />
+                            <i className="pi pi-file-pdf text-[11px]" />
+                            <span>Ver documento</span>
                           </button>
                         </div>
                       </div>

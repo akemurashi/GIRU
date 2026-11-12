@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { externalAiService, type AskResponse, type AskRequest } from "../../../services/externalAiService";
 import { authService, type User } from "../../../services/authService";
-import api from "../../../services/api";
+import { resolveDocumentoPorTitulo } from "../../../services/relacionService";
 import { PdfModal } from "../../Documentos/Componentes/PdfModal";
 import { ChatHeader } from "./ChatHeader";
 import { ChatConversation } from "./ChatConversation";
@@ -108,10 +108,7 @@ export const ChatMain = () => {
   const [sessionId, setSessionId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [showPdfModal, setShowPdfModal] = useState(false);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(
-    null
-  );
+  const [pdfSeleccionado, setPdfSeleccionado] = useState<string | null>(null);
 
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -220,12 +217,13 @@ export const ChatMain = () => {
 
   const handleViewDocument = async (documentTitle: string) => {
     try {
-      const response = await api.get<{ id: number; titulo: string }>(
-        `/documents/by-title/${encodeURIComponent(documentTitle)}`
-      );
-
-      setSelectedDocumentId(response.data.id);
-      setShowPdfModal(true);
+      const resolved = await resolveDocumentoPorTitulo(documentTitle);
+      const documentId = String(resolved.id).trim();
+      if (!documentId || ["NaN", "undefined", "null"].includes(documentId)) {
+        console.error("Identificador de documento inválido:", resolved.id);
+        return;
+      }
+      setPdfSeleccionado(documentId);
     } catch (error) {
       console.error("Error getting document by title:", error);
       alert("Error al abrir el documento");
@@ -394,84 +392,82 @@ export const ChatMain = () => {
   };
 
   return (
-    <main
-      className="
-        fixed
-        left-0
-        right-0
-        bottom-0
-        top-20
-        z-0
-        flex
-        min-h-0
-        overflow-hidden
-        bg-white
-        md:static
-        md:h-full
-      "
-    >
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
-        {/* HEADER */}
-        <div
-          className={`
-            shrink-0
-            overflow-hidden
-            transition-all
-            duration-300
-            ease-in-out
-            ${showHeader ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}
-            md:max-h-none
-            md:opacity-100
-          `}
-        >
-          <ChatHeader />
-        </div>
-
-        {/* CONVERSACIÓN */}
-        <div
-          onScroll={handleScroll}
-          className="
-            min-h-0
-            flex-1
-            overflow-y-auto
-            overscroll-contain
-            bg-white
-          "
-        >
-          <div className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-6 sm:py-6 lg:px-10">
-            <ChatConversation
-              messages={messages}
-              onViewDocument={handleViewDocument}
-            />
-            <div ref={conversationEndRef} />
+    <>
+      <main
+        className="
+          fixed
+          left-0
+          right-0
+          bottom-0
+          top-14
+          flex
+          min-h-0
+          overflow-hidden
+          bg-white
+          md:static
+          md:h-full
+        "
+      >
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+          {/* HEADER */}
+          <div
+            className={`
+              shrink-0
+              overflow-hidden
+              transition-all
+              duration-300
+              ease-in-out
+              ${showHeader ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}
+              md:max-h-none
+              md:opacity-100
+            `}
+          >
+            <ChatHeader />
           </div>
-        </div>
 
-        {/* INPUT */}
-        <ChatInput
-          value={inputValue}
-          onChange={setInputValue}
-          onSend={() => handleSendMessage()}
+          {/* CONVERSACIÓN */}
+          <div
+            onScroll={handleScroll}
+            className="
+              min-h-0
+              flex-1
+              overflow-y-auto
+              overscroll-contain
+              bg-white
+            "
+          >
+            <div className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 lg:px-8 xl:px-10">
+              <ChatConversation
+                messages={messages}
+                onViewDocument={handleViewDocument}
+              />
+              <div ref={conversationEndRef} />
+            </div>
+          </div>
+
+          {/* INPUT */}
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={() => handleSendMessage()}
+            disabled={isLoading || !sessionId}
+          />
+        </section>
+
+        {/* PANEL DERECHO */}
+        <InfoPanel
+          onSelectQuery={handleSendMessage}
           disabled={isLoading || !sessionId}
         />
-      </section>
+      </main>
 
-      {/* PANEL DERECHO */}
-      <InfoPanel
-        onSelectQuery={handleSendMessage}
-        disabled={isLoading || !sessionId}
-      />
-
-      {/* PDF MODAL */}
-      {showPdfModal && selectedDocumentId && (
+      {/* PDF MODAL (Mismo visualizador que en la vista de Documentos) */}
+      {pdfSeleccionado !== null && (
         <PdfModal
-          documentId={String(selectedDocumentId)}
-          onClose={() => {
-            setShowPdfModal(false);
-            setSelectedDocumentId(null);
-          }}
+          documentId={pdfSeleccionado}
+          onClose={() => setPdfSeleccionado(null)}
         />
       )}
-    </main>
+    </>
   );
 };
