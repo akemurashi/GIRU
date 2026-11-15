@@ -5,6 +5,7 @@ import { FrontendStack } from '../lib/frontend-stack';
 import { DatabaseStack } from '../lib/database-stack';
 import { BackendStack } from '../lib/backend-stack';
 import { AuthStack } from '../lib/auth-stack';
+import { StorageStack } from '../lib/storage-stack';
 
 const app = new cdk.App();
 
@@ -28,6 +29,7 @@ const env = {
 const network = new NetworkStack(app, 'GiruNetworkStack', { env });
 const database = new DatabaseStack(app, 'GiruDatabaseStack', { env, vpc: network.vpc });
 const auth = new AuthStack(app, 'GiruAuthStack', { env });
+new StorageStack(app, 'GiruStorageStack', { env, stage });
 new BackendStack(app, 'GiruBackendStack', {
   env,
   vpc: network.vpc,

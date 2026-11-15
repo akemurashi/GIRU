@@ -7,6 +7,7 @@ export type CategoryCardProps = {
   title: string;
   description: string;
   trailingIcon?: string;
+  disabled?: boolean;
 };
 
 export const CategoryCard = ({
@@ -16,7 +17,88 @@ export const CategoryCard = ({
   title,
   description,
   trailingIcon = "pi pi-arrow-right",
+  disabled = false,
 }: CategoryCardProps) => {
+  const cardContent = (
+    <>
+      {/* Imagen principal */}
+      <img
+        src={imageSrc}
+        alt={title}
+        className={`h-48 w-full object-cover ${disabled ? "grayscale" : ""}`}
+      />
+
+
+      {/* Contenido */}
+      <div className="flex items-start gap-4 p-6">
+
+
+        {/* Icono PrimeReact */}
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+            disabled ? "bg-gray-200" : "bg-slate-100"
+          }`}
+        >
+          <i
+            className={`${icon} text-xl ${
+              disabled ? "text-gray-400" : "text-slate-700"
+            }`}
+          />
+        </div>
+
+
+        {/* Texto */}
+        <div className="flex-1">
+
+          <h3
+            className={`mb-1 text-lg font-semibold ${
+              disabled ? "text-gray-500" : "text-slate-900"
+            }`}
+          >
+            {title}
+          </h3>
+
+          <p className={`text-sm ${disabled ? "text-gray-400" : "text-slate-600"}`}>
+            {description}
+          </p>
+
+        </div>
+
+
+        {/* Icono derecha */}
+        <i
+          className={`${trailingIcon} mt-2 text-lg ${
+            disabled ? "text-gray-400" : "text-slate-500"
+          }`}
+        />
+
+
+      </div>
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <div
+        aria-disabled="true"
+        title="Tipo de documento aún no disponible"
+        className="
+          cursor-not-allowed
+          select-none
+          overflow-hidden
+          rounded-xl
+          border
+          border-gray-200
+          bg-gray-100
+          opacity-60
+          grayscale
+        "
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
   return (
     <Link
       to={href}
@@ -31,49 +113,7 @@ export const CategoryCard = ({
         hover:shadow-lg
       "
     >
-
-      {/* Imagen principal */}
-      <img
-        src={imageSrc}
-        alt={title}
-        className="h-48 w-full object-cover"
-      />
-
-
-      {/* Contenido */}
-      <div className="flex items-start gap-4 p-6">
-
-
-        {/* Icono PrimeReact */}
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-          <i 
-            className={`${icon} text-xl text-slate-700`}
-          />
-        </div>
-
-
-        {/* Texto */}
-        <div className="flex-1">
-
-          <h3 className="mb-1 text-lg font-semibold text-slate-900">
-            {title}
-          </h3>
-
-          <p className="text-sm text-slate-600">
-            {description}
-          </p>
-
-        </div>
-
-
-        {/* Icono derecha */}
-        <i
-          className={`${trailingIcon} mt-2 text-lg text-slate-500`}
-        />
-
-
-      </div>
-
+      {cardContent}
     </Link>
   );
 };

@@ -1,0 +1,61 @@
+
+import { ChatMessage } from "./ChatMenssage";
+import type { Message } from "../types";
+
+interface ChatConversationProps {
+  messages: Message[];
+  onViewDocument?: (documentTitle: string) => void;
+}
+
+export const ChatConversation = ({
+  messages,
+  onViewDocument,
+}: Readonly<ChatConversationProps>) => {
+  if (messages.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+          <i className="pi pi-book text-3xl text-sky-900" />
+        </div>
+
+        <h3 className="mb-2 text-lg font-semibold text-gray-900">
+          Bienvenido al asistente de reglamentos
+        </h3>
+
+        <p className="max-w-md text-sm text-gray-600">
+          Haz preguntas sobre reglamentos, normativas o resoluciones y recibirás
+          respuestas basadas en los documentos oficiales.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5 sm:gap-8">
+      {messages.map((message, index) => {
+        const messageKey = `${message.type}-${message.messageText ?? message.sourceDocumentTitle ?? "msg"}-${String(index).slice(0, 8)}`;
+        return (
+          <ChatMessage
+            key={messageKey}
+            type={message.type}
+            messageText={message.messageText}
+            interpretationTitle={message.interpretationTitle}
+            interpretationText={message.interpretationText}
+            sourceTitle={message.sourceTitle}
+            sourceStatus={message.sourceStatus}
+            sourceDocumentTitle={message.sourceDocumentTitle}
+            sourceDocumentMeta={message.sourceDocumentMeta}
+            sourceDocumentUpdated={message.sourceDocumentUpdated}
+            sourceQuote={message.sourceQuote}
+            sourceButtonText={message.sourceButtonText}
+            sourceDocumentOriginalTitle={message.sourceDocumentOriginalTitle}
+            isStreaming={message.isStreaming}
+            streamingStatus={message.streamingStatus}
+            sources={message.sources}
+            onViewDocument={onViewDocument}
+          />
+        );
+      })}
+    </div>
+  );
+};

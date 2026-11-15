@@ -1,42 +1,962 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Filtros } from "./FilterSidebar";
+import {
+  useFilterOptions,
+  type FilterOption,
+} from "../../../services/searchService";
+
+// =====================================================
+// AÑOS
+// =====================================================
+
+const AÑO_INICIO = 1972;
+const AÑO_ACTUAL = new Date().getFullYear();
+
+const años = Array.from(
+  {
+    length:
+      AÑO_ACTUAL -
+      AÑO_INICIO +
+      1,
+  },
+  (_, index) =>
+    String(AÑO_ACTUAL - index)
+);
+
+// =====================================================
+// PROPS
+// =====================================================
+
 type FilterFormProps = {
-  tipoSeleccionado: string;
-  onTipoChange: (tipo: string) => void;
+  filtros: Filtros;
+
+  onFiltroChange: (
+    campo: keyof Filtros,
+    valor: string | string[]
+  ) => void;
+
+  mostrarTodos: boolean;
 };
 
-export const FilterForm = ({
-  tipoSeleccionado,
-  onTipoChange,
-}: FilterFormProps) => {
-  return (
-    <div className="space-y-6">
+// =====================================================
+// HOOK PARA CERRAR AL INTERACTUAR FUERA O CON ESCAPE
+// =====================================================
 
-      <div>
-        <label className="block mb-2 text-sm font-medium">
-          Tipo de documento
+function useCloseOnOutsideInteraction(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  abierto: boolean,
+  onClose: () => void
+) {
+  useEffect(() => {
+    if (!abierto) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [abierto, containerRef, onClose]);
+}
+
+// =====================================================
+// SELECT
+// =====================================================
+
+type SelectFilterProps = {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+};
+
+const SelectFilter = ({
+  label,
+  value,
+  options,
+  onChange,
+}: SelectFilterProps) => {
+  const [abierto, setAbierto] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlId = `select-filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
+
+  useCloseOnOutsideInteraction(containerRef, abierto, () => setAbierto(false));
+
+  return (
+    <div ref={containerRef} className="relative mb-4 sm:mb-5">
+      <label
+        htmlFor={controlId}
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
+        {label}
+      </label>
+
+      <button
+        id={controlId}
+        type="button"
+        onClick={(e) => {
+          if (abierto) {
+            e.currentTarget.blur();
+          }
+          setAbierto(!abierto);
+        }}
+        className={`
+          flex
+          min-h-11
+          w-full
+          items-center
+          justify-between
+          gap-2
+          rounded-lg
+          border
+          bg-white
+          px-3
+          py-2
+          text-left
+          text-sm
+          text-slate-700
+          outline-none
+          transition
+          ${
+            abierto
+              ? "border-sidebar ring-2 ring-sidebar/20"
+              : "border-slate-300 hover:border-slate-400"
+          }
+        `}
+      >
+        <span className="min-w-0 truncate">{value}</span>
+
+        <span
+          className={`
+            shrink-0
+            transition-transform
+            ${abierto ? "rotate-180" : ""}
+          `}
+        >
+          ▼
+        </span>
+      </button>
+
+      {abierto && (
+        <div
+          className="
+            absolute
+            left-0
+            z-50
+            mt-1
+            w-full
+            rounded-lg
+            border
+            border-slate-200
+            bg-white
+            p-1.5
+            shadow-lg
+          "
+        >
+          <div className="max-h-48 overflow-y-auto">
+            {options.map((option: string) => {
+              const seleccionado = value === option;
+
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    onChange(option);
+                    setAbierto(false);
+                  }}
+                  className={`
+                    flex
+                    w-full
+                    items-center
+                    justify-between
+                    rounded-md
+                    px-3
+                    py-2
+                    text-left
+                    text-sm
+                    transition
+                    ${
+                      seleccionado
+                        ? "bg-sidebar/10 font-semibold text-sidebar"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }
+                  `}
+                >
+                  <span className="truncate">{option}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// =====================================================
+// AÑO
+// =====================================================
+
+type YearFilterProps = {
+  selected: string[];
+  onChange: (values: string[]) => void;
+};
+
+const YearFilter = ({
+  selected,
+  onChange,
+}: YearFilterProps) => {
+  const [busqueda, setBusqueda] = useState("");
+
+  const añosFiltrados = useMemo(() => {
+    if (!busqueda.trim()) {
+      return años;
+    }
+
+    return años.filter((año: string) =>
+      año.includes(busqueda.trim())
+    );
+  }, [busqueda]);
+
+  const toggleAño = (año: string) => {
+    if (selected.includes(año)) {
+      onChange(
+        selected.filter(
+          (item: string) => item !== año
+        )
+      );
+    } else {
+      onChange([
+        ...selected,
+        año,
+      ]);
+    }
+  };
+
+  return (
+    <div className="mb-5">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <label
+          htmlFor="year-filter-search-input"
+          className="block text-sm font-semibold text-slate-700"
+        >
+          Año
         </label>
 
-        <select
-          value={tipoSeleccionado}
-          onChange={(e) => onTipoChange(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
+        {selected.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="
+              shrink-0
+              text-xs
+              font-medium
+              text-red-600
+              hover:underline
+            "
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
+
+      <input
+        id="year-filter-search-input"
+        type="text"
+        inputMode="numeric"
+        placeholder="Buscar año..."
+        value={busqueda}
+        onChange={(e) =>
+          setBusqueda(e.target.value)
+        }
+        className="
+          mb-3
+          h-10
+          w-full
+          rounded-lg
+          border
+          border-slate-300
+          bg-white
+          px-3
+          text-sm
+          text-slate-700
+          outline-none
+          transition
+          focus:border-sidebar
+          focus:ring-2
+          focus:ring-sidebar/20
+        "
+      />
+
+      <div
+        className="
+          max-h-33
+          overflow-y-auto
+          overflow-x-hidden
+          pr-1
+        "
+      >
+        <div
+          className="
+            grid
+            grid-cols-3
+            gap-2
+            sm:grid-cols-4
+            md:grid-cols-6
+            lg:grid-cols-8
+            xl:grid-cols-3
+            2xl:grid-cols-4
+          "
         >
-          <option value="Todos">Todos</option>
-          <option value="Reglamento">Reglamento</option>
-          <option value="Normativa">Normativa</option>
-          <option value="Acta">Acta</option>
-          <option value="Decreto">Decreto</option>
-          <option value="Convenio">Convenio</option>
-        </select>
+          {añosFiltrados.map(
+            (año: string) => {
+              const seleccionado =
+                selected.includes(año);
+
+              return (
+                <button
+                  key={año}
+                  type="button"
+                  onClick={() =>
+                    toggleAño(año)
+                  }
+                  className={`
+                    min-w-0
+                    rounded-md
+                    border
+                    px-2
+                    py-2
+                    text-sm
+                    font-medium
+                    transition
+                    ${
+                      seleccionado
+                        ? "border-sidebar bg-sidebar text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                    }
+                  `}
+                >
+                  {año}
+                </button>
+              );
+            }
+          )}
+        </div>
+
+        {añosFiltrados.length === 0 && (
+          <p className="py-3 text-center text-sm text-slate-500">
+            No se encontraron años.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// =====================================================
+// MULTISELECT
+// =====================================================
+
+type MultiSelectFilterProps = {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+};
+
+const MultiSelectFilter = ({
+  label,
+  options,
+  selected,
+  onChange,
+}: MultiSelectFilterProps) => {
+  const [abierto, setAbierto] =
+    useState(false);
+
+  const [busqueda, setBusqueda] =
+    useState("");
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlId = `multiselect-filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
+
+  useCloseOnOutsideInteraction(containerRef, abierto, () => setAbierto(false));
+
+  const opcionesFiltradas = useMemo(() => {
+    if (!busqueda.trim()) {
+      return options;
+    }
+
+    return options.filter(
+      (option: string) =>
+        option
+          .toLowerCase()
+          .includes(
+            busqueda.toLowerCase()
+          )
+    );
+  }, [options, busqueda]);
+
+  const toggleOpcion = (
+    opcion: string
+  ) => {
+    if (selected.includes(opcion)) {
+      onChange(
+        selected.filter(
+          (item: string) =>
+            item !== opcion
+        )
+      );
+    } else {
+      onChange([
+        ...selected,
+        opcion,
+      ]);
+    }
+  };
+
+  let textoResumenSeleccion = `Seleccionar ${label.toLowerCase()}`;
+  if (selected.length === 1) {
+    textoResumenSeleccion = "1 seleccionado";
+  } else if (selected.length > 1) {
+    textoResumenSeleccion = `${selected.length} seleccionados`;
+  }
+
+  return (
+    <div ref={containerRef} className="relative mb-4 sm:mb-5">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <label
+          htmlFor={controlId}
+          className="block min-w-0 text-sm font-semibold text-slate-700"
+        >
+          {label}
+        </label>
+
+        {selected.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="
+              shrink-0
+              text-xs
+              font-medium
+              text-red-600
+              hover:underline
+            "
+          >
+            Limpiar
+          </button>
+        )}
       </div>
 
       <button
+        id={controlId}
         type="button"
-        onClick={() => onTipoChange("Todos")}
-        className="w-full border rounded-lg py-2"
+        onClick={(e) => {
+          if (abierto) {
+            e.currentTarget.blur();
+          }
+          setAbierto(!abierto);
+        }}
+        className={`
+          flex
+          min-h-11
+          w-full
+          items-center
+          justify-between
+          gap-2
+          rounded-lg
+          border
+          bg-white
+          px-3
+          py-2
+          text-left
+          text-sm
+          text-slate-700
+          outline-none
+          transition
+          ${
+            abierto
+              ? "border-sidebar ring-2 ring-sidebar/20"
+              : "border-slate-300 hover:border-slate-400"
+          }
+        `}
       >
-        Limpiar filtros
+        <span className="min-w-0 truncate">
+          {textoResumenSeleccion}
+        </span>
+
+        <span
+          className={`
+            shrink-0
+            transition-transform
+            ${
+              abierto
+                ? "rotate-180"
+                : ""
+            }
+          `}
+        >
+          ▼
+        </span>
       </button>
 
+      {abierto && (
+        <div
+          className="
+            absolute
+            left-0
+            z-50
+            mt-1
+            w-full
+            rounded-lg
+            border
+            border-slate-200
+            bg-white
+            p-2
+            shadow-lg
+          "
+        >
+          <input
+            type="text"
+            placeholder={`Buscar ${label.toLowerCase()}...`}
+            value={busqueda}
+            onChange={(e) =>
+              setBusqueda(
+                e.target.value
+              )
+            }
+            className="
+              mb-2
+              h-10
+              w-full
+              rounded-md
+              border
+              border-slate-300
+              px-3
+              text-sm
+              outline-none
+              focus:border-sidebar
+              focus:ring-2
+              focus:ring-sidebar/20
+            "
+          />
+
+          <div className="max-h-48 overflow-y-auto">
+            {opcionesFiltradas.map(
+              (opcion: string) => {
+                const seleccionado =
+                  selected.includes(
+                    opcion
+                  );
+
+                return (
+                  <label
+                    key={opcion}
+                    className="
+                      flex
+                      cursor-pointer
+                      items-start
+                      gap-2
+                      rounded-md
+                      px-2
+                      py-2
+                      text-sm
+                      text-slate-700
+                      hover:bg-slate-100
+                    "
+                  >
+                    <input
+                      type="checkbox"
+                      checked={
+                        seleccionado
+                      }
+                      onChange={() =>
+                        toggleOpcion(
+                          opcion
+                        )
+                      }
+                      className="
+                        mt-0.5
+                        h-4
+                        w-4
+                        shrink-0
+                        rounded
+                        border-slate-300
+                        accent-sidebar
+                      "
+                    />
+
+                    <span className="leading-5">
+                      {opcion}
+                    </span>
+                  </label>
+                );
+              }
+            )}
+
+            {opcionesFiltradas.length ===
+              0 && (
+              <p className="px-2 py-3 text-sm text-slate-500">
+                No se encontraron resultados.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {selected.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {selected
+            .slice(0, 3)
+            .map(
+              (item: string) => (
+                <span
+                  key={item}
+                  className="
+                    max-w-full
+                    truncate
+                    rounded-md
+                    bg-sidebar/10
+                    px-2
+                    py-1
+                    text-xs
+                    text-sidebar
+                  "
+                >
+                  {item}
+                </span>
+              )
+            )}
+
+          {selected.length > 3 && (
+            <span
+              className="
+                rounded-md
+                bg-slate-100
+                px-2
+                py-1
+                text-xs
+                text-slate-600
+              "
+            >
+              +{selected.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// =====================================================
+// FILTER FORM
+// =====================================================
+
+export const FilterForm = ({
+  filtros,
+  onFiltroChange,
+  mostrarTodos,
+}: FilterFormProps) => {
+  // ===================================================
+  // API - OPCIONES
+  // ===================================================
+
+  const {
+    data: filterOptions,
+  } = useFilterOptions();
+
+  // ===================================================
+  // TIPO DOCUMENTO
+  // ===================================================
+
+  const tiposDocumento = useMemo(() => {
+    if (
+      filterOptions?.tipos_documento &&
+      filterOptions.tipos_documento.length > 0
+    ) {
+      return [
+        "Todos",
+        ...filterOptions.tipos_documento.map(
+          (opt: FilterOption) =>
+            opt.nombre
+        ),
+      ];
+    }
+
+    return [
+      "Todos",
+      "Reglamento",
+      "Decreto",
+      "Decreto Exento",
+      "Resolución",
+      "Resolución Rectoría",
+      "Instructivo",
+      "Normativa",
+      "Acta",
+      "Documento",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // ESTADOS
+  // ===================================================
+
+  const estados = useMemo(() => {
+    if (
+      filterOptions?.estados_vigencia &&
+      filterOptions.estados_vigencia.length > 0
+    ) {
+      return [
+        "Todos",
+        ...filterOptions.estados_vigencia.map(
+          (opt: FilterOption) =>
+            opt.nombre
+        ),
+      ];
+    }
+
+    return [
+      "Todos",
+      "Vigente",
+      "Derogado",
+      "Modificado",
+      "En Revisión",
+      "No Vigente",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // ÁREAS
+  // ===================================================
+
+  const areas = useMemo(() => {
+    if (
+      filterOptions?.tipos_area &&
+      filterOptions.tipos_area.length > 0
+    ) {
+      return filterOptions.tipos_area.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Académica",
+      "Administración y Finanzas",
+      "Asuntos Estudiantiles",
+      "Investigación y Postgrado",
+      "Vinculación con el Medio",
+      "Gobierno Superior y Rectoría",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // SEDES
+  // ===================================================
+
+  const sedes = useMemo(() => {
+    const list = filterOptions?.sedes_campus?.length
+      ? filterOptions.sedes_campus
+      : filterOptions?.sedes;
+
+    if (list && list.length > 0) {
+      return list.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Casa Central (Valparaíso)",
+      "Campus San Joaquín",
+      "Campus Vitacura",
+      "Sede Viña del Mar",
+      "Sede Concepción",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // DEPARTAMENTOS
+  // ===================================================
+
+  const departamentos = useMemo(() => {
+    if (
+      filterOptions?.departamentos &&
+      filterOptions.departamentos.length > 0
+    ) {
+      return filterOptions.departamentos.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Informática",
+      "Electrónica",
+      "Mecánica",
+      "Industrias",
+      "Matemática",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // CARRERAS
+  // ===================================================
+
+  const carreras = useMemo(() => {
+    if (
+      filterOptions?.carreras &&
+      filterOptions.carreras.length > 0
+    ) {
+      return filterOptions.carreras.map(
+        (opt: FilterOption) =>
+          opt.nombre
+      );
+    }
+
+    return [
+      "Ingeniería Civil Informática",
+      "Técnico en Electrónica",
+      "Magíster en Informática",
+      "Doctorado en Industrias",
+      "Ingeniería Civil Mecánica",
+    ];
+  }, [filterOptions]);
+
+  // ===================================================
+  // RENDER
+  // ===================================================
+
+  return (
+    <div className="mt-2 w-full">
+
+      {/* =================================================
+          FILTROS PRINCIPALES
+      ================================================= */}
+
+      <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2 xl:grid-cols-1">
+        <SelectFilter
+          label="Tipo de documento"
+          value={filtros.tipoDocumento}
+          options={tiposDocumento}
+          onChange={(value: string) =>
+            onFiltroChange(
+              "tipoDocumento",
+              value
+            )
+          }
+        />
+
+        <SelectFilter
+          label="Estado"
+          value={filtros.estado}
+          options={estados}
+          onChange={(value: string) =>
+            onFiltroChange(
+              "estado",
+              value
+            )
+          }
+        />
+      </div>
+
+      <YearFilter
+        selected={filtros.año}
+        onChange={(values: string[]) =>
+          onFiltroChange(
+            "año",
+            values
+          )
+        }
+      />
+
+      {/* =================================================
+          FILTROS AVANZADOS
+      ================================================= */}
+
+      {mostrarTodos && (
+        <div
+          className="
+            grid
+            grid-cols-1
+            gap-x-4
+            border-t
+            border-slate-200
+            pt-5
+            md:grid-cols-2
+            xl:grid-cols-1
+          "
+        >
+          <MultiSelectFilter
+            label="Área"
+            options={areas}
+            selected={filtros.area}
+            onChange={(values: string[]) =>
+              onFiltroChange(
+                "area",
+                values
+              )
+            }
+          />
+
+          <MultiSelectFilter
+            label="Sede"
+            options={sedes}
+            selected={filtros.sede}
+            onChange={(values: string[]) =>
+              onFiltroChange(
+                "sede",
+                values
+              )
+            }
+          />
+
+          <MultiSelectFilter
+            label="Departamento"
+            options={departamentos}
+            selected={
+              filtros.departamento
+            }
+            onChange={(values: string[]) =>
+              onFiltroChange(
+                "departamento",
+                values
+              )
+            }
+          />
+
+          <MultiSelectFilter
+            label="Carrera"
+            options={carreras}
+            selected={filtros.carrera}
+            onChange={(values: string[]) =>
+              onFiltroChange(
+                "carrera",
+                values
+              )
+            }
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,10 +1,10 @@
 import { CategoryCard } from "./CategoriaCard";
 
-import reglamentosImg from "/assets/Imagenes/Inicio/Reglamentos.jpg";
-import eleccionesImg from "/assets/Imagenes/Inicio/Elecciones.jpg";
-import actasImg from "/assets/Imagenes/Inicio/Actas.jpeg";
-import decretosImg from "/assets/Imagenes/Inicio/Decretos.jpg";
-import conveniosImg from "/assets/Imagenes/Inicio/Convenios.jpg";
+const reglamentosImg = "/assets/Imagenes/Inicio/Reglamentos.jpg";
+const eleccionesImg = "/assets/Imagenes/Inicio/Elecciones.jpg";
+const actasImg = "/assets/Imagenes/Inicio/Actas.jpeg";
+const decretosImg = "/assets/Imagenes/Inicio/Decretos.jpg";
+const conveniosImg = "/assets/Imagenes/Inicio/Convenios.jpg";
 
 
 const categories = [
@@ -33,6 +33,7 @@ const categories = [
     title: "Actas",
     description:
       "Decisiones institucionales y registros oficiales.",
+    disabled: true,
   },
 
   {
@@ -42,6 +43,7 @@ const categories = [
     title: "Elecciones",
     description:
       "Guías de procedimiento y procesos electorales.",
+    disabled: true,
   },
 
   {
@@ -51,6 +53,7 @@ const categories = [
     title: "Convenios",
     description:
       "Convenios institucionales y acuerdos vigentes.",
+    disabled: true,
   },
 ];
 

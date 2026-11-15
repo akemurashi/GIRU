@@ -1,4 +1,11 @@
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { authService, type User } from "../../../services/authService";
+import { RelacionesModal } from "./RelacionesModal";
+import { PdfModal } from "./PdfModal";
+
 type DocumentCardProps = {
+  id: string | number;
   titulo: string;
   tipo: string;
   fecha: string;
@@ -8,6 +15,7 @@ type DocumentCardProps = {
 };
 
 export const DocumentCard = ({
+  id,
   titulo,
   tipo,
   fecha,
@@ -15,6 +23,15 @@ export const DocumentCard = ({
   estado,
   descripcion,
 }: DocumentCardProps) => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [showRelaciones, setShowRelaciones] = useState(false);
+  const [pdfDocId, setPdfDocId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUser(authService.getUser());
+  }, []);
+
   return (
     <article
       className="
@@ -67,15 +84,42 @@ export const DocumentCard = ({
           Ver documento
         </button>
 
+        {user?.role === "admin" && (
+          <button
+            onClick={() => navigate(`/administracion?docId=${id}`)}
+            className="
+              rounded-lg
+              border
+              border-amber-400
+              text-amber-500
+              hover:bg-amber-50
+              px-4
+              py-2
+            "
+          >
+            <i className="pi pi-pencil mr-2" />
+            <span>Editar</span>
+          </button>
+        )}
+
         <button
+          type="button"
+          onClick={() => setShowRelaciones(true)}
           className="
+            flex
+            items-center
             rounded-lg
             border
+            border-slate-300
             px-4
             py-2
+            text-slate-700
+            transition
+            hover:bg-slate-50
           "
         >
-          Ver relaciones
+          <i className="pi pi-share-alt mr-2 text-sidebar" />
+          <span>Ver relaciones</span>
         </button>
 
         <button
@@ -89,6 +133,21 @@ export const DocumentCard = ({
           Consultar con Don Fede
         </button>
       </div>
+
+      {showRelaciones && (
+        <RelacionesModal
+          documentId={String(id)}
+          onClose={() => setShowRelaciones(false)}
+          onVerDocumento={(targetId) => setPdfDocId(targetId)}
+        />
+      )}
+
+      {pdfDocId !== null && (
+        <PdfModal
+          documentId={pdfDocId}
+          onClose={() => setPdfDocId(null)}
+        />
+      )}
     </article>
   );
 };

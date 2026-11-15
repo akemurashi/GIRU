@@ -1,0 +1,423 @@
+
+import type { DocumentChange } from "./ConfirmModal";
+import type {
+  CatalogOption,
+  Catalogs,
+  EditableDocument,
+  FieldErrors,
+} from "./types";
+
+const labelOf = (
+  options: CatalogOption[],
+  id: number | string | null | undefined
+): string =>
+  id == null
+    ? ""
+    : options.find(
+        (option) => String(option.value) === String(id)
+      )?.label ?? `#${id}`;
+
+const labelsOf = (options: CatalogOption[], ids: number[]): string =>
+  ids
+    .map((id) => labelOf(options, id))
+    .sort((a, b) => a.localeCompare(b, "es"))
+    .join(", ");
+
+const yn = (value: boolean): string => (value ? "Sí" : "No");
+
+const txt = (
+  value: string | number | null | undefined
+): string => (value == null ? "" : String(value));
+
+/** Prefijo esperado: <siglaMacro>-<numCategoria>- */
+export function getMetadatoPrefix(
+  idcategoria: number | null,
+  catalogs: Catalogs
+): string {
+  const category = catalogs.categorias.find(
+    (item) => String(item.value) === String(idcategoria)
+  );
+
+  if (!category) return "";
+
+  const macro = catalogs.macroCategorias.find(
+    (item) => String(item.value) === String(category.parentId)
+  );
+
+  return macro?.code && category.code
+    ? `${macro.code}-${category.code}-`
+    : "";
+}
+
+export const isDeroga = (
+  idtiporelacion: number | null,
+  catalogs: Catalogs
+): boolean =>
+  labelOf(catalogs.tiposRelacion, idtiporelacion).toUpperCase() ===
+  "DEROGA";
+
+// ---------------------------------------------------------------- Validación
+
+export type ValidationIssue = {
+  key: string;
+  section: string;
+  field: string;
+  message: string;
+  targetId: string;
+};
+
+export function getValidationIssues(
+  document: EditableDocument,
+  _catalogs: Catalogs,
+  _prefix?: string
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  if (!document.numero.trim()) {
+    issues.push({
+      key: "numero",
+      section: "Datos generales",
+      field: "Número de documento",
+      message: "Debe ingresar el número del documento.",
+      targetId: "field-numero",
+    });
+  } else if (document.numero.length > 50) {
+    issues.push({
+      key: "numero",
+      section: "Datos generales",
+      field: "Número de documento",
+      message: "Máximo 50 caracteres.",
+      targetId: "field-numero",
+    });
+  }
+
+  if (document.idtipodocumento == null) {
+    issues.push({
+      key: "idtipodocumento",
+      section: "Datos generales",
+      field: "Tipo de documento",
+      message: "Debe seleccionar el tipo de documento.",
+      targetId: "field-idtipodocumento",
+    });
+  }
+
+  // El título y metadato identificador no son editables en este panel (los gestiona el backend/SP).
+
+  if (
+    document.descripcion.trim() &&
+    document.descripcion.length > 5000
+  ) {
+    issues.push({
+      key: "descripcion",
+      section: "Datos generales",
+      field: "Descripción",
+      message: "Máximo 5000 caracteres.",
+      targetId: "field-descripcion",
+    });
+  }
+
+  if (document.idcategoria == null) {
+    issues.push({
+      key: "idcategoria",
+      section: "Categorización",
+      field: "Macrocategoría y Categoría",
+      message:
+        "Debe seleccionar una macrocategoría (Paso 1) y una categoría (Paso 2).",
+      targetId: "section-categorizacion",
+    });
+  }
+
+  if (document.idestadovigencia == null) {
+    issues.push({
+      key: "idestadovigencia",
+      section: "Vigencia y estado",
+      field: "Estado de vigencia",
+      message: "Debe seleccionar el estado de vigencia.",
+      targetId: "field-idestadovigencia",
+    });
+  }
+
+  if (!document.creacion) {
+    issues.push({
+      key: "creacion",
+      section: "Vigencia y estado",
+      field: "Fecha de creación",
+      message: "Debe seleccionar la fecha de creación.",
+      targetId: "field-creacion",
+    });
+  }
+
+  if (
+    document.derogacion &&
+    document.creacion &&
+    document.derogacion < document.creacion
+  ) {
+    issues.push({
+      key: "derogacion",
+      section: "Vigencia y estado",
+      field: "Fecha de derogación",
+      message: "No puede ser anterior a la fecha de creación.",
+      targetId: "field-derogacion",
+    });
+  }
+
+  // Validación de trazabilidad normativa (antes y después)
+  const validateHitos = (
+    hitos: EditableDocument["trazabilidadAntes"],
+    etapa: "antes" | "despues",
+    etapaLabel: string
+  ) => {
+    if (!Array.isArray(hitos)) return;
+    hitos.forEach((hito, index) => {
+      const num = index + 1;
+      if (!hito.decreto.trim()) {
+        issues.push({
+          key: `hito:${etapa}:${hito.key}:decreto`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Decreto`,
+          message: "Debe ingresar el código oficial del decreto o resolución.",
+          targetId: `${etapa}-${hito.key}-decreto`,
+        });
+      }
+
+      if (hito.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(hito.fecha.trim())) {
+        issues.push({
+          key: `hito:${etapa}:${hito.key}:fecha`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Fecha`,
+          message: "La fecha debe tener formato válido YYYY-MM-DD.",
+          targetId: `${etapa}-${hito.key}-fecha`,
+        });
+      }
+
+      if (
+        hito.anio != null &&
+        (!Number.isInteger(hito.anio) || hito.anio < 1800 || hito.anio > 2200)
+      ) {
+        issues.push({
+          key: `hito:${etapa}:${hito.key}:anio`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Año`,
+          message: "El año debe ser un entero entre 1800 y 2200.",
+          targetId: `${etapa}-${hito.key}-anio`,
+        });
+      }
+
+      if (hito.digitalizado && !hito.nombre_archivo?.trim()) {
+        issues.push({
+          key: `hito:${etapa}:${hito.key}:nombre_archivo`,
+          section: "Trazabilidad y Relaciones Normativas",
+          field: `${etapaLabel} #${num} · Nombre de archivo`,
+          message:
+            "Debe indicar el nombre del archivo o desactivar «Norma digitalizada».",
+          targetId: `${etapa}-${hito.key}-nombre_archivo`,
+        });
+      }
+    });
+  };
+
+  validateHitos(document.trazabilidadAntes, "antes", "Hito Anterior");
+  validateHitos(document.trazabilidadDespues, "despues", "Hito Posterior");
+
+  return issues;
+}
+
+export function validateDocument(
+  document: EditableDocument,
+  catalogs: Catalogs,
+  prefix?: string
+): FieldErrors {
+  const issues = getValidationIssues(document, catalogs, prefix);
+  const errors: FieldErrors = {};
+
+  for (const issue of issues) {
+    errors[issue.key] = issue.message;
+  }
+
+  return errors;
+}
+
+// ---------------------------------------------------------------- Diferencias
+
+export function computeChanges(
+  before: EditableDocument,
+  after: EditableDocument,
+  catalogs: Catalogs
+): DocumentChange[] {
+  const scalar: {
+    field: string;
+    fmt: (document: EditableDocument) => string;
+  }[] = [
+    { field: "Número", fmt: (document) => txt(document.numero) },
+    {
+      field: "Tipo de documento",
+      fmt: (document) =>
+        labelOf(catalogs.tiposDocumento, document.idtipodocumento),
+    },
+    // El título no se edita.
+    { field: "Metadato", fmt: (document) => txt(document.nommetadato) },
+    { field: "Descripción", fmt: (document) => txt(document.descripcion) },
+    {
+      field: "Categoría",
+      fmt: (document) =>
+        labelOf(catalogs.categorias, document.idcategoria),
+    },
+    {
+      field: "Tipo de sesión",
+      fmt: (document) =>
+        labelOf(catalogs.tiposSesion, document.idtiposesion),
+    },
+    {
+      field: "N° de sesión",
+      fmt: (document) => txt(document.numsesion),
+    },
+    {
+      field: "N° de acuerdo",
+      fmt: (document) => txt(document.numacuerdo),
+    },
+    {
+      field: "Tipo de decisión",
+      fmt: (document) =>
+        labelOf(catalogs.tiposDecision, document.idtipodecision),
+    },
+    {
+      field: "Estado de vigencia",
+      fmt: (document) =>
+        labelOf(catalogs.estadosVigencia, document.idestadovigencia),
+    },
+    {
+      field: "Fecha de creación",
+      fmt: (document) => txt(document.creacion),
+    },
+    {
+      field: "Fecha de derogación",
+      fmt: (document) => txt(document.derogacion),
+    },
+    {
+      field: "Aplicación inmediata",
+      fmt: (document) => yn(document.aplicacioninmediata),
+    },
+    {
+      field: "Documento activo",
+      fmt: (document) => yn(document.isactive),
+    },
+    {
+      field: "Áreas emisoras",
+      fmt: (document) =>
+        labelsOf(catalogs.subAreas, document.areasemisoras),
+    },
+    {
+      field: "Niveles académicos",
+      fmt: (document) =>
+        labelsOf(catalogs.niveles, document.niveles),
+    },
+    {
+      field: "Carreras",
+      fmt: (document) =>
+        labelsOf(catalogs.carreras, document.carreras),
+    },
+    {
+      field: "Jornadas",
+      fmt: (document) =>
+        labelsOf(catalogs.jornadas, document.jornadas),
+    },
+    {
+      field: "Departamentos",
+      fmt: (document) =>
+        labelsOf(catalogs.departamentos, document.departamentos),
+    },
+    {
+      field: "Sedes / campus",
+      fmt: (document) =>
+        labelsOf(catalogs.sedes, document.sedes),
+    },
+    {
+      field: "Roles institucionales",
+      fmt: (document) =>
+        labelsOf(catalogs.roles, document.roles),
+    },
+    {
+      field: "Beneficios internos",
+      fmt: (document) =>
+        labelsOf(catalogs.beneficios, document.beneficios),
+    },
+    {
+      field: "Nombramientos",
+      fmt: (document) =>
+        labelsOf(catalogs.nombramientos, document.nombramientos),
+    },
+  ];
+
+  const changes: DocumentChange[] = [];
+
+  for (const item of scalar) {
+    const oldValue = item.fmt(before);
+    const newValue = item.fmt(after);
+
+    if (oldValue !== newValue) {
+      changes.push({
+        field: item.field,
+        before: oldValue,
+        after: newValue,
+      });
+    }
+  }
+
+  // Comparación de trazabilidad normativa (antes y después)
+  const normalizeHitos = (hitos: EditableDocument["trazabilidadAntes"] = []) =>
+    hitos.map((h) => ({
+      decreto: h.decreto.trim(),
+      fecha: h.fecha || null,
+      anio: h.anio ?? null,
+      nombre_archivo:
+        h.digitalizado && h.nombre_archivo?.trim()
+          ? h.nombre_archivo.trim()
+          : null,
+    }));
+
+  const fmtHitos = (hitos: ReturnType<typeof normalizeHitos>) => {
+    if (hitos.length === 0) {
+      return "Sin hitos registrados";
+    }
+
+    return hitos
+      .map((h, i) => {
+        const decretoTexto = h.decreto || "(Sin decreto)";
+        let fechaTexto = "";
+        if (h.fecha) {
+          fechaTexto = " (" + h.fecha + ")";
+        } else if (h.anio) {
+          fechaTexto = " (" + String(h.anio) + ")";
+        }
+        const archivoTexto = h.nombre_archivo
+          ? " [" + h.nombre_archivo + "]"
+          : " [No digitalizado]";
+        return String(i + 1) + ". " + decretoTexto + fechaTexto + archivoTexto;
+      })
+      .join("\n");
+  };
+
+  const beforeAntes = normalizeHitos(before.trazabilidadAntes);
+  const afterAntes = normalizeHitos(after.trazabilidadAntes);
+
+  if (JSON.stringify(beforeAntes) !== JSON.stringify(afterAntes)) {
+    changes.push({
+      field: "Trazabilidad · Hitos Anteriores (Antes)",
+      before: fmtHitos(beforeAntes),
+      after: fmtHitos(afterAntes),
+    });
+  }
+
+  const beforeDespues = normalizeHitos(before.trazabilidadDespues);
+  const afterDespues = normalizeHitos(after.trazabilidadDespues);
+
+  if (JSON.stringify(beforeDespues) !== JSON.stringify(afterDespues)) {
+    changes.push({
+      field: "Trazabilidad · Hitos Posteriores (Después)",
+      before: fmtHitos(beforeDespues),
+      after: fmtHitos(afterDespues),
+    });
+  }
+
+  return changes;
+}
